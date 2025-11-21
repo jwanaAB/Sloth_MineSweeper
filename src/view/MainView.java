@@ -3,7 +3,10 @@ package view;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
@@ -15,6 +18,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -22,6 +26,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.border.EmptyBorder;
 
 public class MainView extends JFrame {
 
@@ -178,14 +183,67 @@ public class MainView extends JFrame {
     }
 
     public boolean confirmExit() {
-        int choice = JOptionPane.showConfirmDialog(
-                this,
-                "Are you sure you want to exit?",
-                "Exit Confirmation",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE
+        final boolean[] confirmed = {false};
+
+        JDialog dialog = new JDialog(this, "Exit Confirmation", true);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
+        JPanel content = new JPanel();
+        content.setBackground(Color.WHITE);
+        content.setBorder(new EmptyBorder(24, 32, 24, 32));
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+
+        JLabel title = new JLabel("Are you sure you want to quit?");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        title.setForeground(new Color(40, 40, 40));
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel subtitle = new JLabel("This will close the game application.");
+        subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        subtitle.setForeground(new Color(120, 120, 120));
+        subtitle.setBorder(BorderFactory.createEmptyBorder(8, 0, 20, 0));
+        subtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
+        buttonRow.setOpaque(false);
+        buttonRow.setAlignmentX(Component.RIGHT_ALIGNMENT);
+
+        RoundedButton noButton = new RoundedButton(
+                "No",
+                Color.WHITE,
+                new Color(45, 45, 45),
+                new Color(210, 210, 210)
         );
-        return choice == JOptionPane.YES_OPTION;
+        RoundedButton yesButton = new RoundedButton(
+                "Yes",
+                new Color(15, 15, 20),
+                Color.WHITE,
+                new Color(15, 15, 20)
+        );
+
+        noButton.addActionListener(e -> {
+            confirmed[0] = false;
+            dialog.dispose();
+        });
+        yesButton.addActionListener(e -> {
+            confirmed[0] = true;
+            dialog.dispose();
+        });
+
+        buttonRow.add(noButton);
+        buttonRow.add(yesButton);
+
+        content.add(title);
+        content.add(subtitle);
+        content.add(buttonRow);
+
+        dialog.setContentPane(content);
+        dialog.pack();
+        dialog.setResizable(false);
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+
+        return confirmed[0];
     }
 
     public String promptForPinCode() {
@@ -239,6 +297,36 @@ public class MainView extends JFrame {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setPaint(new GradientPaint(0, 0, start, getWidth(), getHeight(), end));
             g2.fillRect(0, 0, getWidth(), getHeight());
+            g2.dispose();
+            super.paintComponent(g);
+        }
+    }
+
+    private static class RoundedButton extends JButton {
+        private final Color fillColor;
+        private final Color borderColor;
+
+        private RoundedButton(String text, Color fillColor, Color textColor, Color borderColor) {
+            super(text);
+            this.fillColor = fillColor;
+            this.borderColor = borderColor;
+            setForeground(textColor);
+            setFont(new Font("Segoe UI", Font.BOLD, 15));
+            setFocusPainted(false);
+            setContentAreaFilled(false);
+            setOpaque(false);
+            setBorder(BorderFactory.createEmptyBorder(10, 24, 10, 24));
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(fillColor);
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 30, 30);
+            g2.setColor(borderColor);
+            g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 30, 30);
             g2.dispose();
             super.paintComponent(g);
         }
