@@ -249,7 +249,7 @@ public class MainView extends JFrame {
     public String promptForPinCode() {
         return JOptionPane.showInputDialog(
                 this,
-                "Enter 4-digit PIN code:",
+                "Enter 4-digit PIN code: \n It's 2580 for testing",
                 "Question Manager Access",
                 JOptionPane.QUESTION_MESSAGE
         );
