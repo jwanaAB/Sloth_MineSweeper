@@ -370,7 +370,7 @@ public class GamePanel extends JPanel {
             
             if (cell.isFlagged()) {
                 // Flagged state - raised appearance, pink/red background
-                setText("🚩");
+                setText("F");
                 setBackground(new Color(255, 180, 180));
                 setForeground(Color.BLACK);
                 setEnabled(true);
@@ -389,7 +389,7 @@ public class GamePanel extends JPanel {
                 
                 switch (type) {
                     case MINE:
-                        setText("💣");
+                        setText("M");
                         setBackground(new Color(255, 120, 120)); // Bright red
                         setForeground(Color.BLACK);
                         break;
@@ -409,7 +409,7 @@ public class GamePanel extends JPanel {
                         else setForeground(new Color(100, 100, 100)); // Gray
                         break;
                     case QUESTION:
-                        setText("❓");
+                        setText("?");
                         setBackground(new Color(255, 255, 150)); // Bright yellow
                         setForeground(Color.BLACK);
                         // Question cells should be clickable if not opened yet
