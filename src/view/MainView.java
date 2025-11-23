@@ -39,6 +39,7 @@ public class MainView extends JFrame {
     private final JPanel menuPanel;
     private final QuestionManagerPanel questionManagerPanel;
     private final HistoryPanel historyPanel;
+    private final GamePanel gamePanel;
 
     public MainView() {
         super("MineSweeper");
@@ -73,10 +74,12 @@ public class MainView extends JFrame {
         menuPanel = buildMainMenuPanel();
         questionManagerPanel = new QuestionManagerPanel();
         historyPanel = new HistoryPanel();
+        gamePanel = new GamePanel();
 
         cardPanel.add(menuPanel, "menu");
         cardPanel.add(questionManagerPanel, "question");
         cardPanel.add(historyPanel, "history");
+        cardPanel.add(gamePanel, "game");
 
         setContentPane(cardPanel);
         setTitle("MineSweeper");
@@ -285,7 +288,38 @@ public class MainView extends JFrame {
 
     public void showMainMenu() {
         setTitle("MineSweeper");
+        setResizable(false);
+        setPreferredSize(new Dimension(900, 520));
+        pack();
         cardLayout.show(cardPanel, "menu");
+    }
+    
+    /**
+     * Shows the game panel with the specified game controller.
+     * 
+     * @param onReturnToMain Runnable to execute when returning to main menu
+     */
+    public void showGamePanel(Runnable onReturnToMain) {
+        gamePanel.setHomeAction(e -> {
+            showMainMenu();
+            if (onReturnToMain != null) {
+                onReturnToMain.run();
+            }
+        });
+        setTitle("Game - Minesweeper PRO");
+        setResizable(true);
+        setPreferredSize(new Dimension(1400, 800));
+        pack();
+        cardLayout.show(cardPanel, "game");
+    }
+    
+    /**
+     * Gets the game panel instance.
+     * 
+     * @return The GamePanel instance
+     */
+    public GamePanel getGamePanel() {
+        return gamePanel;
     }
 
     private static class GradientPanel extends JPanel {
