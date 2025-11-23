@@ -258,12 +258,6 @@ public class MainView extends JFrame {
         );
     }
 
-    public GameSetupDialog showGameSetupDialog() {
-        GameSetupDialog dialog = new GameSetupDialog(this);
-        dialog.setVisible(true);
-        return dialog;
-    }
-
     public void showHistoryPanel(Runnable onReturnToMain) {
         historyPanel.setHomeAction(e -> {
             showMainMenu();

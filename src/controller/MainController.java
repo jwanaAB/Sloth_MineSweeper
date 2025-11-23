@@ -1,9 +1,10 @@
 package controller;
 
+
+
 import model.Game;
 import model.SysData;
 import view.MainView;
-import view.GameSetupDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,14 +14,13 @@ public class MainController {
 
     private static final String QUESTION_MANAGER_PIN = "2580";
 
+    @SuppressWarnings("unused")
     private final SysData model;
     private final MainView view;
-    private final GameController gameController;
 
     public MainController(SysData model, MainView view) {
         this.model = model;
         this.view = view;
-        this.gameController = new GameController(model);
     }
 
     public void init() {
@@ -36,32 +36,6 @@ public class MainController {
     private ActionListener createStartGameListener() {
         return e -> {
             // Show game setup dialog
-
-            // <<<<<<< HEAD  (COMMENTED OUT — OLD VERSION)
-            // GameSetupDialog setupDialog = view.showGameSetupDialog();
-            // 
-            // // Check if user clicked start game button and confirmed the input
-            // if (setupDialog.isConfirmed()) {
-            //     String player1Name = setupDialog.getPlayer1Name();
-            //     String player2Name = setupDialog.getPlayer2Name();
-            //     int difficulty = setupDialog.getDifficulty();
-            //     
-            //     // Pass setup data (both players and difficulty) to game controller for initialization
-            //     gameController.initializeGame(player1Name, player2Name, difficulty);
-            //     
-            //     // TODO: Show the actual game board view here
-            //     // For now, show a confirmation message
-            //     JOptionPane.showMessageDialog(
-            //         view,
-            //         String.format("Game initialized!\nPlayer 1: %s\nPlayer 2: %s\nDifficulty: %d", 
-            //                      player1Name, player2Name, difficulty),
-            //         "Game Setup Complete",
-            //         JOptionPane.INFORMATION_MESSAGE
-            //     );
-            // }
-            // =======
-
-            // >>>>>>> Riad (YOUR VERSION — ACTIVE)
             GameSetupDialog setupDialog = new GameSetupDialog(view);
             if (setupDialog.isConfirmed()) {
                 String player1Name = setupDialog.getPlayer1Name();
@@ -75,7 +49,7 @@ public class MainController {
                 // Create game
                 Game game = new Game(player1Name, player2Name, difficulty, questionLogic);
                 
-                // Create game controller
+                // Create game controller 
                 new GameController(game, view.getGamePanel(), questionLogic);
                 
                 // Show game panel
@@ -83,7 +57,6 @@ public class MainController {
             }
         };
     }
-
     
     /**
      * Dialog for game setup (player names and difficulty selection).
@@ -203,7 +176,6 @@ public class MainController {
         public Game.Difficulty getDifficulty() {
             return difficulty;
         }
-
     }
 
     private ActionListener createHistoryListener() {
