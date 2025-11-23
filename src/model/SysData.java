@@ -14,6 +14,8 @@ public final class SysData {
     private String player1Name;
     private String player2Name;
     private int currentDifficulty;
+    private PlayerState player1State;
+    private PlayerState player2State;
 
     private SysData() {
         this.playerScores = new ArrayList<>();
@@ -76,6 +78,22 @@ public final class SysData {
         if (currentDifficulty >= 1 && currentDifficulty <= 3) {
             this.currentDifficulty = currentDifficulty;
         }
+    }
+
+    public PlayerState getPlayer1State() {
+        return player1State;
+    }
+
+    public void setPlayer1State(PlayerState player1State) {
+        this.player1State = player1State;
+    }
+
+    public PlayerState getPlayer2State() {
+        return player2State;
+    }
+
+    public void setPlayer2State(PlayerState player2State) {
+        this.player2State = player2State;
     }
 }
 
