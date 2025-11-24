@@ -323,14 +323,12 @@ public class ScoringService {
                 }
             }
         }
-        player.useSolution();
-        
         String questionTypeName = getQuestionTypeName(QuestionType);
         String result = isCorrect ? "correctly" : "incorrectly";
         String lifeChange = scoreChange[1] != 0 ? String.format(", %s%d life", scoreChange[1] > 0 ? "+" : "", scoreChange[1]) : "";
-        sysData.addHistoryEntry(String.format("%s used %s solution %s (%s%dpts%s, %d solutions remaining)", 
+        sysData.addHistoryEntry(String.format("%s used %s solution %s (%s%dpts%s)", 
                 player.getPlayerName(), questionTypeName, result, 
-                scoreChange[0] >= 0 ? "+" : "", scoreChange[0], lifeChange, player.getSolutionsRemaining()));
+                scoreChange[0] >= 0 ? "+" : "", scoreChange[0], lifeChange));
     }
     
     /**
@@ -512,9 +510,9 @@ public class ScoringService {
     /**
      * Initializes player states for a new game based on difficulty.
      * According to requirements:
-     * Easy: 10 lives, 5 hints, 5 solutions
-     * Medium: 8 lives, 8 hints, 8 solutions
-     * Hard: 6 lives, 12 hints, 12 solutions
+     * Easy: 10 lives
+     * Medium: 8 lives
+     * Hard: 6 lives
      *
      * @param player1Name Name of player 1
      * @param player2Name Name of player 2
@@ -522,32 +520,24 @@ public class ScoringService {
      * @return Array with [player1State, player2State]
      */
     public PlayerState[] initializePlayerStates(String player1Name, String player2Name, int difficulty) {
-        int lives, hints, solutions;
+        int lives;
         
         switch (difficulty) {
             case 1: // Easy
                 lives = 10;
-                hints = 5;
-                solutions = 5;
                 break;
             case 2: // Medium
                 lives = 8;
-                hints = 8;
-                solutions = 8;
                 break;
             case 3: // Hard
                 lives = 6;
-                hints = 12;
-                solutions = 12;
                 break;
             default:
                 lives = 10;
-                hints = 5;
-                solutions = 5;
         }
 
-        PlayerState player1 = new PlayerState(player1Name, lives, hints, solutions);
-        PlayerState player2 = new PlayerState(player2Name, lives, hints, solutions);
+        PlayerState player1 = new PlayerState(player1Name, lives);
+        PlayerState player2 = new PlayerState(player2Name, lives);
 
         return new PlayerState[]{player1, player2};
     }
