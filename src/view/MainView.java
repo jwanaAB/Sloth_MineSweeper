@@ -86,6 +86,10 @@ public class MainView extends JFrame {
         cardLayout.show(cardPanel, "menu");
         pack();
         setLocationRelativeTo(null);
+        // Ensure frame is visible and brought to front
+        setVisible(true);
+        toFront();
+        repaint();
     }
 
     private void configureLookAndFeel() {
