@@ -347,6 +347,11 @@ public class GameBoard {
             return false;
         }
         
+
+
+
+
+
         // Handle first click - ensure no mine
         if (firstClick) {
             firstClick = false;
@@ -357,6 +362,12 @@ public class GameBoard {
             }
         }
         
+
+
+
+
+
+
         // Reveal the cell
         cell.reveal();
         
@@ -367,8 +378,9 @@ public class GameBoard {
         
         // If it's an empty cell, reveal adjacent empty cells recursively
         // Also reveal adjacent number cells (but don't recurse from them)
-        if (cell.getType() == Cell.CellType.EMPTY) {
+        if (cell.getType() == Cell.CellType.EMPTY || cell.getType() == Cell.CellType.QUESTION || cell.getType() == Cell.CellType.SURPRISE) {
             revealAdjacentEmptyCells(row, col);
+
         }
         
         return false;
@@ -396,19 +408,15 @@ public class GameBoard {
                     
                     // Only reveal hidden, non-flagged cells
                     if (adjacentCell.isHidden() && !adjacentCell.isFlagged()) {
-                        // Reveal number cells (but don't recurse from them)
+
                         if (adjacentCell.getType() == Cell.CellType.NUMBER) {
                             adjacentCell.reveal();
                         }
-                        // Reveal empty cells and recurse
-                        else if (adjacentCell.getType() == Cell.CellType.EMPTY) {
+
+                        if (adjacentCell.getType() == Cell.CellType.EMPTY || adjacentCell.getType() == Cell.CellType.QUESTION || 
+                        adjacentCell.getType() == Cell.CellType.SURPRISE) {
                             adjacentCell.reveal();
                             revealAdjacentEmptyCells(newRow, newCol);
-                        }
-                        // Also reveal question and surprise cells (but don't recurse)
-                        else if (adjacentCell.getType() == Cell.CellType.QUESTION || 
-                                 adjacentCell.getType() == Cell.CellType.SURPRISE) {
-                            adjacentCell.reveal();
                         }
                     }
                 }
