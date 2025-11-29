@@ -1,23 +1,24 @@
 package controller;
 
-import javax.swing.JOptionPane;
-import java.awt.event.ActionListener;
+import model.Game;
 import model.SysData;
-import view.MainView;
 import view.GameSetupDialog;
+import view.MainView;
+
+import javax.swing.*;
+import java.awt.event.ActionListener;
 
 public class MainController {
 
     private static final String QUESTION_MANAGER_PIN = "2580";
 
+    @SuppressWarnings("unused")
     private final SysData model;
     private final MainView view;
-    private final GameController gameController;
 
     public MainController(SysData model, MainView view) {
         this.model = model;
         this.view = view;
-        this.gameController = new GameController(model);
     }
 
     public void init() {
@@ -25,35 +26,44 @@ public class MainController {
                 createStartGameListener(),
                 createHistoryListener(),
                 createQuestionManagerListener(),
-                createExitListener()
-        );
+                createExitListener());
         view.setVisible(true);
     }
 
     private ActionListener createStartGameListener() {
         return e -> {
             // Show game setup dialog
-            GameSetupDialog setupDialog = view.showGameSetupDialog();
-            
-            // Check if user clicked start game button and confirmed the input
+            GameSetupDialog setupDialog = new GameSetupDialog(view);
+            setupDialog.setVisible(true);
             if (setupDialog.isConfirmed()) {
                 String player1Name = setupDialog.getPlayer1Name();
                 String player2Name = setupDialog.getPlayer2Name();
-                int difficulty = setupDialog.getDifficulty();
-                
-                // Pass setup data (both players and difficulty) to game controller for initialization
-                gameController.initializeGame(player1Name, player2Name, difficulty);
-                
-                // TODO: Show the actual game board view here
-                // For now, show a confirmation message
-                JOptionPane.showMessageDialog(
-                    view,
-                    String.format("Game initialized!\nPlayer 1: %s\nPlayer 2: %s\nDifficulty: %d", 
-                                 player1Name, player2Name, difficulty),
-                    "Game Setup Complete",
-                    JOptionPane.INFORMATION_MESSAGE
-                );
+                Game.Difficulty difficulty = mapDifficulty(setupDialog.getDifficulty());
+
+                // Load questions
+                QuestionLogic questionLogic = new QuestionLogic();
+                questionLogic.loadQuestionsFromCSV("resources/Questions.csv");
+
+                // Create game
+                Game game = new Game(player1Name, player2Name, difficulty, questionLogic);
+
+                // Create game controller with callback to return to main menu
+                new GameController(game, view.getGamePanel(), questionLogic, () -> {
+                    view.showMainMenu();
+                });
+
+                // Show game panel
+                view.showGamePanel(null);
             }
+        };
+    }
+
+    private Game.Difficulty mapDifficulty(int difficultySelection) {
+        return switch (difficultySelection) {
+            case 1 -> Game.Difficulty.EASY;
+            case 2 -> Game.Difficulty.MEDIUM;
+            case 3 -> Game.Difficulty.HARD;
+            default -> Game.Difficulty.EASY;
         };
     }
 
@@ -75,8 +85,7 @@ public class MainController {
                         view,
                         "Incorrect PIN. Please try again.",
                         "Access Denied",
-                        JOptionPane.ERROR_MESSAGE
-                );
+                        JOptionPane.ERROR_MESSAGE);
             }
         };
     }
@@ -90,4 +99,3 @@ public class MainController {
         };
     }
 }
-

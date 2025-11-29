@@ -7,11 +7,20 @@ public class PlayerState {
     private String playerName;
     private int score;
     private int lives;
+    private int hints;
+    private int solutions;
 
     public PlayerState(String playerName, int initialLives) {
         this.playerName = playerName;
         this.score = 0;
         this.lives = initialLives;
+        this.hints = initialHints;
+        this.solutions = initialSolutions;
+    }
+
+    // Constructor for backward compatibility if needed, or just remove if not used
+    public PlayerState(String playerName, int initialLives) {
+        this(playerName, initialLives, 0, 0);
     }
 
     public String getPlayerName() {
@@ -46,9 +55,26 @@ public class PlayerState {
         this.lives++;
     }
 
-
     public boolean isAlive() {
         return lives > 0;
+    }
+
+    public int getHintsRemaining() {
+        return hints;
+    }
+
+    public void useHint() {
+        if (hints > 0)
+            hints--;
+    }
+
+    public int getSolutionsRemaining() {
+        return solutions;
+    }
+
+    public void useSolution() {
+        if (solutions > 0)
+            solutions--;
     }
 
     @Override
@@ -57,7 +83,8 @@ public class PlayerState {
                 "playerName='" + playerName + '\'' +
                 ", score=" + score +
                 ", lives=" + lives +
+                ", hints=" + hints +
+                ", solutions=" + solutions +
                 '}';
     }
 }
-
