@@ -13,6 +13,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.RenderingHints;
+import java.awt.Toolkit;
 import java.awt.event.ActionListener;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -24,6 +25,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.EmptyBorder;
@@ -45,8 +47,13 @@ public class MainView extends JFrame {
         super("MineSweeper");
         configureLookAndFeel();
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setResizable(false);
-        setPreferredSize(new Dimension(900, 520));
+        setResizable(true);
+        
+        // Use percentage-based sizing for better screen compatibility
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int windowWidth = (int) (screenSize.width * 0.6); // 60% of screen width
+        int windowHeight = (int) (screenSize.height * 0.7); // 70% of screen height
+        setPreferredSize(new Dimension(windowWidth, windowHeight));
 
         startGameButton = buildMenuButton(
                 "Start Game",
@@ -286,9 +293,16 @@ public class MainView extends JFrame {
 
     public void showMainMenu() {
         setTitle("MineSweeper");
-        setResizable(false);
-        setPreferredSize(new Dimension(900, 520));
+        setResizable(true);
+        // Reset extended state in case window was maximized
+        setExtendedState(JFrame.NORMAL);
+        // Use percentage-based sizing for better screen compatibility
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int windowWidth = (int) (screenSize.width * 0.6); // 60% of screen width
+        int windowHeight = (int) (screenSize.height * 0.7); // 70% of screen height
+        setPreferredSize(new Dimension(windowWidth, windowHeight));
         pack();
+        setLocationRelativeTo(null); // Center the window on screen
         cardLayout.show(cardPanel, "menu");
     }
     
@@ -306,9 +320,17 @@ public class MainView extends JFrame {
         });
         setTitle("Game - Minesweeper PRO");
         setResizable(true);
-        setPreferredSize(new Dimension(1400, 800));
+        // Use near-full screen sizing for better visibility, especially in hard mode
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int windowWidth = (int) (screenSize.width * 0.98); // 98% of screen width (almost full screen)
+        int windowHeight = (int) (screenSize.height * 0.95); // 95% of screen height (almost full screen)
+        setPreferredSize(new Dimension(windowWidth, windowHeight));
         pack();
         setLocationRelativeTo(null); // Center the window on screen
+        // Maximize the window for best experience, especially in hard mode
+        SwingUtilities.invokeLater(() -> {
+            setExtendedState(JFrame.MAXIMIZED_BOTH);
+        });
         cardLayout.show(cardPanel, "game");
     }
     
