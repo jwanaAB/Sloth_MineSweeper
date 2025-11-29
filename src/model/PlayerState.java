@@ -7,18 +7,18 @@ public class PlayerState {
     private String playerName;
     private int score;
     private int lives;
-    private int hints;
-    private int solutions;
+    private int questions;
+    private int surprises;
 
-    public PlayerState(String playerName, int initialLives) {
+    public PlayerState(String playerName, int initialLives, int initialQuestions, int initialSurprises) {
         this.playerName = playerName;
         this.score = 0;
         this.lives = initialLives;
-        this.hints = initialHints;
-        this.solutions = initialSolutions;
+        this.questions = initialQuestions;
+        this.surprises = initialSurprises;
     }
 
-    // Constructor for backward compatibility if needed, or just remove if not used
+    // Constructor for backward compatibility
     public PlayerState(String playerName, int initialLives) {
         this(playerName, initialLives, 0, 0);
     }
@@ -59,22 +59,22 @@ public class PlayerState {
         return lives > 0;
     }
 
-    public int getHintsRemaining() {
-        return hints;
+    public int getQuestionsRemaining() {
+        return questions;
     }
 
-    public void useHint() {
-        if (hints > 0)
-            hints--;
+    public void useQuestion() {
+        if (questions > 0)
+            questions--;
     }
 
-    public int getSolutionsRemaining() {
-        return solutions;
+    public int getSurprisesRemaining() {
+        return surprises;
     }
 
-    public void useSolution() {
-        if (solutions > 0)
-            solutions--;
+    public void useSurprise() {
+        if (surprises > 0)
+            surprises--;
     }
 
     @Override
@@ -83,8 +83,8 @@ public class PlayerState {
                 "playerName='" + playerName + '\'' +
                 ", score=" + score +
                 ", lives=" + lives +
-                ", hints=" + hints +
-                ", solutions=" + solutions +
+                ", questions=" + questions +
+                ", surprises=" + surprises +
                 '}';
     }
 }
