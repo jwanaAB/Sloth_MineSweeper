@@ -57,6 +57,7 @@ build/
 
 # Package Files
 *.jar
+!SlothMinesweeper.jar
 *.war
 *.nar
 *.ear
