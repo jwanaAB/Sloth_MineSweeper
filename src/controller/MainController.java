@@ -47,8 +47,10 @@ public class MainController {
                 // Create game
                 Game game = new Game(player1Name, player2Name, difficulty, questionLogic);
 
-                // Create game controller
-                new GameController(game, view.getGamePanel(), questionLogic);
+                // Create game controller with callback to return to main menu
+                new GameController(game, view.getGamePanel(), questionLogic, () -> {
+                    view.showMainMenu();
+                });
 
                 // Show game panel
                 view.showGamePanel(null);

@@ -308,6 +308,7 @@ public class MainView extends JFrame {
         setResizable(true);
         setPreferredSize(new Dimension(1400, 800));
         pack();
+        setLocationRelativeTo(null); // Center the window on screen
         cardLayout.show(cardPanel, "game");
     }
     
