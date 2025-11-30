@@ -40,7 +40,7 @@ public class GameBoard {
     private void initializeBoard() {
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                cells[i][j] = new Cell(Cell.CellType.EMPTY);
+                cells[i][j] = new EmptyCell();
             }
         }
     }
@@ -62,8 +62,6 @@ public class GameBoard {
      */
     public void allocateCells(int mineCount, int questionCount, 
                              int surpriseCount, List<Question> questions) {
-        int totalCells = rows * cols;
-        
         // Use exact counts as specified
         totalMines = mineCount;
         // Always use the requested number of question cells
@@ -88,7 +86,7 @@ public class GameBoard {
         // Allocate mines
         for (int i = 0; i < totalMines && posIndex < positions.size(); i++) {
             int[] pos = positions.get(posIndex++);
-            cells[pos[0]][pos[1]] = new Cell(Cell.CellType.MINE);
+            cells[pos[0]][pos[1]] = new MineCell();
         }
         
         // Allocate question cells
@@ -98,19 +96,23 @@ public class GameBoard {
         int questionIndex = 0;
         for (int i = 0; i < totalQuestionCells && posIndex < positions.size(); i++) {
             int[] pos = positions.get(posIndex++);
-            Cell questionCell = new Cell(Cell.CellType.QUESTION);
+            QuestionCell questionCell;
             // Reuse questions if we need more than available (cycle through the list)
             if (questionIndex >= shuffledQuestions.size()) {
                 questionIndex = 0; // Reset to start if we've used all questions
             }
-            questionCell.setQuestion(shuffledQuestions.get(questionIndex++));
+            if (!shuffledQuestions.isEmpty()) {
+                questionCell = new QuestionCell(shuffledQuestions.get(questionIndex++));
+            } else {
+                questionCell = new QuestionCell();
+            }
             cells[pos[0]][pos[1]] = questionCell;
         }
         
         // Allocate surprise cells
         for (int i = 0; i < totalSurpriseCells && posIndex < positions.size(); i++) {
             int[] pos = positions.get(posIndex++);
-            cells[pos[0]][pos[1]] = new Cell(Cell.CellType.SURPRISE);
+            cells[pos[0]][pos[1]] = new SurpriseCell();
         }
         
         // Remaining cells are empty (already initialized as EMPTY type)
@@ -187,7 +189,7 @@ public class GameBoard {
             List<int[]> regularPositions = getRegularCellPositions();
             if (regularPositions.isEmpty()) break;
             int[] pos = regularPositions.get(0);
-            cells[pos[0]][pos[1]] = new Cell(Cell.CellType.MINE);
+            cells[pos[0]][pos[1]] = new MineCell();
             currentMines++;
         }
         while (currentMines > requiredMines) {
@@ -195,7 +197,7 @@ public class GameBoard {
             for (int i = 0; i < rows && currentMines > requiredMines; i++) {
                 for (int j = 0; j < cols && currentMines > requiredMines; j++) {
                     if (cells[i][j].getType() == Cell.CellType.MINE) {
-                        cells[i][j] = new Cell(Cell.CellType.EMPTY);
+                        cells[i][j] = new EmptyCell();
                         currentMines--;
                         break;
                     }
@@ -214,13 +216,15 @@ public class GameBoard {
             List<int[]> regularPositions = getRegularCellPositions();
             if (regularPositions.isEmpty()) break;
             int[] pos = regularPositions.get(0);
-            Cell questionCell = new Cell(Cell.CellType.QUESTION);
+            QuestionCell questionCell;
             // Only assign question if questions are available
             if (!shuffledQuestions.isEmpty()) {
                 if (questionIndex >= shuffledQuestions.size()) {
                     questionIndex = 0; // Cycle through questions
                 }
-                questionCell.setQuestion(shuffledQuestions.get(questionIndex++));
+                questionCell = new QuestionCell(shuffledQuestions.get(questionIndex++));
+            } else {
+                questionCell = new QuestionCell();
             }
             cells[pos[0]][pos[1]] = questionCell;
             currentQuestions++;
@@ -230,7 +234,7 @@ public class GameBoard {
             for (int i = 0; i < rows && currentQuestions > requiredQuestions; i++) {
                 for (int j = 0; j < cols && currentQuestions > requiredQuestions; j++) {
                     if (cells[i][j].getType() == Cell.CellType.QUESTION) {
-                        cells[i][j] = new Cell(Cell.CellType.EMPTY);
+                        cells[i][j] = new EmptyCell();
                         currentQuestions--;
                         break;
                     }
@@ -243,7 +247,7 @@ public class GameBoard {
             List<int[]> regularPositions = getRegularCellPositions();
             if (regularPositions.isEmpty()) break;
             int[] pos = regularPositions.get(0);
-            cells[pos[0]][pos[1]] = new Cell(Cell.CellType.SURPRISE);
+            cells[pos[0]][pos[1]] = new SurpriseCell();
             currentSurprises++;
         }
         while (currentSurprises > requiredSurprises) {
@@ -251,7 +255,7 @@ public class GameBoard {
             for (int i = 0; i < rows && currentSurprises > requiredSurprises; i++) {
                 for (int j = 0; j < cols && currentSurprises > requiredSurprises; j++) {
                     if (cells[i][j].getType() == Cell.CellType.SURPRISE) {
-                        cells[i][j] = new Cell(Cell.CellType.EMPTY);
+                        cells[i][j] = new EmptyCell();
                         currentSurprises--;
                         break;
                     }
@@ -272,7 +276,7 @@ public class GameBoard {
             for (int j = 0; j < cols; j++) {
                 Cell cell = cells[i][j];
                 
-                // Skip mines - they don't need adjacent counts
+                // Skip mines, questions, and surprises - they don't need adjacent counts
                 if (cell.getType() == Cell.CellType.MINE || cell.getType() == Cell.CellType.QUESTION || cell.getType() == Cell.CellType.SURPRISE) {
                     continue;
                 }
@@ -281,11 +285,18 @@ public class GameBoard {
                 int mineCount = countAdjacentMines(i, j);
                 
                 // If there are adjacent mines, convert to NUMBER cell
-                if (mineCount > 0) {
-                    cell.setType(Cell.CellType.NUMBER);
-                    cell.setAdjacentMines(mineCount);
+                if (mineCount > 0 && cell.getType() == Cell.CellType.EMPTY) {
+                    // Preserve the revealed/flagged state when converting
+                    Cell.CellState state = cell.getState();
+                    cells[i][j] = new NumberCell(mineCount);
+                    // Restore state if needed
+                    if (state == Cell.CellState.REVEALED) {
+                        cells[i][j].reveal();
+                    } else if (state == Cell.CellState.FLAGGED) {
+                        cells[i][j].toggleFlag();
+                    }
                 }
-                // Otherwise, it remains EMPTY, QUESTION, or SURPRISE
+                // Otherwise, it remains EMPTY
             }
         }
     }
@@ -376,19 +387,19 @@ public class GameBoard {
             return true;
         }
         
-        // If it's an empty cell, reveal adjacent empty cells recursively
-        // Also reveal adjacent number cells (but don't recurse from them)
-        if (cell.getType() == Cell.CellType.EMPTY || cell.getType() == Cell.CellType.QUESTION || cell.getType() == Cell.CellType.SURPRISE) {
+        // If it's an empty cell (or any subclass like QuestionCell or SurpriseCell), 
+        // reveal adjacent cells recursively
+        if (cell instanceof EmptyCell) {
             revealAdjacentEmptyCells(row, col);
-
         }
         
         return false;
     }
     
     /**
-     * Recursively reveals adjacent empty cells when an empty cell is revealed.
-     * Also reveals adjacent number cells but doesn't recurse from them.
+     * Recursively reveals adjacent cells when an empty cell (or its subclasses) is revealed.
+     * Reveals adjacent number cells (but doesn't recurse from them).
+     * Recursively reveals adjacent empty cells and their subclasses (QuestionCell, SurpriseCell).
      * 
      * @param row The row index
      * @param col The column index
@@ -408,13 +419,12 @@ public class GameBoard {
                     
                     // Only reveal hidden, non-flagged cells
                     if (adjacentCell.isHidden() && !adjacentCell.isFlagged()) {
-
-                        if (adjacentCell.getType() == Cell.CellType.NUMBER) {
+                        // Reveal number cells (but don't recurse from them)
+                        if (adjacentCell instanceof NumberCell) {
                             adjacentCell.reveal();
                         }
-
-                        if (adjacentCell.getType() == Cell.CellType.EMPTY || adjacentCell.getType() == Cell.CellType.QUESTION || 
-                        adjacentCell.getType() == Cell.CellType.SURPRISE) {
+                        // Recursively reveal empty cells and their subclasses (QuestionCell, SurpriseCell)
+                        else if (adjacentCell instanceof EmptyCell) {
                             adjacentCell.reveal();
                             revealAdjacentEmptyCells(newRow, newCol);
                         }
@@ -441,8 +451,8 @@ public class GameBoard {
                 
                 if (cells[i][j].getType() != Cell.CellType.MINE) {
                     // Swap: move mine here, make first click position empty
-                    cells[i][j] = new Cell(Cell.CellType.MINE);
-                    cells[row][col] = new Cell(Cell.CellType.EMPTY);
+                    cells[i][j] = new MineCell();
+                    cells[row][col] = new EmptyCell();
                     
                     // Recalculate adjacent mines
                     calculateAdjacentMines();

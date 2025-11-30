@@ -1,6 +1,11 @@
 package controller;
 
 import model.Cell;
+import model.EmptyCell;
+import model.MineCell;
+import model.NumberCell;
+import model.QuestionCell;
+import model.SurpriseCell;
 import model.Game;
 import model.GameBoard;
 import model.Question;
@@ -64,7 +69,7 @@ public class GameController {
         // Check if it's a question cell that needs special handling (already revealed)
         Cell cell = game.getBoard(player).getCell(row, col);
         if (cell != null && cell.isRevealed() && 
-            cell.getType() == Cell.CellType.QUESTION && !cell.isQuestionOpened()) {
+            cell instanceof QuestionCell && !((QuestionCell) cell).isQuestionOpened()) {
             // Question cell already revealed - offer to open question
             handleQuestionCellClick(row, col, player);
             return;
@@ -129,7 +134,7 @@ public class GameController {
             // Handle non-mine cells
             if (revealedCell != null) {
                 // Check if it's a question or surprise cell
-                if (revealedCell.getType() == Cell.CellType.QUESTION) {
+                if (revealedCell instanceof QuestionCell) {
                     // Question cell revealed - player must wait until next turn to activate
                     showMessage(
                         "Question cell revealed! You can activate it on your next turn.",
@@ -138,7 +143,7 @@ public class GameController {
                     );
                     // Switch turn - player cannot activate in same turn
                     game.switchTurn();
-                } else if (revealedCell.getType() == Cell.CellType.SURPRISE) {
+                } else if (revealedCell instanceof SurpriseCell) {
                     // Surprise cell revealed - player must wait until next turn to activate
                     showMessage(
                         "Surprise cell revealed! You can activate it on your next turn.",
@@ -218,19 +223,21 @@ public class GameController {
         
         Cell cell = game.getBoard(player).getCell(row, col);
         
-        if (cell == null || cell.getType() != Cell.CellType.QUESTION) {
+        if (cell == null || !(cell instanceof QuestionCell)) {
             return;
         }
         
+        QuestionCell questionCell = (QuestionCell) cell;
+        
         // Check if question already opened
-        if (cell.isQuestionOpened()) {
+        if (questionCell.isQuestionOpened()) {
             showMessage("This question has already been opened.", "Question Already Used", 
                        JOptionPane.INFORMATION_MESSAGE);
             return;
         }
         
         // Directly open the question without asking for confirmation
-        openQuestion(cell, player);
+        openQuestion(questionCell, player);
     }
     
     /**
@@ -255,29 +262,31 @@ public class GameController {
         
         Cell cell = game.getBoard(player).getCell(row, col);
         
-        if (cell == null || cell.getType() != Cell.CellType.SURPRISE) {
+        if (cell == null || !(cell instanceof SurpriseCell)) {
             return;
         }
         
+        SurpriseCell surpriseCell = (SurpriseCell) cell;
+        
         // Check if surprise already activated
-        if (cell.isSurpriseActivated()) {
+        if (surpriseCell.isSurpriseActivated()) {
             showMessage("This surprise cell has already been activated.", "Surprise Already Used", 
                        JOptionPane.INFORMATION_MESSAGE);
             return;
         }
         
         // Directly activate the surprise cell without asking for confirmation
-        activateSurpriseCell(cell, player);
+        activateSurpriseCell(surpriseCell, player);
     }
     
     /**
      * Opens a question for the player to answer.
      * 
-     * @param cell The question cell
+     * @param questionCell The question cell
      * @param player The player number
      */
-    private void openQuestion(Cell cell, int player) {
-        Question question = cell.getQuestion();
+    private void openQuestion(QuestionCell questionCell, int player) {
+        Question question = questionCell.getQuestion();
         
         if (question == null) {
             showMessage("No question available.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -285,7 +294,7 @@ public class GameController {
         }
         
         // Mark question as opened
-        cell.markQuestionOpened();
+        questionCell.markQuestionOpened();
         
         // Show question dialog
         showQuestionDialog(question, player);
@@ -441,22 +450,16 @@ public class GameController {
     private void scoreCellReveal(Cell cell, String playerName, int gameDifficulty) {
         if (cell == null) return;
         
-        switch (cell.getType()) {
-            case MINE:
-                // Mine hit is handled separately in handleCellReveal
-                break;
-            case NUMBER:
-                scoringService.scoreNumberedCellRevealedCorrectly(game, playerName, cell.getAdjacentMines());
-                break;
-            case EMPTY:
-                scoringService.scoreEmptyCellRevealedCorrectly(game, playerName);
-                break;
-            case QUESTION:
-                scoringService.scoreQuestionCellRevealedCorrectly(game, playerName);
-                break;
-            case SURPRISE:
-                scoringService.scoreSurpriseCellRevealedCorrectly(game, playerName);
-                break;
+        if (cell instanceof MineCell) {
+            // Mine hit is handled separately in handleCellReveal
+        } else if (cell instanceof NumberCell) {
+            scoringService.scoreNumberedCellRevealedCorrectly(game, playerName, ((NumberCell) cell).getAdjacentMines());
+        } else if (cell instanceof EmptyCell) {
+            scoringService.scoreEmptyCellRevealedCorrectly(game, playerName);
+        } else if (cell instanceof QuestionCell) {
+            scoringService.scoreQuestionCellRevealedCorrectly(game, playerName);
+        } else if (cell instanceof SurpriseCell) {
+            scoringService.scoreSurpriseCellRevealedCorrectly(game, playerName);
         }
     }
     
@@ -472,29 +475,20 @@ public class GameController {
         if (cell == null) return;
         
         String playerName = player == 1 ? game.getPlayer1Name() : game.getPlayer2Name();
-        Cell.CellType cellType = cell.getType();
         
-        if (cellType == Cell.CellType.MINE) {
+        if (cell instanceof MineCell) {
             // Correct flag on a mine
             scoringService.scoreMineFlaggedCorrectly(game, playerName);
         } else {
             // Incorrect flag on non-mine cell
-            switch (cellType) {
-                case NUMBER:
-                    scoringService.scoreNumberedCellFlaggedIncorrectly(game, playerName, cell.getAdjacentMines());
-                    break;
-                case EMPTY:
-                    scoringService.scoreEmptyCellFlaggedIncorrectly(game, playerName);
-                    break;
-                case QUESTION:
-                    scoringService.scoreQuestionCellFlaggedIncorrectly(game, playerName);
-                    break;
-                case SURPRISE:
-                    scoringService.scoreSurpriseCellFlaggedIncorrectly(game, playerName);
-                    break;
-                default:
-                    // Unknown cell type - no scoring
-                    break;
+            if (cell instanceof NumberCell) {
+                scoringService.scoreNumberedCellFlaggedIncorrectly(game, playerName, ((NumberCell) cell).getAdjacentMines());
+            } else if (cell instanceof EmptyCell) {
+                scoringService.scoreEmptyCellFlaggedIncorrectly(game, playerName);
+            } else if (cell instanceof QuestionCell) {
+                scoringService.scoreQuestionCellFlaggedIncorrectly(game, playerName);
+            } else if (cell instanceof SurpriseCell) {
+                scoringService.scoreSurpriseCellFlaggedIncorrectly(game, playerName);
             }
         }
     }
@@ -502,16 +496,16 @@ public class GameController {
     /**
      * Activates a surprise cell and applies its effects.
      * 
-     * @param cell The surprise cell to activate
+     * @param surpriseCell The surprise cell to activate
      * @param player The player number
      */
-    private void activateSurpriseCell(Cell cell, int player) {
-        if (cell == null || cell.getType() != Cell.CellType.SURPRISE) {
+    private void activateSurpriseCell(SurpriseCell surpriseCell, int player) {
+        if (surpriseCell == null) {
             return;
         }
         
         // Mark surprise as activated
-        cell.markSurpriseActivated();
+        surpriseCell.markSurpriseActivated();
         
         String playerName = player == 1 ? game.getPlayer1Name() : game.getPlayer2Name();
         int gameDifficulty = convertDifficultyToInt(game.getDifficulty());

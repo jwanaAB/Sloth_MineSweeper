@@ -2,6 +2,11 @@ package view;
 
 import controller.GameController;
 import model.Cell;
+import model.EmptyCell;
+import model.MineCell;
+import model.NumberCell;
+import model.QuestionCell;
+import model.SurpriseCell;
 import model.Game;
 import model.GameBoard;
 
@@ -500,10 +505,10 @@ public class GamePanel extends JPanel {
                         // Left click: reveal cell or handle question/surprise cell
                         Cell cell = game.getBoard(player).getCell(row, col);
                         if (cell != null && cell.isRevealed()) {
-                            if (cell.getType() == Cell.CellType.QUESTION && !cell.isQuestionOpened()) {
+                            if (cell instanceof QuestionCell && !((QuestionCell) cell).isQuestionOpened()) {
                                 // Question cell already revealed - offer to open
                                 gameController.handleQuestionCellClick(row, col, player);
-                            } else if (cell.getType() == Cell.CellType.SURPRISE && !cell.isSurpriseActivated()) {
+                            } else if (cell instanceof SurpriseCell && !((SurpriseCell) cell).isSurpriseActivated()) {
                                 // Surprise cell already revealed - offer to activate
                                 gameController.handleSurpriseCellClick(row, col, player);
                             } else {
@@ -554,78 +559,73 @@ public class GamePanel extends JPanel {
                 setBorder(BorderFactory.createCompoundBorder(
                         BorderFactory.createLoweredBevelBorder(),
                         BorderFactory.createEmptyBorder(2, 2, 2, 2)));
-                Cell.CellType type = cell.getType();
 
-                switch (type) {
-                    case MINE:
-                        setText("M");
-                        setBackground(new Color(255, 120, 120)); // Bright red
-                        setForeground(Color.BLACK);
-                        break;
-                    case NUMBER:
-                        setFont(new Font("Segoe UI", Font.BOLD, 16));
-                        setText(String.valueOf(cell.getAdjacentMines()));
-                        setBackground(new Color(250, 250, 250)); // Very light gray/almost white - same as empty
-                        // Color code numbers for better visibility
-                        int num = cell.getAdjacentMines();
-                        if (num == 1)
-                            setForeground(new Color(0, 0, 255)); // Blue
-                        else if (num == 2)
-                            setForeground(new Color(0, 150, 0)); // Green
-                        else if (num == 3)
-                            setForeground(new Color(255, 0, 0)); // Red
-                        else if (num == 4)
-                            setForeground(new Color(0, 0, 150)); // Dark blue
-                        else if (num == 5)
-                            setForeground(new Color(150, 0, 0)); // Dark red
-                        else if (num == 6)
-                            setForeground(new Color(0, 150, 150)); // Teal
-                        else if (num == 7)
-                            setForeground(new Color(0, 0, 0)); // Black
-                        else
-                            setForeground(new Color(100, 100, 100)); // Gray
-                        break;
-                    case QUESTION:
-                        setText("?");
-                        setBackground(new Color(255, 255, 150)); // Bright yellow
-                        setForeground(Color.BLACK);
-                        // Question cells should be clickable if not opened yet
-                        if (!cell.isQuestionOpened()) {
-                            setEnabled(true); // Enable so user can click to open question
-                            setBorder(BorderFactory.createCompoundBorder(
-                                    BorderFactory.createLoweredBevelBorder(),
-                                    BorderFactory.createCompoundBorder(
-                                            new LineBorder(new Color(255, 200, 0), 2),
-                                            new EmptyBorder(0, 0, 0, 0))));
-                        } else {
-                            setEnabled(false); // Disable if already opened
-                        }
-                        break;
-                    case SURPRISE:
-                        setText("✨");
-                        setBackground(new Color(255, 180, 255)); // Bright magenta
-                        setForeground(Color.BLACK);
-                        // Surprise cells should be clickable when revealed (if not already activated)
-                        if (!cell.isSurpriseActivated()) {
-                            setEnabled(true); // Enable so user can click to activate surprise
-                            setBorder(BorderFactory.createCompoundBorder(
-                                    BorderFactory.createLoweredBevelBorder(),
-                                    BorderFactory.createCompoundBorder(
-                                            new LineBorder(new Color(255, 100, 255), 2),
-                                            new EmptyBorder(0, 0, 0, 0))));
-                        } else {
-                            setEnabled(false); // Disable if already activated
-                        }
-                        break;
-                    case EMPTY:
-                    default:
-                        // Empty revealed cells - very light/white to show they're opened
-                        setFont(new Font("Segoe UI", Font.PLAIN, 12));
-                        setText("");
-                        setBackground(new Color(250, 250, 250)); // Very light gray/almost white - clearly different
-                                                                 // from hidden
-                        setForeground(Color.BLACK);
-                        break;
+                if (cell instanceof MineCell) {
+                    setText("M");
+                    setBackground(new Color(255, 120, 120)); // Bright red
+                    setForeground(Color.BLACK);
+                } else if (cell instanceof NumberCell) {
+                    NumberCell numberCell = (NumberCell) cell;
+                    setFont(new Font("Segoe UI", Font.BOLD, 16));
+                    setText(String.valueOf(numberCell.getAdjacentMines()));
+                    setBackground(new Color(250, 250, 250)); // Very light gray/almost white - same as empty
+                    // Color code numbers for better visibility
+                    int num = numberCell.getAdjacentMines();
+                    if (num == 1)
+                        setForeground(new Color(0, 0, 255)); // Blue
+                    else if (num == 2)
+                        setForeground(new Color(0, 150, 0)); // Green
+                    else if (num == 3)
+                        setForeground(new Color(255, 0, 0)); // Red
+                    else if (num == 4)
+                        setForeground(new Color(0, 0, 150)); // Dark blue
+                    else if (num == 5)
+                        setForeground(new Color(150, 0, 0)); // Dark red
+                    else if (num == 6)
+                        setForeground(new Color(0, 150, 150)); // Teal
+                    else if (num == 7)
+                        setForeground(new Color(0, 0, 0)); // Black
+                    else
+                        setForeground(new Color(100, 100, 100)); // Gray
+                } else if (cell instanceof QuestionCell) {
+                    QuestionCell questionCell = (QuestionCell) cell;
+                    setText("?");
+                    setBackground(new Color(255, 255, 150)); // Bright yellow
+                    setForeground(Color.BLACK);
+                    // Question cells should be clickable if not opened yet
+                    if (!questionCell.isQuestionOpened()) {
+                        setEnabled(true); // Enable so user can click to open question
+                        setBorder(BorderFactory.createCompoundBorder(
+                                BorderFactory.createLoweredBevelBorder(),
+                                BorderFactory.createCompoundBorder(
+                                        new LineBorder(new Color(255, 200, 0), 2),
+                                        new EmptyBorder(0, 0, 0, 0))));
+                    } else {
+                        setEnabled(false); // Disable if already opened
+                    }
+                } else if (cell instanceof SurpriseCell) {
+                    SurpriseCell surpriseCell = (SurpriseCell) cell;
+                    setText("✨");
+                    setBackground(new Color(255, 180, 255)); // Bright magenta
+                    setForeground(Color.BLACK);
+                    // Surprise cells should be clickable when revealed (if not already activated)
+                    if (!surpriseCell.isSurpriseActivated()) {
+                        setEnabled(true); // Enable so user can click to activate surprise
+                        setBorder(BorderFactory.createCompoundBorder(
+                                BorderFactory.createLoweredBevelBorder(),
+                                BorderFactory.createCompoundBorder(
+                                        new LineBorder(new Color(255, 100, 255), 2),
+                                        new EmptyBorder(0, 0, 0, 0))));
+                    } else {
+                        setEnabled(false); // Disable if already activated
+                    }
+                } else if (cell instanceof EmptyCell) {
+                    // Empty revealed cells - very light/white to show they're opened
+                    setFont(new Font("Segoe UI", Font.PLAIN, 12));
+                    setText("");
+                    setBackground(new Color(250, 250, 250)); // Very light gray/almost white - clearly different
+                                                             // from hidden
+                    setForeground(Color.BLACK);
                 }
             } else {
                 // Hidden state - raised 3D appearance, darker gray background
