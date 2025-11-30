@@ -70,6 +70,7 @@ public class GamePanel extends JPanel {
     public void initializeGame(Game game, GameController gameController) {
         this.game = game;
         this.gameController = gameController;
+        this.gameOver = false; // Reset game over state for new game
 
         // Update player names
         player1NameLabel.setText("Player 1: " + game.getPlayer1Name());
