@@ -3,6 +3,7 @@ import javax.swing.SwingUtilities;
 import model.SysData;
 import view.MainView;
 
+
 public class Main {
     public static void main(String[] args) {
         // Set up uncaught exception handler

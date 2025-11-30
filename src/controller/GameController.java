@@ -4,6 +4,7 @@ import model.Cell;
 import model.Game;
 import model.GameBoard;
 import model.Question;
+import model.SysData;
 import view.GamePanel;
 
 import javax.swing.*;
@@ -19,6 +20,9 @@ public class GameController {
     
     private final Game game;
     private final GamePanel gamePanel;
+    private final ScoringService scoringService;
+    private final Runnable onReturnToMainMenu;
+    private boolean gameOver = false;
     
     /**
      * Constructs a new GameController.
@@ -26,10 +30,13 @@ public class GameController {
      * @param game The Game model instance
      * @param gamePanel The GamePanel view instance
      * @param questionLogic The QuestionLogic instance for loading questions
+     * @param onReturnToMainMenu Callback to return to main menu when game ends
      */
-    public GameController(Game game, GamePanel gamePanel, QuestionLogic questionLogic) {
+    public GameController(Game game, GamePanel gamePanel, QuestionLogic questionLogic, Runnable onReturnToMainMenu) {
         this.game = game;
         this.gamePanel = gamePanel;
+        this.scoringService = new ScoringService(SysData.getInstance());
+        this.onReturnToMainMenu = onReturnToMainMenu;
         
         // Initialize the game panel
         gamePanel.initializeGame(game, this);
@@ -43,6 +50,11 @@ public class GameController {
      * @param player The player number (1 or 2) attempting the action
      */
     public void handleCellReveal(int row, int col, int player) {
+        // Don't allow actions if game is over
+        if (gameOver) {
+            return;
+        }
+        
         // Validate that it's the current player's turn
         if (!game.canRevealCell(row, col, player)) {
             showMessage("It's not your turn!", "Invalid Move", JOptionPane.WARNING_MESSAGE);
@@ -71,27 +83,42 @@ public class GameController {
         
         // Get the revealed cell to check its type
         Cell revealedCell = game.getBoard(player).getCell(row, col);
+        String playerName = game.getCurrentPlayerName();
+        int gameDifficulty = convertDifficultyToInt(game.getDifficulty());
         
         if (mineHit) {
-            // Mine hit - show message but don't decrease lives
-            String playerName = game.getCurrentPlayerName();
+            // Mine hit - score the mine hit
+            scoringService.scoreMineHit(game, playerName);
             showMessage(
                 playerName + " hit a mine!",
                 "Mine Hit!",
                 JOptionPane.WARNING_MESSAGE
             );
+            
+            // Check if game is over due to lives running out
+            if (game.getSharedLives() <= 0) {
+                handleGameOver(false);
+                return;
+            }
+            
             // Switch turn after mine hit
             game.switchTurn();
         } else {
+            // Score the revealed cell (only for the initially clicked cell, not cascade reveals)
+            if (revealedCell != null) {
+                scoreCellReveal(revealedCell, playerName, gameDifficulty);
+            }
+            
             // Check if current player won (BEFORE switching turn for non-mine cells)
             // Only check if ALL non-mine cells are revealed
             GameBoard currentBoard = game.getCurrentBoard();
             if (currentBoard.isGameWon()) {
                 // Set game over in the model
                 game.setGameOver(true);
-                String winnerName = game.getCurrentPlayerName();
                 showMessage(
-                    winnerName + " revealed all cells on their board! Game Over!",
+                    "Congratulations! Both players won!\n" +
+                    game.getPlayer1Name() + " and " + game.getPlayer2Name() + 
+                    " successfully revealed all cells on their boards!",
                     "Game Won!",
                     JOptionPane.INFORMATION_MESSAGE
                 );
@@ -101,26 +128,24 @@ public class GameController {
             
             // Handle non-mine cells
             if (revealedCell != null) {
-                // Check if it's a question or surprise cell - let user decide
+                // Check if it's a question or surprise cell
                 if (revealedCell.getType() == Cell.CellType.QUESTION) {
-                    // Question cell - ask if user wants to open now
-                    int option = JOptionPane.showConfirmDialog(
-                        gamePanel,
-                        "Question cell revealed! Do you want to open it now?",
+                    // Question cell revealed - player must wait until next turn to activate
+                    showMessage(
+                        "Question cell revealed! You can activate it on your next turn.",
                         "Question Cell Found",
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.QUESTION_MESSAGE
+                        JOptionPane.INFORMATION_MESSAGE
                     );
-                    
-                    if (option == JOptionPane.YES_OPTION) {
-                        openQuestion(revealedCell, player);
-                    }
-                    // If NO, user can open it later by clicking on it
-                    // Switch turn after question cell handling
+                    // Switch turn - player cannot activate in same turn
                     game.switchTurn();
                 } else if (revealedCell.getType() == Cell.CellType.SURPRISE) {
-                    // Surprise cell - could add special handling here if needed
-                    // Switch turn
+                    // Surprise cell revealed - player must wait until next turn to activate
+                    showMessage(
+                        "Surprise cell revealed! You can activate it on your next turn.",
+                        "Surprise Cell Found",
+                        JOptionPane.INFORMATION_MESSAGE
+                    );
+                    // Switch turn - player cannot activate in same turn
                     game.switchTurn();
                 } else {
                     // Regular cell (number, empty) - switch turn
@@ -144,14 +169,28 @@ public class GameController {
      * @param player The player number (1 or 2) attempting the action
      */
     public void handleCellFlag(int row, int col, int player) {
+        // Don't allow actions if game is over
+        if (gameOver) {
+            return;
+        }
+        
         // Validate that it's the current player's turn
         if (!game.canFlagCell(row, col, player)) {
             showMessage("It's not your turn!", "Invalid Move", JOptionPane.WARNING_MESSAGE);
             return;
         }
         
+        // Get the cell before toggling to check if it's currently flagged
+        Cell cell = game.getBoard(player).getCell(row, col);
+        boolean wasFlagged = cell != null && cell.isFlagged();
+        
         // Toggle flag
         game.flagCell(row, col);
+        
+        // Score the flag action (only if flagging, not unflagging)
+        if (cell != null && !wasFlagged && cell.isFlagged()) {
+            scoreCellFlag(cell, row, col, player);
+        }
         
         // Update UI
         gamePanel.updateUI();
@@ -166,6 +205,17 @@ public class GameController {
      * @param player The player number (1 or 2)
      */
     public void handleQuestionCellClick(int row, int col, int player) {
+        // Don't allow actions if game is over
+        if (gameOver) {
+            return;
+        }
+        
+        // Validate that it's the current player's turn
+        if (player != game.getCurrentPlayer()) {
+            showMessage("It's not your turn!", "Invalid Move", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
         Cell cell = game.getBoard(player).getCell(row, col);
         
         if (cell == null || cell.getType() != Cell.CellType.QUESTION) {
@@ -179,18 +229,45 @@ public class GameController {
             return;
         }
         
-        // Ask if player wants to open the question now
-        int option = JOptionPane.showConfirmDialog(
-            gamePanel,
-            "Do you want to open this question now?",
-            "Question Cell",
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.QUESTION_MESSAGE
-        );
-        
-        if (option == JOptionPane.YES_OPTION) {
-            openQuestion(cell, player);
+        // Directly open the question without asking for confirmation
+        openQuestion(cell, player);
+    }
+    
+    /**
+     * Handles clicking on a revealed surprise cell.
+     * Can be called from GamePanel when user clicks on an already-revealed surprise cell.
+     * 
+     * @param row The row index of the surprise cell
+     * @param col The column index of the surprise cell
+     * @param player The player number (1 or 2)
+     */
+    public void handleSurpriseCellClick(int row, int col, int player) {
+        // Don't allow actions if game is over
+        if (gameOver) {
+            return;
         }
+        
+        // Validate that it's the current player's turn
+        if (player != game.getCurrentPlayer()) {
+            showMessage("It's not your turn!", "Invalid Move", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        Cell cell = game.getBoard(player).getCell(row, col);
+        
+        if (cell == null || cell.getType() != Cell.CellType.SURPRISE) {
+            return;
+        }
+        
+        // Check if surprise already activated
+        if (cell.isSurpriseActivated()) {
+            showMessage("This surprise cell has already been activated.", "Surprise Already Used", 
+                       JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        
+        // Directly activate the surprise cell without asking for confirmation
+        activateSurpriseCell(cell, player);
     }
     
     /**
@@ -262,44 +339,76 @@ public class GameController {
         // Check if correct
         boolean isCorrect = question.getCorrectAnswer().equalsIgnoreCase(selectedAnswer);
         
+        // Score the question activation
+        String playerName = player == 1 ? game.getPlayer1Name() : game.getPlayer2Name();
+        int gameDifficulty = convertDifficultyToInt(game.getDifficulty());
+        int questionType = question.getDifficulty(); // Question difficulty maps to question type (1-4)
+        
+        scoringService.scoreQuestionCellActivated(game, playerName, gameDifficulty, questionType, isCorrect);
+        
         if (isCorrect) {
             showMessage("Correct! Well done!", "Correct Answer", JOptionPane.INFORMATION_MESSAGE);
-            // TODO: Add score points when scoring is implemented
         } else {
             showMessage("Incorrect. The correct answer was " + question.getCorrectAnswer() + ".", 
                        "Wrong Answer", JOptionPane.INFORMATION_MESSAGE);
         }
+        
+        // Switch turn after answering question
+        game.switchTurn();
+        
+        // Update UI
+        gamePanel.updateUI();
     }
     
     /**
      * Handles game over scenarios (win or lose).
      * 
-     * @param won true if the game was won, false if a mine was hit
+     * @param won true if the game was won, false if lives ran out
      */
     private void handleGameOver(boolean won) {
+        // Mark game as over to prevent further actions
+        gameOver = true;
+        
+        // Disable all game interactions
+        gamePanel.setGameOver(true);
+        
+        // Convert remaining lives to points
+        int pointsAdded = scoringService.convertRemainingLivesToPoints(game);
+        
         String message;
         String title;
         
         if (won) {
-            int winner = game.getWinner();
-            String winnerName = winner == 1 ? game.getPlayer1Name() : game.getPlayer2Name();
-            message = "Congratulations! " + winnerName + " wins!";
+            message = "Congratulations! Both " + game.getPlayer1Name() + " and " + 
+                     game.getPlayer2Name() + " won together!\n" +
+                     "Final Score: " + game.getCombinedScore() + " points";
             title = "Game Won";
         } else {
-            int loser = game.getCurrentPlayer();
-            String loserName = loser == 1 ? game.getPlayer1Name() : game.getPlayer2Name();
-            int winner = game.getWinner();
-            String winnerName = winner == 1 ? game.getPlayer1Name() : game.getPlayer2Name();
-            message = loserName + " hit a mine! " + winnerName + " wins!";
+            message = "Game Over! Both " + game.getPlayer1Name() + " and " + 
+                     game.getPlayer2Name() + " lost.\n" +
+                     "Shared lives ran out.\n" +
+                     "Final Score: " + game.getCombinedScore() + " points";
+            if (pointsAdded > 0) {
+                message += "\n" + pointsAdded + " points added from remaining lives.";
+            }
             title = "Game Over";
         }
         
+        // Show game over message
         JOptionPane.showMessageDialog(
             gamePanel,
             message,
             title,
             won ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE
         );
+        
+        // Update UI to show final state
+        gamePanel.updateUI();
+        
+        // Return to main menu after showing the message
+        if (onReturnToMainMenu != null) {
+            onReturnToMainMenu.run();
+        }
     }
     
     /**
@@ -320,6 +429,133 @@ public class GameController {
      */
     public Game getGame() {
         return game;
+    }
+    
+    /**
+     * Scores a cell reveal based on the cell type.
+     * 
+     * @param cell The cell that was revealed
+     * @param playerName The name of the player who revealed it
+     * @param gameDifficulty The game difficulty (1=Easy, 2=Medium, 3=Hard)
+     */
+    private void scoreCellReveal(Cell cell, String playerName, int gameDifficulty) {
+        if (cell == null) return;
+        
+        switch (cell.getType()) {
+            case MINE:
+                // Mine hit is handled separately in handleCellReveal
+                break;
+            case NUMBER:
+                scoringService.scoreNumberedCellRevealedCorrectly(game, playerName, cell.getAdjacentMines());
+                break;
+            case EMPTY:
+                scoringService.scoreEmptyCellRevealedCorrectly(game, playerName);
+                break;
+            case QUESTION:
+                scoringService.scoreQuestionCellRevealedCorrectly(game, playerName);
+                break;
+            case SURPRISE:
+                scoringService.scoreSurpriseCellRevealedCorrectly(game, playerName);
+                break;
+        }
+    }
+    
+    /**
+     * Scores a cell flag based on whether it's correct or incorrect.
+     * 
+     * @param cell The cell that was flagged
+     * @param row The row index
+     * @param col The column index
+     * @param player The player number
+     */
+    private void scoreCellFlag(Cell cell, int row, int col, int player) {
+        if (cell == null) return;
+        
+        String playerName = player == 1 ? game.getPlayer1Name() : game.getPlayer2Name();
+        Cell.CellType cellType = cell.getType();
+        
+        if (cellType == Cell.CellType.MINE) {
+            // Correct flag on a mine
+            scoringService.scoreMineFlaggedCorrectly(game, playerName);
+        } else {
+            // Incorrect flag on non-mine cell
+            switch (cellType) {
+                case NUMBER:
+                    scoringService.scoreNumberedCellFlaggedIncorrectly(game, playerName, cell.getAdjacentMines());
+                    break;
+                case EMPTY:
+                    scoringService.scoreEmptyCellFlaggedIncorrectly(game, playerName);
+                    break;
+                case QUESTION:
+                    scoringService.scoreQuestionCellFlaggedIncorrectly(game, playerName);
+                    break;
+                case SURPRISE:
+                    scoringService.scoreSurpriseCellFlaggedIncorrectly(game, playerName);
+                    break;
+                default:
+                    // Unknown cell type - no scoring
+                    break;
+            }
+        }
+    }
+    
+    /**
+     * Activates a surprise cell and applies its effects.
+     * 
+     * @param cell The surprise cell to activate
+     * @param player The player number
+     */
+    private void activateSurpriseCell(Cell cell, int player) {
+        if (cell == null || cell.getType() != Cell.CellType.SURPRISE) {
+            return;
+        }
+        
+        // Mark surprise as activated
+        cell.markSurpriseActivated();
+        
+        String playerName = player == 1 ? game.getPlayer1Name() : game.getPlayer2Name();
+        int gameDifficulty = convertDifficultyToInt(game.getDifficulty());
+        
+        // Score the surprise cell activation and get the surprise details
+        String surpriseMessage = scoringService.scoreSurpriseCellActivated(game, playerName, gameDifficulty);
+        
+        // Show result message with surprise details
+        showMessage(
+            surpriseMessage,
+            "Surprise!",
+            JOptionPane.INFORMATION_MESSAGE
+        );
+        
+        // Check if game is over due to lives running out (bad surprise can decrease lives)
+        if (game.getSharedLives() <= 0) {
+            handleGameOver(false);
+            return;
+        }
+        
+        // Switch turn after activating surprise
+        game.switchTurn();
+        
+        // Update UI
+        gamePanel.updateUI();
+    }
+    
+    /**
+     * Converts Game.Difficulty enum to integer (1=Easy, 2=Medium, 3=Hard).
+     * 
+     * @param difficulty The Game.Difficulty enum value
+     * @return Integer representation (1, 2, or 3)
+     */
+    private int convertDifficultyToInt(Game.Difficulty difficulty) {
+        switch (difficulty) {
+            case EASY:
+                return 1;
+            case MEDIUM:
+                return 2;
+            case HARD:
+                return 3;
+            default:
+                return 1;
+        }
     }
 }
 

@@ -1,11 +1,11 @@
 package view;
 
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 
 public class GameSetupDialog extends JDialog {
     private final JTextField player1TextField;
@@ -18,17 +18,26 @@ public class GameSetupDialog extends JDialog {
     public GameSetupDialog(JFrame parent) {
         super(parent, "Game Setup", true);
         setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-        setResizable(false);
+        setResizable(true);
+
+        // Get screen dimensions for percentage-based sizing
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int dialogWidth = (int) (screenSize.width * 0.5); // 50% of screen width
+        int dialogHeight = (int) (screenSize.height * 0.85); // 85% of screen height
+        setPreferredSize(new Dimension(dialogWidth, dialogHeight));
+        setSize(dialogWidth, dialogHeight);
 
         GradientPanel background = new GradientPanel();
-        background.setBorder(new EmptyBorder(60, 48, 60, 48));
+        background.setBorder(new EmptyBorder(30, 30, 30, 30));
         background.setLayout(new GridBagLayout());
 
         RoundedPanel card = new RoundedPanel(32);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setOpaque(false);
         card.setAlignmentX(Component.CENTER_ALIGNMENT);
-        card.setMaximumSize(new Dimension(560, Integer.MAX_VALUE));
+        // Use percentage-based width instead of fixed
+        int cardWidth = (int) (dialogWidth * 0.85); // 85% of dialog width
+        card.setMaximumSize(new Dimension(cardWidth, Integer.MAX_VALUE));
 
         JLabel backLabel = new JLabel("\u2190 Back to Menu");
         backLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -50,8 +59,10 @@ public class GameSetupDialog extends JDialog {
         title.setForeground(new Color(76, 63, 125));
         title.setBorder(new EmptyBorder(0, 0, 20, 0));
 
-        player1TextField = createStyledTextField("Player 1 name");
-        player2TextField = createStyledTextField("Player 2 name");
+        // Create text fields with percentage-based sizing
+        int fieldWidth = (int) (cardWidth * 0.9); // 90% of card width
+        player1TextField = createStyledTextField("Player 1 name", fieldWidth);
+        player2TextField = createStyledTextField("Player 2 name", fieldWidth);
 
         JLabel player1Label = createSectionLabel("Player 1 Name");
         JLabel player2Label = createSectionLabel("Player 2 Name");
@@ -60,7 +71,8 @@ public class GameSetupDialog extends JDialog {
         JPanel difficultyRow = new JPanel(new GridLayout(1, 3, 16, 0));
         difficultyRow.setOpaque(false);
         difficultyRow.setAlignmentX(Component.CENTER_ALIGNMENT);
-        difficultyRow.setMaximumSize(new Dimension(480, 150));
+        int diffRowWidth = (int) (cardWidth * 0.9);
+        difficultyRow.setMaximumSize(new Dimension(diffRowWidth, 150));
 
         difficultyOptions = new DifficultyOption[]{
             new DifficultyOption("Easy", "9 × 9", 10, 10, 1, new Color(97, 207, 145)),
@@ -88,7 +100,8 @@ public class GameSetupDialog extends JDialog {
             new EmptyBorder(12, 18, 12, 18)
         ));
         infoWrapper.setAlignmentX(Component.CENTER_ALIGNMENT);
-        infoWrapper.setMaximumSize(new Dimension(440, 70));
+        int infoWidth = (int) (cardWidth * 0.85);
+        infoWrapper.setMaximumSize(new Dimension(infoWidth, 70));
 
         JLabel infoIcon = new JLabel("i", SwingConstants.CENTER);
         infoIcon.setPreferredSize(new Dimension(26, 26));
@@ -149,27 +162,46 @@ public class GameSetupDialog extends JDialog {
         JPanel buttonHolder = new JPanel();
         buttonHolder.setOpaque(false);
         buttonHolder.setLayout(new BoxLayout(buttonHolder, BoxLayout.X_AXIS));
-        buttonHolder.setMaximumSize(new Dimension(400, 60));
+        int buttonHolderWidth = (int) (cardWidth * 0.75);
+        buttonHolder.setMaximumSize(new Dimension(buttonHolderWidth, 60));
         buttonHolder.add(Box.createHorizontalGlue());
         buttonHolder.add(startButton);
         buttonHolder.add(Box.createHorizontalGlue());
         card.add(buttonHolder);
 
+        // Wrap card in scroll pane for scrollability
+        // Set preferred size on card to enable scrolling
+        card.setPreferredSize(new Dimension(cardWidth, Integer.MAX_VALUE));
+        JScrollPane scrollPane = new JScrollPane(card);
+        scrollPane.setBorder(null);
+        scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        // Set scroll pane to fill available space
+        scrollPane.setPreferredSize(new Dimension(cardWidth, dialogHeight - 60));
+        
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.NONE;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
         gbc.anchor = GridBagConstraints.CENTER;
-        background.add(card, gbc);
+        background.add(scrollPane, gbc);
 
         setContentPane(background);
-        pack();
-        setLocationRelativeTo(parent);
+        // Don't use pack() as it overrides our size - use setSize instead
+        // setSize was already called above, just center it now
+        // Manually center on screen
+        int x = (screenSize.width - dialogWidth) / 2;
+        int y = (screenSize.height - dialogHeight) / 2;
+        setLocation(x, y);
     }
 
-    private JTextField createStyledTextField(String placeholder) {
+    private JTextField createStyledTextField(String placeholder, int width) {
         JTextField field = new JTextField();
-        Dimension fieldSize = new Dimension(380, 44);
+        Dimension fieldSize = new Dimension(width, 44);
         field.setMaximumSize(fieldSize);
         field.setPreferredSize(fieldSize);
         field.setFont(new Font("Segoe UI", Font.PLAIN, 15));

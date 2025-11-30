@@ -19,9 +19,15 @@ public class AddQuestionDialog extends JDialog {
         super(parent, "Add Question", true);
 
         setLayout(new BorderLayout());
-        setSize(600, 430);
+        
+        // Use percentage-based sizing for better screen compatibility
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int dialogWidth = (int) (screenSize.width * 0.45); // 45% of screen width
+        int dialogHeight = (int) (screenSize.height * 0.65); // 65% of screen height
+        setPreferredSize(new Dimension(dialogWidth, dialogHeight));
+        setSize(dialogWidth, dialogHeight);
         setLocationRelativeTo(parent);
-        setResizable(false);
+        setResizable(true);
 
         // Main content panel
         JPanel contentPanel = new JPanel();

@@ -290,6 +290,33 @@ public class Game {
     }
     
     /**
+     * Adds to the shared score.
+     * 
+     * @param points The points to add (can be negative)
+     */
+    public void addSharedScore(int points) {
+        this.combinedScore += points;
+    }
+    
+    /**
+     * Adds a shared life (cannot exceed initial total lives).
+     */
+    public void addSharedLife() {
+        if (sharedLives < totalLives) {
+            sharedLives++;
+        }
+    }
+    
+    /**
+     * Sets the shared lives directly.
+     * 
+     * @param lives The new number of shared lives
+     */
+    public void setSharedLives(int lives) {
+        this.sharedLives = Math.max(0, Math.min(lives, totalLives));
+    }
+    
+    /**
      * Checks if the game is over.
      * 
      * @return true if the game is over, false otherwise

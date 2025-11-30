@@ -34,6 +34,7 @@ public class GamePanel extends JPanel {
     private final CellButton[][] player2Cells;
     private GameController gameController;
     private Game game;
+    private boolean gameOver = false;
 
     /**
      * Constructs a new GamePanel.
@@ -306,11 +307,46 @@ public class GamePanel extends JPanel {
         }
         if (listener != null) {
             homeButton.addActionListener(e -> {
-                // Show confirmation dialog before executing the listener
-                if (confirmReturnHome()) {
+                // Show confirmation dialog before executing the listener (unless game is over)
+                if (gameOver || confirmReturnHome()) {
                     listener.actionPerformed(e);
                 }
             });
+        }
+    }
+    
+    /**
+     * Sets the game over state and disables all cell interactions.
+     * 
+     * @param gameOver true if the game is over, false otherwise
+     */
+    public void setGameOver(boolean gameOver) {
+        this.gameOver = gameOver;
+        
+        // Disable all cell buttons
+        disableAllCells();
+    }
+    
+    /**
+     * Disables all cell buttons to prevent further interactions.
+     */
+    private void disableAllCells() {
+        // Disable player 1 cells
+        for (int i = 0; i < player1Cells.length; i++) {
+            for (int j = 0; j < player1Cells[i].length; j++) {
+                if (player1Cells[i][j] != null) {
+                    player1Cells[i][j].setEnabled(false);
+                }
+            }
+        }
+        
+        // Disable player 2 cells
+        for (int i = 0; i < player2Cells.length; i++) {
+            for (int j = 0; j < player2Cells[i].length; j++) {
+                if (player2Cells[i][j] != null) {
+                    player2Cells[i][j].setEnabled(false);
+                }
+            }
         }
     }
 
@@ -454,14 +490,26 @@ public class GamePanel extends JPanel {
                     if (gameController == null || game == null) {
                         return;
                     }
+                    
+                    // Don't process clicks if game is over
+                    if (gameOver) {
+                        return;
+                    }
 
                     if (SwingUtilities.isLeftMouseButton(e)) {
-                        // Left click: reveal cell or handle question cell
+                        // Left click: reveal cell or handle question/surprise cell
                         Cell cell = game.getBoard(player).getCell(row, col);
-                        if (cell != null && cell.isRevealed() &&
-                                cell.getType() == Cell.CellType.QUESTION && !cell.isQuestionOpened()) {
-                            // Question cell already revealed - offer to open
-                            gameController.handleQuestionCellClick(row, col, player);
+                        if (cell != null && cell.isRevealed()) {
+                            if (cell.getType() == Cell.CellType.QUESTION && !cell.isQuestionOpened()) {
+                                // Question cell already revealed - offer to open
+                                gameController.handleQuestionCellClick(row, col, player);
+                            } else if (cell.getType() == Cell.CellType.SURPRISE && !cell.isSurpriseActivated()) {
+                                // Surprise cell already revealed - offer to activate
+                                gameController.handleSurpriseCellClick(row, col, player);
+                            } else {
+                                // Already revealed regular cell or already activated - do nothing
+                                return;
+                            }
                         } else {
                             // Reveal cell
                             gameController.handleCellReveal(row, col, player);
@@ -557,6 +605,17 @@ public class GamePanel extends JPanel {
                         setText("✨");
                         setBackground(new Color(255, 180, 255)); // Bright magenta
                         setForeground(Color.BLACK);
+                        // Surprise cells should be clickable when revealed (if not already activated)
+                        if (!cell.isSurpriseActivated()) {
+                            setEnabled(true); // Enable so user can click to activate surprise
+                            setBorder(BorderFactory.createCompoundBorder(
+                                    BorderFactory.createLoweredBevelBorder(),
+                                    BorderFactory.createCompoundBorder(
+                                            new LineBorder(new Color(255, 100, 255), 2),
+                                            new EmptyBorder(0, 0, 0, 0))));
+                        } else {
+                            setEnabled(false); // Disable if already activated
+                        }
                         break;
                     case EMPTY:
                     default:

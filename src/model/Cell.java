@@ -42,6 +42,7 @@ public class Cell {
     private int adjacentMines; // For NUMBER cells
     private Question question; // For QUESTION cells
     private boolean questionOpened; // Track if question has been opened
+    private boolean surpriseActivated; // Track if surprise has been activated
     
     /**
      * Constructs a new Cell with the specified type.
@@ -54,6 +55,7 @@ public class Cell {
         this.adjacentMines = 0;
         this.question = null;
         this.questionOpened = false;
+        this.surpriseActivated = false;
     }
     
     /**
@@ -157,6 +159,23 @@ public class Cell {
      */
     public void markQuestionOpened() {
         this.questionOpened = true;
+    }
+    
+    /**
+     * Checks if the surprise in this cell has been activated.
+     * 
+     * @return true if the surprise has been activated, false otherwise
+     */
+    public boolean isSurpriseActivated() {
+        return surpriseActivated;
+    }
+    
+    /**
+     * Marks the surprise in this cell as activated.
+     * Once activated, a surprise cannot be activated again.
+     */
+    public void markSurpriseActivated() {
+        this.surpriseActivated = true;
     }
     
     /**
