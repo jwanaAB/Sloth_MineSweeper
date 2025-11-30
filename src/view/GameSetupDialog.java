@@ -14,6 +14,8 @@ public class GameSetupDialog extends JDialog {
     private boolean confirmed = false;
     private int selectedDifficulty = 1;
     private DifficultyOption[] difficultyOptions;
+    private JLabel infoText = new JLabel("Both players will share 10 hearts total");
+
 
     public GameSetupDialog(JFrame parent) {
         super(parent, "Game Setup", true);
@@ -89,6 +91,8 @@ public class GameSetupDialog extends JDialog {
             });
             difficultyRow.add(option);
         }
+        
+        // Initialize with default difficulty (Easy = 1)
         selectDifficulty(1);
 
         JPanel infoWrapper = new JPanel();
@@ -111,7 +115,7 @@ public class GameSetupDialog extends JDialog {
         infoIcon.setForeground(Color.WHITE);
         infoIcon.setBorder(new LineBorder(new Color(35, 123, 255), 1, true));
 
-        JLabel infoText = new JLabel("Both players will share 10 hearts total");
+        infoText = new JLabel("Both players will share 10 hearts total");
         infoText.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         infoText.setForeground(new Color(35, 89, 160));
         infoText.setBorder(new EmptyBorder(0, 12, 0, 0));
@@ -232,6 +236,27 @@ public class GameSetupDialog extends JDialog {
         for (DifficultyOption option : difficultyOptions) {
             option.setSelected(option.getDifficulty() == difficulty);
         }
+        // Update hearts text based on selected difficulty
+        updateHeartsText(difficulty);
+    }
+    
+    private void updateHeartsText(int difficulty) {
+        int hearts;
+        switch (difficulty) {
+            case 1: // Easy
+                hearts = 10;
+                break;
+            case 2: // Medium
+                hearts = 8;
+                break;
+            case 3: // Hard
+                hearts = 6;
+                break;
+            default:
+                hearts = 10;
+                break;
+        }
+        infoText.setText("Both players will share " + hearts + " hearts total");
     }
 
     private boolean validateInput() {
