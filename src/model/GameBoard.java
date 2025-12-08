@@ -89,13 +89,21 @@ public class GameBoard {
             cells[pos[0]][pos[1]] = new MineCell();
         }
         
+        // Calculate adjacent mine counts after placing mines
+        // This converts EMPTY cells adjacent to mines into NUMBER cells
+        calculateAdjacentMines();
+        
+        // Get positions with zero adjacent mines for QuestionCell and SurpriseCell placement
+        List<int[]> emptyCellPositions = getEmptyCellPositions();
+        int emptyPosIndex = 0;
+        
         // Allocate question cells
         // Ensure we have enough questions - if not, we'll reuse questions
         List<Question> shuffledQuestions = new ArrayList<>(questions);
         Collections.shuffle(shuffledQuestions);
         int questionIndex = 0;
-        for (int i = 0; i < totalQuestionCells && posIndex < positions.size(); i++) {
-            int[] pos = positions.get(posIndex++);
+        for (int i = 0; i < totalQuestionCells && emptyPosIndex < emptyCellPositions.size(); i++) {
+            int[] pos = emptyCellPositions.get(emptyPosIndex++);
             QuestionCell questionCell;
             // Reuse questions if we need more than available (cycle through the list)
             if (questionIndex >= shuffledQuestions.size()) {
@@ -109,9 +117,13 @@ public class GameBoard {
             cells[pos[0]][pos[1]] = questionCell;
         }
         
+        // Refresh empty cell positions after placing question cells
+        emptyCellPositions = getEmptyCellPositions();
+        emptyPosIndex = 0;
+        
         // Allocate surprise cells
-        for (int i = 0; i < totalSurpriseCells && posIndex < positions.size(); i++) {
-            int[] pos = positions.get(posIndex++);
+        for (int i = 0; i < totalSurpriseCells && emptyPosIndex < emptyCellPositions.size(); i++) {
+            int[] pos = emptyCellPositions.get(emptyPosIndex++);
             cells[pos[0]][pos[1]] = new SurpriseCell();
         }
         
@@ -119,8 +131,7 @@ public class GameBoard {
         // These will become regular cells - either EMPTY (if no adjacent mines) 
         // or NUMBER (if adjacent to mines) after calculateAdjacentMines()
         
-        // Calculate adjacent mine counts for all cells
-        // This converts EMPTY cells adjacent to mines into NUMBER cells
+        // Recalculate adjacent mine counts after placing all special cells
         calculateAdjacentMines();
         
         // Verify and fix allocation to ensure exact counts
@@ -145,6 +156,30 @@ public class GameBoard {
         }
         Collections.shuffle(regularPositions, new Random());
         return regularPositions;
+    }
+    
+    /**
+     * Gets a shuffled list of all positions with zero adjacent mines.
+     * These positions are suitable for placing QuestionCell and SurpriseCell,
+     * which should behave like EmptyCell (no adjacent mines).
+     * 
+     * @return List of empty cell positions [row, col] with zero adjacent mines
+     */
+    private List<int[]> getEmptyCellPositions() {
+        List<int[]> emptyPositions = new ArrayList<>();
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                Cell cell = cells[i][j];
+                // Only include positions that are currently EMPTY cells (not NUMBER or MINE)
+                // and have zero adjacent mines
+                if (cell.getType() == Cell.CellType.EMPTY && 
+                    countAdjacentMines(i, j) == 0) {
+                    emptyPositions.add(new int[]{i, j});
+                }
+            }
+        }
+        Collections.shuffle(emptyPositions, new Random());
+        return emptyPositions;
     }
     
     /**
@@ -205,17 +240,45 @@ public class GameBoard {
             }
         }
         
-        // Fix question cells if needed
+        // Validate and fix question cells - ensure they're not near mines
         List<Question> shuffledQuestions = new ArrayList<>(questions);
         if (!shuffledQuestions.isEmpty()) {
             Collections.shuffle(shuffledQuestions);
         }
         int questionIndex = 0;
         
+        // First, check if any existing question cells are near mines and move them
+        List<int[]> questionCellsToMove = new ArrayList<>();
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                if (cells[i][j].getType() == Cell.CellType.QUESTION) {
+                    if (countAdjacentMines(i, j) > 0) {
+                        questionCellsToMove.add(new int[]{i, j});
+                    }
+                }
+            }
+        }
+        
+        // Move question cells that are near mines to empty positions
+        for (int[] pos : questionCellsToMove) {
+            QuestionCell questionCell = (QuestionCell) cells[pos[0]][pos[1]];
+            List<int[]> emptyPositions = getEmptyCellPositions();
+            if (!emptyPositions.isEmpty()) {
+                int[] newPos = emptyPositions.get(0);
+                cells[newPos[0]][newPos[1]] = questionCell;
+                cells[pos[0]][pos[1]] = new EmptyCell();
+            } else {
+                // If no empty positions available, convert to empty cell
+                cells[pos[0]][pos[1]] = new EmptyCell();
+                currentQuestions--;
+            }
+        }
+        
+        // Fix question cell count if needed
         while (currentQuestions < requiredQuestions) {
-            List<int[]> regularPositions = getRegularCellPositions();
-            if (regularPositions.isEmpty()) break;
-            int[] pos = regularPositions.get(0);
+            List<int[]> emptyPositions = getEmptyCellPositions();
+            if (emptyPositions.isEmpty()) break;
+            int[] pos = emptyPositions.get(0);
             QuestionCell questionCell;
             // Only assign question if questions are available
             if (!shuffledQuestions.isEmpty()) {
@@ -242,11 +305,39 @@ public class GameBoard {
             }
         }
         
-        // Fix surprise cells if needed
+        // Validate and fix surprise cells - ensure they're not near mines
+        // First, check if any existing surprise cells are near mines and move them
+        List<int[]> surpriseCellsToMove = new ArrayList<>();
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                if (cells[i][j].getType() == Cell.CellType.SURPRISE) {
+                    if (countAdjacentMines(i, j) > 0) {
+                        surpriseCellsToMove.add(new int[]{i, j});
+                    }
+                }
+            }
+        }
+        
+        // Move surprise cells that are near mines to empty positions
+        for (int[] pos : surpriseCellsToMove) {
+            SurpriseCell surpriseCell = (SurpriseCell) cells[pos[0]][pos[1]];
+            List<int[]> emptyPositions = getEmptyCellPositions();
+            if (!emptyPositions.isEmpty()) {
+                int[] newPos = emptyPositions.get(0);
+                cells[newPos[0]][newPos[1]] = surpriseCell;
+                cells[pos[0]][pos[1]] = new EmptyCell();
+            } else {
+                // If no empty positions available, convert to empty cell
+                cells[pos[0]][pos[1]] = new EmptyCell();
+                currentSurprises--;
+            }
+        }
+        
+        // Fix surprise cell count if needed
         while (currentSurprises < requiredSurprises) {
-            List<int[]> regularPositions = getRegularCellPositions();
-            if (regularPositions.isEmpty()) break;
-            int[] pos = regularPositions.get(0);
+            List<int[]> emptyPositions = getEmptyCellPositions();
+            if (emptyPositions.isEmpty()) break;
+            int[] pos = emptyPositions.get(0);
             cells[pos[0]][pos[1]] = new SurpriseCell();
             currentSurprises++;
         }
