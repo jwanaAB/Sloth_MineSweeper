@@ -287,6 +287,8 @@ public class MainView extends JFrame {
                 onReturnToMain.run();
             }
         });
+        // Reload questions from CSV file every time the panel is shown
+        questionManagerPanel.reloadQuestions();
         setTitle("Question Manager");
         cardLayout.show(cardPanel, "question");
     }

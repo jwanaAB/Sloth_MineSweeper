@@ -387,6 +387,15 @@ public class QuestionManagerPanel extends JPanel {
         }
     }
 
+    /**
+     * Reloads questions from the CSV file.
+     * This should be called whenever the question manager panel is shown
+     * to ensure the latest data from the CSV file is displayed.
+     */
+    public void reloadQuestions() {
+        loadQuestions();
+    }
+
     // Custom renderer for Question text
     private static class QuestionTextRenderer extends JLabel implements TableCellRenderer {
         public QuestionTextRenderer() {
