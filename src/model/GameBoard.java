@@ -461,6 +461,8 @@ public class GameBoard {
             // If first click is on a mine, move the mine
             if (cell.getType() == Cell.CellType.MINE) {
                 moveMineAway(row, col);
+                // Update cell reference after mine was moved
+                cell = cells[row][col];
             }
         }
         
@@ -473,7 +475,6 @@ public class GameBoard {
         // Reveal the cell
         cell.reveal();
         
-        // If it's a mine, game over
         if (cell.getType() == Cell.CellType.MINE) {
             return true;
         }
