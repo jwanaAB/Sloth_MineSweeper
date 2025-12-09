@@ -8,6 +8,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
@@ -42,7 +43,7 @@ public class QuestionManagerPanel extends JPanel {
         titleLabel.setForeground(new Color(156, 39, 176)); // Purple
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-        // Add Question button (top right)
+        // Add Question button
         JButton addButton = new JButton("+ Add Question");
         addButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
         addButton.setFocusPainted(false);
@@ -55,13 +56,32 @@ public class QuestionManagerPanel extends JPanel {
         addButton.setForeground(Color.WHITE);
         addButton.addActionListener(e -> handleAddQuestion());
 
-        // Top header panel: Home (left) | Title (center) | Add Question (right)
+        // Import Questions button
+        JButton importButton = new JButton("📥 Import Questions");
+        importButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        importButton.setFocusPainted(false);
+        importButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        importButton.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        importButton.setOpaque(true);
+        importButton.setContentAreaFilled(true);
+        importButton.setBorderPainted(false);
+        importButton.setBackground(new Color(33, 150, 243)); // Blue color
+        importButton.setForeground(Color.WHITE);
+        importButton.addActionListener(e -> handleImportQuestions());
+
+        // Panel for buttons on the right
+        JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        buttonsPanel.setBackground(Color.WHITE);
+        buttonsPanel.add(importButton);
+        buttonsPanel.add(addButton);
+
+        // Top header panel: Home (left) | Title (center) | Buttons (right)
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(Color.WHITE);
         headerPanel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
         headerPanel.add(homeButton, BorderLayout.WEST);
         headerPanel.add(titleLabel, BorderLayout.CENTER);
-        headerPanel.add(addButton, BorderLayout.EAST);
+        headerPanel.add(buttonsPanel, BorderLayout.EAST);
 
         // Controls panel with search and filter in one line
         JPanel controlsPanel = new JPanel(new BorderLayout());
@@ -371,6 +391,80 @@ public class QuestionManagerPanel extends JPanel {
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(this,
                         "Error saving changes: " + e.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void handleImportQuestions() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Select CSV file to import");
+        fileChooser.setFileFilter(new FileNameExtensionFilter("CSV Files", "csv"));
+        
+        int result = fileChooser.showOpenDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            java.io.File selectedFile = fileChooser.getSelectedFile();
+            
+            try {
+                QuestionLogic.ImportResult importResult = questionLogic.importQuestionsFromCSV(selectedFile);
+                
+                if (importResult.getImportedCount() > 0) {
+                    // Save the updated questions to CSV
+                    questionLogic.saveQuestionsToCSV(questionLogic.getCSVPath());
+                    
+                    // Refresh the table
+                    populateTable();
+                    
+                    // Show success message
+                    StringBuilder message = new StringBuilder();
+                    message.append("Import completed!\n\n");
+                    message.append("Successfully imported: ").append(importResult.getImportedCount()).append(" question(s)\n");
+                    if (importResult.getSkippedCount() > 0) {
+                        message.append("Skipped: ").append(importResult.getSkippedCount()).append(" question(s)\n");
+                    }
+                    
+                    if (!importResult.getErrors().isEmpty()) {
+                        message.append("\nErrors/Warnings:\n");
+                        int errorCount = Math.min(importResult.getErrors().size(), 10); // Show max 10 errors
+                        for (int i = 0; i < errorCount; i++) {
+                            message.append("- ").append(importResult.getErrors().get(i)).append("\n");
+                        }
+                        if (importResult.getErrors().size() > 10) {
+                            message.append("... and ").append(importResult.getErrors().size() - 10).append(" more");
+                        }
+                    }
+                    
+                    JOptionPane.showMessageDialog(this,
+                            message.toString(),
+                            "Import Results",
+                            importResult.getErrors().isEmpty() ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.WARNING_MESSAGE);
+                } else {
+                    // No questions were imported
+                    StringBuilder message = new StringBuilder();
+                    message.append("No questions were imported.\n\n");
+                    if (importResult.getSkippedCount() > 0) {
+                        message.append("Skipped: ").append(importResult.getSkippedCount()).append(" question(s)\n\n");
+                    }
+                    
+                    if (!importResult.getErrors().isEmpty()) {
+                        message.append("Errors:\n");
+                        for (String error : importResult.getErrors()) {
+                            message.append("- ").append(error).append("\n");
+                        }
+                    } else {
+                        message.append("The CSV file may be empty or contain only invalid data.");
+                    }
+                    
+                    JOptionPane.showMessageDialog(this,
+                            message.toString(),
+                            "Import Failed",
+                            JOptionPane.WARNING_MESSAGE);
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this,
+                        "Error importing questions: " + e.getMessage(),
                         "Error",
                         JOptionPane.ERROR_MESSAGE);
                 e.printStackTrace();
