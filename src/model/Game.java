@@ -439,5 +439,13 @@ public class Game {
         
         return cell != null && (cell.isHidden() || cell.isFlagged());
     }
+    
+    /**
+     * Reveals all cells on both players' boards (used when game is over).
+     */
+    public void revealAllCells() {
+        player1Board.revealAllCells();
+        player2Board.revealAllCells();
+    }
 }
 

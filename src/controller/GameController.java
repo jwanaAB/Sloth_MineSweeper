@@ -26,6 +26,7 @@ public class GameController {
     private final Game game;
     private final GamePanel gamePanel;
     private final ScoringService scoringService;
+    @SuppressWarnings("unused")
     private final Runnable onReturnToMainMenu;
     private boolean gameOver = false;
     
@@ -403,6 +404,9 @@ public class GameController {
             title = "Game Over";
         }
         
+        // Reveal all cells for both players
+        game.revealAllCells();
+        
         // Show game over message
         JOptionPane.showMessageDialog(
             gamePanel,
@@ -411,13 +415,10 @@ public class GameController {
             won ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE
         );
         
-        // Update UI to show final state
+        // Update UI to show final state with all cells revealed
         gamePanel.updateUI();
         
-        // Return to main menu after showing the message
-        if (onReturnToMainMenu != null) {
-            onReturnToMainMenu.run();
-        }
+        // Stay on game board view - do not return to main menu
     }
     
     /**

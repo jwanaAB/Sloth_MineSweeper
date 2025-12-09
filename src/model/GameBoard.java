@@ -632,5 +632,24 @@ public class GameBoard {
         }
         return true;
     }
+    
+    /**
+     * Reveals all cells on the board (used when game is over).
+     * This will reveal all hidden and flagged cells.
+     */
+    public void revealAllCells() {
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                Cell cell = cells[i][j];
+                // Reveal all cells regardless of their current state
+                // The reveal() method will only change HIDDEN to REVEALED,
+                // so we need to handle FLAGGED cells too
+                if (cell.isFlagged()) {
+                    cell.toggleFlag(); // Unflag first
+                }
+                cell.reveal(); // Then reveal
+            }
+        }
+    }
 }
 
