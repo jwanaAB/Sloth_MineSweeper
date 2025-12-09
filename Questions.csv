@@ -1,0 +1,15 @@
+ID,Question,Difficulty,A,B,C,D,Correct Answer
+1,What is the capital of France?,1,London,Paris,Berlin,Madrid,B
+2,Which planet is known as the Red Planet?,2,Venus,Mars,Jupiter,Saturn,B
+3,What is the chemical symbol for gold?,2,Go,Ge,Au,Ag,C
+4,Who wrote the novel "1984"?,3,George Orwell,Ernest Hemingway,Mark Twain,J.K. Rowling,A
+5,What is the largest ocean on Earth?,1,Atlantic Ocean,Indian Ocean,Pacific Ocean,Arctic Ocean,C
+6,In which year did World War II end?,3,1943,1944,1945,1946,C
+7,What is the square root of 144?,2,10,11,12,13,C
+8,Which programming language is known for its use in web development?,2,Python,Java,JavaScript,C++,C
+9,Who painted the Mona Lisa?,3,Pablo Picasso,Vincent van Gogh,Leonardo da Vinci,Michelangelo,C
+10,What is the smallest prime number?,1,0,1,2,3,C
+11,Which element has the atomic number 1?,2,Helium,Hydrogen,Lithium,Beryllium,B
+12,What is the derivative of x^2?,4,x,2x,x^2,2x^2,B
+13,In which continent is the Sahara Desert located?,1,Asia,Africa,South America,Australia,B
+14,What is the main component of the Sun?,3,Hydrogen,Helium,Oxygen,Carbon,A

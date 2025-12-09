@@ -41,17 +41,40 @@ public class GameSetupDialog extends JDialog {
         int cardWidth = (int) (dialogWidth * 0.85); // 85% of dialog width
         card.setMaximumSize(new Dimension(cardWidth, Integer.MAX_VALUE));
 
-        JLabel backLabel = new JLabel("\u2190 Back to Menu");
-        backLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        backLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        backLabel.setForeground(new Color(110, 110, 150));
-        backLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        backLabel.setBorder(new EmptyBorder(0, 0, 12, 0));
-        backLabel.addMouseListener(new MouseAdapter() {
+        JButton backButton = new JButton("\u2190 Back to Menu");
+        backButton.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        backButton.setForeground(new Color(110, 110, 150));
+        backButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        backButton.setBorder(BorderFactory.createCompoundBorder(
+            new LineBorder(new Color(150, 150, 180), 1, true),
+            new EmptyBorder(6, 12, 6, 12)
+        ));
+        backButton.setBackground(new Color(255, 255, 255, 200));
+        backButton.setOpaque(true);
+        backButton.setContentAreaFilled(true);
+        backButton.setFocusPainted(false);
+        backButton.setMargin(new Insets(6, 12, 6, 12));
+        backButton.addActionListener(e -> {
+            confirmed = false;
+            dispose();
+        });
+        // Add hover effect
+        backButton.addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseClicked(MouseEvent e) {
-                confirmed = false;
-                dispose();
+            public void mouseEntered(MouseEvent e) {
+                backButton.setBackground(new Color(240, 240, 255));
+                backButton.setBorder(BorderFactory.createCompoundBorder(
+                    new LineBorder(new Color(120, 120, 180), 2, true),
+                    new EmptyBorder(5, 11, 5, 11)
+                ));
+            }
+            @Override
+            public void mouseExited(MouseEvent e) {
+                backButton.setBackground(new Color(255, 255, 255, 200));
+                backButton.setBorder(BorderFactory.createCompoundBorder(
+                    new LineBorder(new Color(150, 150, 180), 1, true),
+                    new EmptyBorder(6, 12, 6, 12)
+                ));
             }
         });
 
@@ -146,7 +169,13 @@ public class GameSetupDialog extends JDialog {
             }
         });
 
-        card.add(backLabel);
+        // Create a wrapper panel for the back button to center it
+        JPanel backButtonWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        backButtonWrapper.setOpaque(false);
+        backButtonWrapper.setAlignmentX(Component.CENTER_ALIGNMENT);
+        backButtonWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        backButtonWrapper.add(backButton);
+        card.add(backButtonWrapper);
         card.add(Box.createVerticalStrut(6));
         card.add(title);
         card.add(Box.createVerticalStrut(8));
@@ -174,23 +203,27 @@ public class GameSetupDialog extends JDialog {
         card.add(buttonHolder);
 
         // Wrap card in scroll pane for scrollability
-        // Set preferred size on card to enable scrolling
-        card.setPreferredSize(new Dimension(cardWidth, Integer.MAX_VALUE));
+        // Don't set preferred size to MAX_VALUE - let it size naturally
         JScrollPane scrollPane = new JScrollPane(card);
         scrollPane.setBorder(null);
         scrollPane.setOpaque(false);
         scrollPane.getViewport().setOpaque(false);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        // Set scroll pane to fill available space
-        scrollPane.setPreferredSize(new Dimension(cardWidth, dialogHeight - 60));
+        // Calculate proper height to end just under start button
+        // Content estimate: back button (~40) + title (~60) + fields (~200) + difficulty (~180) + info (~70) + button (~80) + spacing (~100) = ~730
+        // Add small buffer (30px) so scroll bar ends just a little under the start button
+        int estimatedContentHeight = 730;
+        int scrollPaneHeight = Math.min(estimatedContentHeight + 30, (int)(dialogHeight * 0.75));
+        scrollPane.setPreferredSize(new Dimension(cardWidth, scrollPaneHeight));
+        scrollPane.setMaximumSize(new Dimension(cardWidth, scrollPaneHeight));
         
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1.0;
-        gbc.weighty = 1.0;
+        gbc.weighty = 0.0; // Don't expand vertically - use fixed height
         gbc.anchor = GridBagConstraints.CENTER;
         background.add(scrollPane, gbc);
 
