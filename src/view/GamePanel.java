@@ -35,6 +35,8 @@ public class GamePanel extends JPanel {
     private JLabel turnIndicatorLabel;
     private final JPanel player1BoardPanel;
     private final JPanel player2BoardPanel;
+    private JLabel player1BoardLabel;
+    private JLabel player2BoardLabel;
     private final CellButton[][] player1Cells;
     private final CellButton[][] player2Cells;
     private GameController gameController;
@@ -75,6 +77,14 @@ public class GamePanel extends JPanel {
         // Update player names
         player1NameLabel.setText("Player 1: " + game.getPlayer1Name());
         player2NameLabel.setText("Player 2: " + game.getPlayer2Name());
+        
+        // Update board labels with player names
+        if (player1BoardLabel != null) {
+            player1BoardLabel.setText(game.getPlayer1Name() + "'s Board");
+        }
+        if (player2BoardLabel != null) {
+            player2BoardLabel.setText(game.getPlayer2Name() + "'s Board");
+        }
 
         // Initialize cell buttons for both boards
         initializeBoard(player1BoardPanel, player1Cells, game.getPlayer1Board(), 1);
@@ -192,26 +202,126 @@ public class GamePanel extends JPanel {
      * Builds the gameboards panel with two boards side-by-side.
      */
     private void buildGameBoards() {
-        JPanel boardsContainer = new JPanel(new GridLayout(1, 2, 20, 0));
+        JPanel boardsContainer = new JPanel(new BorderLayout());
         boardsContainer.setBackground(new Color(240, 240, 250));
         boardsContainer.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Player 1 board panel
+        // Container for both boards
+        JPanel boardsWrapper = new JPanel(new GridLayout(1, 2, 20, 0));
+        boardsWrapper.setOpaque(false);
+        
+        // Player 1 board container with label
+        JPanel player1Container = new JPanel(new BorderLayout(0, 10));
+        player1Container.setOpaque(false);
+        player1BoardLabel = new JLabel("Player 1's Board", SwingConstants.CENTER);
+        player1BoardLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        player1BoardLabel.setForeground(new Color(91, 161, 255));
+        player1Container.add(player1BoardLabel, BorderLayout.NORTH);
+        
+        // Player 1 board panel with custom border
         player1BoardPanel.setBackground(new Color(255, 255, 255));
         player1BoardPanel.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(new Color(200, 200, 200), 2),
                 new EmptyBorder(10, 10, 10, 10)));
-
-        // Player 2 board panel
+        player1Container.add(player1BoardPanel, BorderLayout.CENTER);
+        
+        // Player 2 board container with label
+        JPanel player2Container = new JPanel(new BorderLayout(0, 10));
+        player2Container.setOpaque(false);
+        player2BoardLabel = new JLabel("Player 2's Board", SwingConstants.CENTER);
+        player2BoardLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        player2BoardLabel.setForeground(new Color(196, 107, 255));
+        player2Container.add(player2BoardLabel, BorderLayout.NORTH);
+        
+        // Player 2 board panel with custom border
         player2BoardPanel.setBackground(new Color(255, 255, 255));
         player2BoardPanel.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(new Color(200, 200, 200), 2),
                 new EmptyBorder(10, 10, 10, 10)));
-
-        boardsContainer.add(player1BoardPanel);
-        boardsContainer.add(player2BoardPanel);
-
+        player2Container.add(player2BoardPanel, BorderLayout.CENTER);
+        
+        boardsWrapper.add(player1Container);
+        boardsWrapper.add(player2Container);
+        
+        boardsContainer.add(boardsWrapper, BorderLayout.CENTER);
         add(boardsContainer, BorderLayout.CENTER);
+    }
+    
+    /**
+     * Updates the board borders and labels to highlight the active player's board.
+     */
+    private void updateBoardBorders() {
+        if (game == null) {
+            return;
+        }
+        
+        int currentPlayer = game.getCurrentPlayer();
+        Color player1Color = new Color(91, 161, 255); // Blue
+        Color player2Color = new Color(196, 107, 255); // Purple
+        Color inactiveColor = new Color(200, 200, 200); // Gray
+        Color inactiveTextColor = new Color(150, 150, 150); // Light gray for inactive text
+        
+        // Update Player 1 board border and label
+        if (currentPlayer == 1) {
+            // Active: thick colored border with glow effect
+            player1BoardPanel.setBorder(BorderFactory.createCompoundBorder(
+                    new LineBorder(player1Color, 4),
+                    new EmptyBorder(8, 8, 8, 8)));
+            player1BoardPanel.setBackground(new Color(245, 250, 255)); // Very light blue tint
+            // Make label bold and colored
+            if (player1BoardLabel != null) {
+                player1BoardLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+                player1BoardLabel.setForeground(player1Color);
+            }
+        } else {
+            // Inactive: thin gray border
+            player1BoardPanel.setBorder(BorderFactory.createCompoundBorder(
+                    new LineBorder(inactiveColor, 2),
+                    new EmptyBorder(10, 10, 10, 10)));
+            player1BoardPanel.setBackground(new Color(255, 255, 255)); // White
+            // Make label less prominent
+            if (player1BoardLabel != null) {
+                player1BoardLabel.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+                player1BoardLabel.setForeground(inactiveTextColor);
+            }
+        }
+        
+        // Update Player 2 board border and label
+        if (currentPlayer == 2) {
+            // Active: thick colored border with glow effect
+            player2BoardPanel.setBorder(BorderFactory.createCompoundBorder(
+                    new LineBorder(player2Color, 4),
+                    new EmptyBorder(8, 8, 8, 8)));
+            player2BoardPanel.setBackground(new Color(255, 245, 255)); // Very light purple tint
+            // Make label bold and colored
+            if (player2BoardLabel != null) {
+                player2BoardLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+                player2BoardLabel.setForeground(player2Color);
+            }
+        } else {
+            // Inactive: thin gray border
+            player2BoardPanel.setBorder(BorderFactory.createCompoundBorder(
+                    new LineBorder(inactiveColor, 2),
+                    new EmptyBorder(10, 10, 10, 10)));
+            player2BoardPanel.setBackground(new Color(255, 255, 255)); // White
+            // Make label less prominent
+            if (player2BoardLabel != null) {
+                player2BoardLabel.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+                player2BoardLabel.setForeground(inactiveTextColor);
+            }
+        }
+        
+        // Repaint both panels and labels to show changes
+        player1BoardPanel.revalidate();
+        player1BoardPanel.repaint();
+        player2BoardPanel.revalidate();
+        player2BoardPanel.repaint();
+        if (player1BoardLabel != null) {
+            player1BoardLabel.repaint();
+        }
+        if (player2BoardLabel != null) {
+            player2BoardLabel.repaint();
+        }
     }
 
     /**
@@ -271,6 +381,9 @@ public class GamePanel extends JPanel {
         turnIndicatorLabel.setText("Current Turn: " + currentPlayerName);
         turnIndicatorLabel.setForeground(
                 game.getCurrentPlayer() == 1 ? new Color(91, 161, 255) : new Color(196, 107, 255));
+
+        // Update board borders to highlight active player
+        updateBoardBorders();
 
         // Update player 1 board
         updateBoard(player1Cells, game.getPlayer1Board(), 1);
