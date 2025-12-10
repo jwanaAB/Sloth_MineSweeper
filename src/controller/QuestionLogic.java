@@ -46,13 +46,7 @@ public class QuestionLogic {
             // Not running from JAR or couldn't determine JAR location
         }
         
-        // Fallback: use src/resources/Questions.csv for development
-        File devFile = new File("src/resources/Questions.csv");
-        if (devFile.exists()) {
-            return devFile;
-        }
-        
-        // Last fallback: use Questions.csv in current directory
+        // Fallback: use Questions.csv in current directory (project root)
         return new File("Questions.csv");
     }
 
