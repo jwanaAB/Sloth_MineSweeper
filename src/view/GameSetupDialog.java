@@ -297,54 +297,29 @@ public class GameSetupDialog extends JDialog {
         String player2Name = player2TextField.getText().trim();
 
         if (player1Name.isEmpty()) {
-            JOptionPane.showMessageDialog(
-                this,
-                "Please enter Player 1 name.",
-                "Invalid Input",
-                JOptionPane.WARNING_MESSAGE
-            );
+            ErrorDialog.showErrorDialog(this, "Please enter Player 1 name.");
             player1TextField.requestFocus();
             return false;
         }
         if (player1Name.length() > 20) {
-            JOptionPane.showMessageDialog(
-                this,
-                "Player 1 name must be 20 characters or less.",
-                "Invalid Input",
-                JOptionPane.WARNING_MESSAGE
-            );
+            ErrorDialog.showErrorDialog(this, "Player 1 name must be 20 characters or less.");
             player1TextField.requestFocus();
             return false;
         }
 
         if (player2Name.isEmpty()) {
-            JOptionPane.showMessageDialog(
-                this,
-                "Please enter Player 2 name.",
-                "Invalid Input",
-                JOptionPane.WARNING_MESSAGE
-            );
+            ErrorDialog.showErrorDialog(this, "Please enter Player 2 name.");
             player2TextField.requestFocus();
             return false;
         }
         if (player2Name.length() > 20) {
-            JOptionPane.showMessageDialog(
-                this,
-                "Player 2 name must be 20 characters or less.",
-                "Invalid Input",
-                JOptionPane.WARNING_MESSAGE
-            );
+            ErrorDialog.showErrorDialog(this, "Player 2 name must be 20 characters or less.");
             player2TextField.requestFocus();
             return false;
         }
 
         if (player1Name.equalsIgnoreCase(player2Name)) {
-            JOptionPane.showMessageDialog(
-                this,
-                "Player 1 and Player 2 must have different names.",
-                "Invalid Input",
-                JOptionPane.WARNING_MESSAGE
-            );
+            ErrorDialog.showErrorDialog(this, "Player 1 and Player 2 must have different names.");
             player2TextField.requestFocus();
             return false;
         }
