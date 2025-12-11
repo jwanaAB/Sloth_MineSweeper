@@ -675,7 +675,7 @@ public class GamePanel extends JPanel {
                         BorderFactory.createEmptyBorder(2, 2, 2, 2)));
 
                 if (cell instanceof MineCell) {
-                    setText("M");
+                    setText("💣");
                     setBackground(new Color(255, 120, 120)); // Bright red
                     setForeground(Color.BLACK);
                 } else if (cell instanceof NumberCell) {

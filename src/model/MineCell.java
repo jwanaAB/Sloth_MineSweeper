@@ -24,7 +24,7 @@ public class MineCell extends Cell {
         if (!isRevealed()) {
             return "";
         }
-        return "M";
+        return "💣";
     }
 }
 
