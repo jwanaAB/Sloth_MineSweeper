@@ -660,7 +660,7 @@ public class GamePanel extends JPanel {
 
             if (cell.isFlagged()) {
                 // Flagged state - raised appearance, pink/red background
-                setText("F");
+                setText("🚩");
                 setBackground(new Color(255, 180, 180));
                 setForeground(Color.BLACK);
                 setEnabled(true);
