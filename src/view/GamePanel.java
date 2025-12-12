@@ -17,6 +17,9 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import javax.swing.SwingUtilities;
 
 /**
  * The main gameplay panel displaying two gameboards side-by-side for two
@@ -63,6 +66,20 @@ public class GamePanel extends JPanel {
         buildPlayerInfoPanel();
         buildGameBoards();
         buildBottomPanel();
+        
+        // Add resize listeners to board panels
+        player1BoardPanel.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                updateCellSizes();
+            }
+        });
+        player2BoardPanel.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                updateCellSizes();
+            }
+        });
     }
 
     /**
@@ -95,6 +112,11 @@ public class GamePanel extends JPanel {
         // Initialize cell buttons for both boards
         initializeBoard(player1BoardPanel, player1Cells, game.getPlayer1Board(), 1);
         initializeBoard(player2BoardPanel, player2Cells, game.getPlayer2Board(), 2);
+
+        // Update cell sizes after initialization
+        SwingUtilities.invokeLater(() -> {
+            updateCellSizes();
+        });
 
         // Update UI
         updateUI();
@@ -446,6 +468,116 @@ public class GamePanel extends JPanel {
     }
 
     /**
+     * Updates the responsive layout based on scale factor or window size.
+     * 
+     * @param scaleFactor The scaling factor from MainView (can be ignored for GamePanel's own calculations)
+     */
+    public void updateResponsiveLayout(double scaleFactor) {
+        // GamePanel handles its own sizing based on available space
+        updateCellSizes();
+        updateFonts(scaleFactor);
+    }
+    
+    /**
+     * Updates cell button sizes based on available board panel space.
+     */
+    private void updateCellSizes() {
+        if (game == null) {
+            return;
+        }
+        
+        updateBoardCellSizes(player1BoardPanel, player1Cells, game.getPlayer1Board());
+        updateBoardCellSizes(player2BoardPanel, player2Cells, game.getPlayer2Board());
+    }
+    
+    /**
+     * Updates cell sizes for a specific board.
+     */
+    private void updateBoardCellSizes(JPanel boardPanel, CellButton[][] cellButtons, GameBoard board) {
+        if (board == null || boardPanel == null || cellButtons == null) {
+            return;
+        }
+        
+        int rows = board.getRows();
+        int cols = board.getCols();
+        
+        if (rows == 0 || cols == 0) {
+            return;
+        }
+        
+        // Get available space (accounting for padding and gaps)
+        int panelWidth = boardPanel.getWidth();
+        int panelHeight = boardPanel.getHeight();
+        
+        // Account for padding (typically 10px on each side)
+        int padding = 10;
+        int gap = 2; // GridLayout gap
+        int availableWidth = panelWidth - (padding * 2);
+        int availableHeight = panelHeight - (padding * 2);
+        
+        if (availableWidth <= 0 || availableHeight <= 0) {
+            return;
+        }
+        
+        // Calculate cell size to fit both width and height
+        int cellWidth = (availableWidth - (gap * (cols - 1))) / cols;
+        int cellHeight = (availableHeight - (gap * (rows - 1))) / rows;
+        int cellSize = Math.min(cellWidth, cellHeight);
+        
+        // Set minimum and maximum cell size for usability
+        cellSize = Math.max(20, Math.min(60, cellSize)); // Clamp between 20-60 pixels
+        
+        // Update all cell button preferred sizes
+        for (int i = 0; i < rows && i < cellButtons.length; i++) {
+            for (int j = 0; j < cols && j < cellButtons[i].length; j++) {
+                if (cellButtons[i][j] != null) {
+                    cellButtons[i][j].setPreferredSize(new Dimension(cellSize, cellSize));
+                    cellButtons[i][j].setMinimumSize(new Dimension(cellSize, cellSize));
+                    cellButtons[i][j].setMaximumSize(new Dimension(cellSize, cellSize));
+                }
+            }
+        }
+        
+        boardPanel.revalidate();
+        boardPanel.repaint();
+    }
+    
+    /**
+     * Updates fonts based on scale factor.
+     */
+    private void updateFonts(double scaleFactor) {
+        // Scale player info fonts
+        if (player1NameLabel != null) {
+            int fontSize = (int) (18 * scaleFactor);
+            fontSize = Math.max(14, Math.min(24, fontSize));
+            player1NameLabel.setFont(new Font("Segoe UI", Font.BOLD, fontSize));
+        }
+        if (player2NameLabel != null) {
+            int fontSize = (int) (18 * scaleFactor);
+            fontSize = Math.max(14, Math.min(24, fontSize));
+            player2NameLabel.setFont(new Font("Segoe UI", Font.BOLD, fontSize));
+        }
+        if (sharedLivesLabel != null) {
+            int fontSize = (int) (16 * scaleFactor);
+            fontSize = Math.max(12, Math.min(22, fontSize));
+            sharedLivesLabel.setFont(new Font("Segoe UI", Font.BOLD, fontSize));
+        }
+        if (combinedScoreLabel != null) {
+            int fontSize = (int) (16 * scaleFactor);
+            fontSize = Math.max(12, Math.min(22, fontSize));
+            combinedScoreLabel.setFont(new Font("Segoe UI", Font.BOLD, fontSize));
+        }
+        if (turnIndicatorLabel != null) {
+            int fontSize = (int) (14 * scaleFactor);
+            fontSize = Math.max(11, Math.min(20, fontSize));
+            turnIndicatorLabel.setFont(new Font("Segoe UI", Font.BOLD, fontSize));
+        }
+        
+        revalidate();
+        repaint();
+    }
+    
+    /**
      * Updates the UI to reflect the current game state.
      */
     public void updateUI() {
@@ -677,7 +809,8 @@ public class GamePanel extends JPanel {
             this.currentCell = null;
             this.isCurrentPlayer = false;
 
-            setPreferredSize(new Dimension(30, 30));
+            // Size will be set dynamically by updateCellSizes()
+            setPreferredSize(new Dimension(30, 30)); // Default, will be updated
             setFont(new Font("Segoe UI", Font.BOLD, 14));
             setFocusPainted(false);
             // Default border for hidden cells (raised appearance)
@@ -744,8 +877,14 @@ public class GamePanel extends JPanel {
                 return;
             }
 
-            // Set font that supports Unicode symbols
-            setFont(new Font("Segoe UI Emoji", Font.BOLD, 16));
+            // Calculate font size based on button size for proportional scaling
+            int buttonSize = Math.min(Math.max(getWidth(), 20), Math.max(getHeight(), 20)); // Ensure minimum size
+            int emojiFontSize = Math.max(10, Math.min(buttonSize * 3 / 4, 24)); // Proportional to button size
+            int numberFontSize = Math.max(8, Math.min(buttonSize * 2 / 3, 20));
+            int emptyFontSize = Math.max(6, Math.min(buttonSize / 3, 14));
+            
+            // Set font that supports Unicode symbols (for emoji) - default for flagged/mine cells
+            setFont(new Font("Segoe UI Emoji", Font.BOLD, emojiFontSize));
 
             if (cell.isFlagged()) {
                 // Flagged state - raised appearance, pink/red background
@@ -769,7 +908,8 @@ public class GamePanel extends JPanel {
                     setForeground(Color.BLACK);
                 } else if (cell instanceof NumberCell) {
                     NumberCell numberCell = (NumberCell) cell;
-                    setFont(new Font("Segoe UI", Font.BOLD, 16));
+                    // Use calculated number font size
+                    setFont(new Font("Segoe UI", Font.BOLD, numberFontSize));
                     setText(String.valueOf(numberCell.getAdjacentMines()));
                     setBackground(new Color(250, 250, 250)); // Very light gray/almost white - same as empty
                     // Color code numbers for better visibility
@@ -824,7 +964,7 @@ public class GamePanel extends JPanel {
                     }
                 } else if (cell instanceof EmptyCell) {
                     // Empty revealed cells - very light/white to show they're opened
-                    setFont(new Font("Segoe UI", Font.PLAIN, 12));
+                    setFont(new Font("Segoe UI", Font.PLAIN, emptyFontSize));
                     setText("");
                     setBackground(new Color(250, 250, 250)); // Very light gray/almost white - clearly different
                                                              // from hidden

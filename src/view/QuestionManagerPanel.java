@@ -23,6 +23,16 @@ public class QuestionManagerPanel extends JPanel {
     private final JTextField searchField;
     private final JComboBox<String> difficultyFilter;
     private List<Question> allQuestions;
+    private JLabel titleLabel;
+    private JPanel searchPanel;
+    private JPanel controlsPanel;
+    private JPanel headerPanel;
+    private JScrollPane scrollPane;
+    
+    // Base dimensions for scaling
+    private static final int BASE_SEARCH_WIDTH = 300;
+    private static final int BASE_FILTER_WIDTH = 180;
+    private static final int BASE_CONTROL_HEIGHT = 40;
 
     public QuestionManagerPanel() {
         setLayout(new BorderLayout());
@@ -38,7 +48,7 @@ public class QuestionManagerPanel extends JPanel {
         homeButton.setBorder(BorderFactory.createEmptyBorder(8, 18, 8, 18));
 
         // Title (center)
-        JLabel titleLabel = new JLabel("Question Manager");
+        titleLabel = new JLabel("Question Manager");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
         titleLabel.setForeground(new Color(156, 39, 176)); // Purple
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -76,7 +86,7 @@ public class QuestionManagerPanel extends JPanel {
         buttonsPanel.add(addButton);
 
         // Top header panel: Home (left) | Title (center) | Buttons (right)
-        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(Color.WHITE);
         headerPanel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
         headerPanel.add(homeButton, BorderLayout.WEST);
@@ -84,15 +94,15 @@ public class QuestionManagerPanel extends JPanel {
         headerPanel.add(buttonsPanel, BorderLayout.EAST);
 
         // Controls panel with search and filter in one line
-        JPanel controlsPanel = new JPanel(new BorderLayout());
+        controlsPanel = new JPanel(new BorderLayout());
         controlsPanel.setBackground(Color.WHITE);
         controlsPanel.setBorder(BorderFactory.createEmptyBorder(0, 30, 15, 30));
 
         // Search field
-        JPanel searchPanel = new JPanel(new BorderLayout());
+        searchPanel = new JPanel(new BorderLayout());
         searchPanel.setBackground(Color.WHITE);
         searchPanel.setBorder(BorderFactory.createLineBorder(new Color(230, 230, 230), 1));
-        searchPanel.setPreferredSize(new Dimension(300, 40));
+        searchPanel.setPreferredSize(new Dimension(BASE_SEARCH_WIDTH, BASE_CONTROL_HEIGHT));
         
         searchField = new JTextField("Search questions...");
         searchField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
@@ -136,7 +146,7 @@ public class QuestionManagerPanel extends JPanel {
         difficultyFilter.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(230, 230, 230), 1),
                 BorderFactory.createEmptyBorder(8, 12, 8, 12)));
-        difficultyFilter.setPreferredSize(new Dimension(180, 40));
+        difficultyFilter.setPreferredSize(new Dimension(BASE_FILTER_WIDTH, BASE_CONTROL_HEIGHT));
         difficultyFilter.addActionListener(e -> filterQuestions());
         
         // Add search and filter to controls panel in one line
@@ -204,7 +214,7 @@ public class QuestionManagerPanel extends JPanel {
             }
         });
 
-        JScrollPane scrollPane = new JScrollPane(questionTable);
+        scrollPane = new JScrollPane(questionTable);
         scrollPane.setBorder(BorderFactory.createEmptyBorder(0, 30, 20, 30));
         scrollPane.setBackground(Color.WHITE);
 
@@ -220,6 +230,25 @@ public class QuestionManagerPanel extends JPanel {
 
         // Load questions after panel is fully constructed
         SwingUtilities.invokeLater(this::loadQuestions);
+        
+        // Add component listener to update table column widths on resize
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                if (questionTable != null && questionTable.getWidth() > 0) {
+                    // Recalculate column widths based on new table width
+                    int tableWidth = questionTable.getWidth();
+                    int[] baseWidths = {300, 250, 100, 120, 120};
+                    int totalBaseWidth = 300 + 250 + 100 + 120 + 120;
+                    
+                    for (int i = 0; i < baseWidths.length && i < questionTable.getColumnCount(); i++) {
+                        double ratio = (double) baseWidths[i] / totalBaseWidth;
+                        int preferredWidth = (int) (tableWidth * ratio);
+                        questionTable.getColumnModel().getColumn(i).setPreferredWidth(preferredWidth);
+                    }
+                }
+            }
+        });
     }
 
     private void loadQuestions() {
@@ -488,6 +517,134 @@ public class QuestionManagerPanel extends JPanel {
      */
     public void reloadQuestions() {
         loadQuestions();
+    }
+    
+    /**
+     * Updates the responsive layout based on scale factor.
+     * 
+     * @param scaleFactor The scaling factor from MainView
+     */
+    public void updateResponsiveLayout(double scaleFactor) {
+        // Scale title font
+        if (titleLabel != null) {
+            int titleSize = (int) (24 * scaleFactor);
+            titleSize = Math.max(20, Math.min(32, titleSize)); // Clamp between 20-32
+            titleLabel.setFont(new Font("Segoe UI", Font.BOLD, titleSize));
+        }
+        
+        // Scale search field
+        if (searchPanel != null) {
+            int searchWidth = (int) (BASE_SEARCH_WIDTH * scaleFactor);
+            int searchHeight = (int) (BASE_CONTROL_HEIGHT * scaleFactor);
+            searchWidth = Math.max(200, Math.min(500, searchWidth)); // Clamp between 200-500
+            searchHeight = Math.max(30, Math.min(50, searchHeight)); // Clamp between 30-50
+            searchPanel.setPreferredSize(new Dimension(searchWidth, searchHeight));
+        }
+        
+        if (searchField != null) {
+            int fieldFontSize = (int) (14 * scaleFactor);
+            fieldFontSize = Math.max(12, Math.min(18, fieldFontSize)); // Clamp between 12-18
+            searchField.setFont(new Font("Segoe UI", Font.PLAIN, fieldFontSize));
+        }
+        
+        // Scale filter
+        if (difficultyFilter != null) {
+            int filterWidth = (int) (BASE_FILTER_WIDTH * scaleFactor);
+            int filterHeight = (int) (BASE_CONTROL_HEIGHT * scaleFactor);
+            filterWidth = Math.max(150, Math.min(250, filterWidth)); // Clamp between 150-250
+            filterHeight = Math.max(30, Math.min(50, filterHeight)); // Clamp between 30-50
+            difficultyFilter.setPreferredSize(new Dimension(filterWidth, filterHeight));
+            
+            int filterFontSize = (int) (14 * scaleFactor);
+            filterFontSize = Math.max(12, Math.min(18, filterFontSize)); // Clamp between 12-18
+            difficultyFilter.setFont(new Font("Segoe UI", Font.PLAIN, filterFontSize));
+        }
+        
+        // Scale table fonts
+        if (questionTable != null) {
+            int tableFontSize = (int) (13 * scaleFactor);
+            tableFontSize = Math.max(11, Math.min(16, tableFontSize)); // Clamp between 11-16
+            questionTable.setFont(new Font("Segoe UI", Font.PLAIN, tableFontSize));
+            
+            // Scale row height
+            int rowHeight = (int) (80 * scaleFactor);
+            rowHeight = Math.max(60, Math.min(100, rowHeight)); // Clamp between 60-100
+            questionTable.setRowHeight(rowHeight);
+            
+            // Scale table column widths proportionally
+            updateTableColumnWidths(scaleFactor);
+        }
+        
+        // Scale header font
+        if (questionTable != null) {
+            JTableHeader header = questionTable.getTableHeader();
+            if (header != null) {
+                int headerFontSize = (int) (14 * scaleFactor);
+                headerFontSize = Math.max(12, Math.min(18, headerFontSize)); // Clamp between 12-18
+                header.setFont(new Font("Segoe UI", Font.BOLD, headerFontSize));
+                
+                int headerHeight = (int) (40 * scaleFactor);
+                headerHeight = Math.max(35, Math.min(50, headerHeight)); // Clamp between 35-50
+                header.setPreferredSize(new Dimension(header.getWidth(), headerHeight));
+            }
+        }
+        
+        // Scale padding
+        if (controlsPanel != null) {
+            int padding = (int) (30 * scaleFactor);
+            padding = Math.max(20, Math.min(50, padding)); // Clamp between 20-50
+            controlsPanel.setBorder(BorderFactory.createEmptyBorder(0, padding, 15, padding));
+        }
+        
+        if (scrollPane != null) {
+            int padding = (int) (30 * scaleFactor);
+            padding = Math.max(20, Math.min(50, padding)); // Clamp between 20-50
+            scrollPane.setBorder(BorderFactory.createEmptyBorder(0, padding, 20, padding));
+        }
+        
+        if (headerPanel != null) {
+            int padding = (int) (30 * scaleFactor);
+            padding = Math.max(20, Math.min(50, padding)); // Clamp between 20-50
+            headerPanel.setBorder(BorderFactory.createEmptyBorder(20, padding, 20, padding));
+        }
+        
+        revalidate();
+        repaint();
+    }
+    
+    /**
+     * Updates table column widths proportionally based on scale factor.
+     */
+    private void updateTableColumnWidths(double scaleFactor) {
+        if (questionTable == null) {
+            return;
+        }
+        
+        // Base column widths
+        int[] baseWidths = {300, 250, 100, 120, 120};
+        
+        // Calculate total base width
+        int totalBaseWidth = 0;
+        for (int width : baseWidths) {
+            totalBaseWidth += width;
+        }
+        
+        // Get current table width
+        int tableWidth = questionTable.getWidth();
+        if (tableWidth <= 0) {
+            // If table hasn't been sized yet, use scaled base widths
+            for (int i = 0; i < baseWidths.length && i < questionTable.getColumnCount(); i++) {
+                int scaledWidth = (int) (baseWidths[i] * scaleFactor);
+                questionTable.getColumnModel().getColumn(i).setPreferredWidth(scaledWidth);
+            }
+        } else {
+            // Scale widths proportionally to maintain ratios
+            for (int i = 0; i < baseWidths.length && i < questionTable.getColumnCount(); i++) {
+                double ratio = (double) baseWidths[i] / totalBaseWidth;
+                int preferredWidth = (int) (tableWidth * ratio);
+                questionTable.getColumnModel().getColumn(i).setPreferredWidth(preferredWidth);
+            }
+        }
     }
 
     // Custom renderer for Question text

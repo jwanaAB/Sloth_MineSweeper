@@ -15,6 +15,8 @@ import java.awt.GridLayout;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -42,6 +44,15 @@ public class MainView extends JFrame {
     private final QuestionManagerPanel questionManagerPanel;
     private final HistoryPanel historyPanel;
     private final GamePanel gamePanel;
+    private JPanel headerPanel;
+    private JPanel menuGrid;
+    private JLabel iconLabel;
+    private JLabel titleLabel;
+    private GradientPanel gradientRoot;
+    
+    // Base dimensions for scaling calculations
+    private int baseWindowWidth;
+    private int baseWindowHeight;
 
     public MainView() {
         super("MineSweeper");
@@ -93,10 +104,34 @@ public class MainView extends JFrame {
         cardLayout.show(cardPanel, "menu");
         pack();
         setLocationRelativeTo(null);
+        
+        // Store base dimensions for scaling (use preferred size if width/height is 0)
+        Dimension size = getSize();
+        baseWindowWidth = size.width > 0 ? size.width : (int)(Toolkit.getDefaultToolkit().getScreenSize().width * 0.6);
+        baseWindowHeight = size.height > 0 ? size.height : (int)(Toolkit.getDefaultToolkit().getScreenSize().height * 0.7);
+        
+        // Add resize listener for responsive UI
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                updateResponsiveLayout();
+            }
+        });
+        
         // Ensure frame is visible and brought to front
         setVisible(true);
         toFront();
         repaint();
+        
+        // Update base dimensions after showing (in case pack() set different size) and trigger initial layout update
+        SwingUtilities.invokeLater(() -> {
+            Dimension actualSize = getSize();
+            if (actualSize.width > 0 && actualSize.height > 0) {
+                baseWindowWidth = actualSize.width;
+                baseWindowHeight = actualSize.height;
+                updateResponsiveLayout(); // Initial layout update
+            }
+        });
     }
 
     private void configureLookAndFeel() {
@@ -110,37 +145,39 @@ public class MainView extends JFrame {
     }
 
     private JPanel buildMainMenuPanel() {
-        GradientPanel root = new GradientPanel(
+        gradientRoot = new GradientPanel(
                 new Color(225, 232, 255),
                 new Color(245, 213, 255)
         );
-        root.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
-        root.setLayout(new BorderLayout());
-        root.add(buildHeader(), BorderLayout.NORTH);
-        root.add(buildMenuGrid(), BorderLayout.CENTER);
-        return root;
+        gradientRoot.setBorder(BorderFactory.createEmptyBorder(24, 24, 24, 24));
+        gradientRoot.setLayout(new BorderLayout());
+        headerPanel = buildHeader();
+        menuGrid = buildMenuGrid();
+        gradientRoot.add(headerPanel, BorderLayout.NORTH);
+        gradientRoot.add(menuGrid, BorderLayout.CENTER);
+        return gradientRoot;
     }
 
     private JPanel buildHeader() {
-        JPanel headerPanel = new JPanel();
-        headerPanel.setOpaque(false);
-        headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
+        JPanel panel = new JPanel();
+        panel.setOpaque(false);
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        JLabel iconLabel = new JLabel("\u26CF", SwingConstants.CENTER);
+        iconLabel = new JLabel("\u26CF", SwingConstants.CENTER);
         iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 64));
         iconLabel.setAlignmentX(CENTER_ALIGNMENT);
         iconLabel.setForeground(new Color(91, 161, 255));
 
-        JLabel title = new JLabel("Minesweeper PRO", SwingConstants.CENTER);
-        title.setForeground(new Color(140, 70, 215));
-        title.setFont(new Font("Segoe UI", Font.BOLD, 46));
-        title.setAlignmentX(CENTER_ALIGNMENT);
+        titleLabel = new JLabel("Minesweeper PRO", SwingConstants.CENTER);
+        titleLabel.setForeground(new Color(140, 70, 215));
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 46));
+        titleLabel.setAlignmentX(CENTER_ALIGNMENT);
 
-        headerPanel.add(iconLabel);
-        headerPanel.add(Box.createVerticalStrut(10));
-        headerPanel.add(title);
-        headerPanel.add(Box.createVerticalStrut(20));
-        return headerPanel;
+        panel.add(iconLabel);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(titleLabel);
+        panel.add(Box.createVerticalStrut(20));
+        return panel;
     }
 
     private JPanel buildMenuGrid() {
@@ -278,6 +315,9 @@ public class MainView extends JFrame {
         });
         setTitle("History");
         cardLayout.show(cardPanel, "history");
+        SwingUtilities.invokeLater(() -> {
+            updateResponsiveLayout();
+        });
     }
 
     public void showQuestionManagerPanel(Runnable onReturnToMain) {
@@ -291,6 +331,9 @@ public class MainView extends JFrame {
         questionManagerPanel.reloadQuestions();
         setTitle("Question Manager");
         cardLayout.show(cardPanel, "question");
+        SwingUtilities.invokeLater(() -> {
+            updateResponsiveLayout();
+        });
     }
 
     public void showMainMenu() {
@@ -305,7 +348,18 @@ public class MainView extends JFrame {
         setPreferredSize(new Dimension(windowWidth, windowHeight));
         pack();
         setLocationRelativeTo(null); // Center the window on screen
+        
+        // Update base dimensions for scaling
+        Dimension size = getSize();
+        if (size.width > 0 && size.height > 0) {
+            baseWindowWidth = size.width;
+            baseWindowHeight = size.height;
+        }
+        
         cardLayout.show(cardPanel, "menu");
+        SwingUtilities.invokeLater(() -> {
+            updateResponsiveLayout();
+        });
     }
     
     /**
@@ -332,6 +386,13 @@ public class MainView extends JFrame {
         // Maximize the window for best experience, especially in hard mode
         SwingUtilities.invokeLater(() -> {
             setExtendedState(JFrame.MAXIMIZED_BOTH);
+            // Update base dimensions after maximizing
+            Dimension size = getSize();
+            if (size.width > 0 && size.height > 0) {
+                baseWindowWidth = size.width;
+                baseWindowHeight = size.height;
+                updateResponsiveLayout();
+            }
         });
         cardLayout.show(cardPanel, "game");
     }
@@ -343,6 +404,94 @@ public class MainView extends JFrame {
      */
     public GamePanel getGamePanel() {
         return gamePanel;
+    }
+    
+    /**
+     * Updates the responsive layout based on current window size.
+     */
+    private void updateResponsiveLayout() {
+        int currentWidth = getWidth();
+        int currentHeight = getHeight();
+        
+        // Skip if window hasn't been sized yet
+        if (currentWidth <= 0 || currentHeight <= 0 || baseWindowWidth <= 0 || baseWindowHeight <= 0) {
+            return;
+        }
+        
+        // Calculate scaling factor with min/max bounds
+        double widthScale = (double) currentWidth / baseWindowWidth;
+        double heightScale = (double) currentHeight / baseWindowHeight;
+        double scaleFactor = Math.min(widthScale, heightScale);
+        scaleFactor = Math.max(0.75, Math.min(1.5, scaleFactor)); // Limit between 0.75x and 1.5x
+        
+        // Update menu panel if it's visible (check by component visibility or always update since it's safe)
+        if (menuPanel != null && menuPanel.isVisible()) {
+            updateMenuPanelScaling(scaleFactor);
+        }
+        
+        // Update other panels (they handle their own scaling)
+        if (gamePanel != null && gamePanel.isVisible()) {
+            gamePanel.updateResponsiveLayout(scaleFactor);
+        }
+        if (questionManagerPanel != null && questionManagerPanel.isVisible()) {
+            questionManagerPanel.updateResponsiveLayout(scaleFactor);
+        }
+        if (historyPanel != null && historyPanel.isVisible()) {
+            historyPanel.updateResponsiveLayout(scaleFactor);
+        }
+    }
+    
+    /**
+     * Updates menu panel elements with scaling.
+     */
+    private void updateMenuPanelScaling(double scaleFactor) {
+        if (iconLabel != null) {
+            int iconSize = (int) (64 * scaleFactor);
+            iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, iconSize));
+        }
+        
+        if (titleLabel != null) {
+            int titleSize = (int) (46 * scaleFactor);
+            titleSize = Math.max(32, Math.min(60, titleSize)); // Clamp between 32-60
+            titleLabel.setFont(new Font("Segoe UI", Font.BOLD, titleSize));
+        }
+        
+        // Update button fonts
+        int buttonFontSize = (int) (20 * scaleFactor);
+        buttonFontSize = Math.max(16, Math.min(28, buttonFontSize)); // Clamp between 16-28
+        Font buttonFont = new Font("Segoe UI", Font.BOLD, buttonFontSize);
+        startGameButton.setFont(buttonFont);
+        historyButton.setFont(buttonFont);
+        questionManagerButton.setFont(buttonFont);
+        exitButton.setFont(buttonFont);
+        
+        // Update button padding
+        int buttonPadding = (int) (28 * scaleFactor);
+        buttonPadding = Math.max(20, Math.min(40, buttonPadding)); // Clamp between 20-40
+        startGameButton.setBorder(BorderFactory.createEmptyBorder(buttonPadding, 12, buttonPadding, 12));
+        historyButton.setBorder(BorderFactory.createEmptyBorder(buttonPadding, 12, buttonPadding, 12));
+        questionManagerButton.setBorder(BorderFactory.createEmptyBorder(buttonPadding, 12, buttonPadding, 12));
+        exitButton.setBorder(BorderFactory.createEmptyBorder(buttonPadding, 12, buttonPadding, 12));
+        
+        // Update menu grid padding
+        if (menuGrid != null) {
+            int gridPadding = (int) (120 * scaleFactor);
+            gridPadding = Math.max(60, Math.min(200, gridPadding)); // Clamp between 60-200
+            int gridGap = (int) (18 * scaleFactor);
+            gridGap = Math.max(12, Math.min(30, gridGap)); // Clamp between 12-30
+            menuGrid.setLayout(new GridLayout(2, 2, gridGap, gridGap));
+            menuGrid.setBorder(BorderFactory.createEmptyBorder(10, gridPadding, 10, gridPadding));
+        }
+        
+        // Update root padding
+        if (gradientRoot != null) {
+            int rootPadding = (int) (24 * scaleFactor);
+            rootPadding = Math.max(16, Math.min(40, rootPadding)); // Clamp between 16-40
+            gradientRoot.setBorder(BorderFactory.createEmptyBorder(rootPadding, rootPadding, rootPadding, rootPadding));
+        }
+        
+        revalidate();
+        repaint();
     }
 
     private static class GradientPanel extends JPanel {

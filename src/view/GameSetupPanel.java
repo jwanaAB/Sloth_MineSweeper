@@ -15,6 +15,10 @@ public class GameSetupPanel extends JPanel {
     private final DifficultyCard easyCard;
     private final DifficultyCard mediumCard;
     private final DifficultyCard hardCard;
+    
+    private JPanel card;
+    private JLabel title;
+    private JLabel icon;
 
     public GameSetupPanel() {
 
@@ -44,7 +48,7 @@ public class GameSetupPanel extends JPanel {
         bg.add(top, BorderLayout.NORTH);
 
         /** MAIN CARD PANEL **/
-        JPanel card = new JPanel();
+        card = new JPanel();
         card.setBackground(Color.WHITE);
         // Use flexible sizing - minimum preferred size but allow growth
         card.setPreferredSize(new Dimension(750, 700));
@@ -73,10 +77,10 @@ public class GameSetupPanel extends JPanel {
         bg.add(wrapper, BorderLayout.CENTER);
 
         // Title
-        JLabel icon = new JLabel("🎮");
+        icon = new JLabel("🎮");
         icon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 28));
 
-        JLabel title = new JLabel("Setup Game");
+        title = new JLabel("Setup Game");
         title.setFont(new Font("Segoe UI", Font.BOLD, 26));
         title.setForeground(new Color(80, 80, 80));
 
@@ -152,6 +156,47 @@ public class GameSetupPanel extends JPanel {
         
         // Add extra bottom spacing to ensure button is fully visible and clickable
         card.add(Box.createVerticalStrut(30));
+    }
+    
+    /**
+     * Updates the responsive layout based on scale factor.
+     * 
+     * @param scaleFactor The scaling factor from MainView
+     */
+    public void updateResponsiveLayout(double scaleFactor) {
+        // Scale title font
+        if (title != null) {
+            int titleSize = (int) (26 * scaleFactor);
+            titleSize = Math.max(20, Math.min(36, titleSize)); // Clamp between 20-36
+            title.setFont(new Font("Segoe UI", Font.BOLD, titleSize));
+        }
+        
+        // Scale icon font
+        if (icon != null) {
+            int iconSize = (int) (28 * scaleFactor);
+            iconSize = Math.max(20, Math.min(40, iconSize)); // Clamp between 20-40
+            icon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, iconSize));
+        }
+        
+        // Scale difficulty cards
+        easyCard.updateScaling(scaleFactor);
+        mediumCard.updateScaling(scaleFactor);
+        hardCard.updateScaling(scaleFactor);
+        
+        // Scale text fields
+        if (player1TextField != null) {
+            int fieldFontSize = (int) (14 * scaleFactor);
+            fieldFontSize = Math.max(12, Math.min(18, fieldFontSize)); // Clamp between 12-18
+            player1TextField.setFont(new Font("Segoe UI", Font.PLAIN, fieldFontSize));
+        }
+        if (player2TextField != null) {
+            int fieldFontSize = (int) (14 * scaleFactor);
+            fieldFontSize = Math.max(12, Math.min(18, fieldFontSize)); // Clamp between 12-18
+            player2TextField.setFont(new Font("Segoe UI", Font.PLAIN, fieldFontSize));
+        }
+        
+        revalidate();
+        repaint();
     }
 
     private JButton createBackButton() {
@@ -305,31 +350,36 @@ public class GameSetupPanel extends JPanel {
     }
 
     /** Difficulty Card Component **/
-    private static class DifficultyCard extends JPanel {
+    private class DifficultyCard extends JPanel {
 
         private boolean active = false;
         private final Color activeColor;
+        private JLabel nameLabel;
+        private JLabel sizeLabel;
+        private JPanel hp;
+        private int baseWidth = 160;
+        private int baseHeight = 135;
 
         DifficultyCard(String title, String size, int hearts, Color activeColor) {
             this.activeColor = activeColor;
 
-            setPreferredSize(new Dimension(160, 135));
+            setPreferredSize(new Dimension(baseWidth, baseHeight));
             setBackground(new Color(250, 250, 250));
             setBorder(new RoundedBorder(15));
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
             setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-            JLabel name = new JLabel(title);
-            name.setFont(new Font("Segoe UI", Font.BOLD, 16));
-            name.setAlignmentX(Component.CENTER_ALIGNMENT);
+            nameLabel = new JLabel(title);
+            nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+            nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-            JLabel sizeLabel = new JLabel(size);
+            sizeLabel = new JLabel(size);
             sizeLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
             sizeLabel.setForeground(new Color(120, 120, 120));
             sizeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-            JPanel hp = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 0));
+            hp = new JPanel(new FlowLayout(FlowLayout.CENTER, 2, 0));
             hp.setOpaque(false);
             for (int i = 0; i < hearts; i++) {
                 JLabel h = new JLabel("❤");
@@ -339,7 +389,7 @@ public class GameSetupPanel extends JPanel {
             }
 
             add(Box.createVerticalStrut(10));
-            add(name);
+            add(nameLabel);
             add(sizeLabel);
             add(Box.createVerticalStrut(10));
             add(hp);
@@ -352,6 +402,43 @@ public class GameSetupPanel extends JPanel {
             } else {
                 setBorder(new RoundedBorder(15));
             }
+            repaint();
+        }
+        
+        public void updateScaling(double scaleFactor) {
+            // Scale card size
+            int newWidth = (int) (baseWidth * scaleFactor);
+            int newHeight = (int) (baseHeight * scaleFactor);
+            newWidth = Math.max(120, Math.min(240, newWidth)); // Clamp between 120-240
+            newHeight = Math.max(100, Math.min(200, newHeight)); // Clamp between 100-200
+            setPreferredSize(new Dimension(newWidth, newHeight));
+            
+            // Scale fonts
+            if (nameLabel != null) {
+                int nameSize = (int) (16 * scaleFactor);
+                nameSize = Math.max(14, Math.min(22, nameSize)); // Clamp between 14-22
+                nameLabel.setFont(new Font("Segoe UI", Font.BOLD, nameSize));
+            }
+            
+            if (sizeLabel != null) {
+                int sizeFontSize = (int) (14 * scaleFactor);
+                sizeFontSize = Math.max(12, Math.min(18, sizeFontSize)); // Clamp between 12-18
+                sizeLabel.setFont(new Font("Segoe UI", Font.PLAIN, sizeFontSize));
+            }
+            
+            // Scale heart icons
+            if (hp != null) {
+                Component[] components = hp.getComponents();
+                int heartSize = (int) (14 * scaleFactor);
+                heartSize = Math.max(12, Math.min(18, heartSize)); // Clamp between 12-18
+                for (Component comp : components) {
+                    if (comp instanceof JLabel) {
+                        ((JLabel) comp).setFont(new Font("Segoe UI Emoji", Font.PLAIN, heartSize));
+                    }
+                }
+            }
+            
+            revalidate();
             repaint();
         }
     }

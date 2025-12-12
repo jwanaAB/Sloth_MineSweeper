@@ -1,9 +1,12 @@
 package view;
 
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.*;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
@@ -15,6 +18,12 @@ public class GameSetupDialog extends JDialog {
     private int selectedDifficulty = 1;
     private DifficultyOption[] difficultyOptions;
     private JLabel infoText = new JLabel("Both players will share 10 hearts total");
+    private RoundedPanel card;
+    private JScrollPane scrollPane;
+    private JPanel difficultyRow;
+    private JPanel infoWrapper;
+    private JPanel buttonHolder;
+    private GradientPanel background;
 
 
     public GameSetupDialog(JFrame parent) {
@@ -29,11 +38,11 @@ public class GameSetupDialog extends JDialog {
         setPreferredSize(new Dimension(dialogWidth, dialogHeight));
         setSize(dialogWidth, dialogHeight);
 
-        GradientPanel background = new GradientPanel();
+        background = new GradientPanel();
         background.setBorder(new EmptyBorder(30, 30, 30, 30));
-        background.setLayout(new GridBagLayout());
+        background.setLayout(new BorderLayout());
 
-        RoundedPanel card = new RoundedPanel(32);
+        card = new RoundedPanel(32);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setOpaque(false);
         card.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -93,7 +102,7 @@ public class GameSetupDialog extends JDialog {
         JLabel player2Label = createSectionLabel("Player 2 Name");
         JLabel difficultyLabel = createSectionLabel("Difficulty Level");
 
-        JPanel difficultyRow = new JPanel(new GridLayout(1, 3, 16, 0));
+        difficultyRow = new JPanel(new GridLayout(1, 3, 16, 0));
         difficultyRow.setOpaque(false);
         difficultyRow.setAlignmentX(Component.CENTER_ALIGNMENT);
         int diffRowWidth = (int) (cardWidth * 0.9);
@@ -118,7 +127,7 @@ public class GameSetupDialog extends JDialog {
         // Initialize with default difficulty (Easy = 1)
         selectDifficulty(1);
 
-        JPanel infoWrapper = new JPanel();
+        infoWrapper = new JPanel();
         infoWrapper.setLayout(new BoxLayout(infoWrapper, BoxLayout.X_AXIS));
         infoWrapper.setOpaque(true);
         infoWrapper.setBackground(new Color(248, 251, 255));
@@ -192,7 +201,7 @@ public class GameSetupDialog extends JDialog {
         card.add(infoWrapper);
         card.add(Box.createVerticalStrut(28));
 
-        JPanel buttonHolder = new JPanel();
+        buttonHolder = new JPanel();
         buttonHolder.setOpaque(false);
         buttonHolder.setLayout(new BoxLayout(buttonHolder, BoxLayout.X_AXIS));
         int buttonHolderWidth = (int) (cardWidth * 0.75);
@@ -204,7 +213,7 @@ public class GameSetupDialog extends JDialog {
 
         // Wrap card in scroll pane for scrollability
         // Don't set preferred size to MAX_VALUE - let it size naturally
-        JScrollPane scrollPane = new JScrollPane(card);
+        scrollPane = new JScrollPane(card);
         scrollPane.setBorder(null);
         scrollPane.setOpaque(false);
         scrollPane.getViewport().setOpaque(false);
@@ -216,16 +225,11 @@ public class GameSetupDialog extends JDialog {
         int estimatedContentHeight = 730;
         int scrollPaneHeight = Math.min(estimatedContentHeight + 30, (int)(dialogHeight * 0.75));
         scrollPane.setPreferredSize(new Dimension(cardWidth, scrollPaneHeight));
-        scrollPane.setMaximumSize(new Dimension(cardWidth, scrollPaneHeight));
+        // Don't set maximumSize - let it resize with the dialog
+        scrollPane.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
         
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.weightx = 1.0;
-        gbc.weighty = 0.0; // Don't expand vertically - use fixed height
-        gbc.anchor = GridBagConstraints.CENTER;
-        background.add(scrollPane, gbc);
+        // Use BorderLayout center to allow the scrollPane to fill available space
+        background.add(scrollPane, BorderLayout.CENTER);
 
         setContentPane(background);
         // Don't use pack() as it overrides our size - use setSize instead
@@ -234,6 +238,95 @@ public class GameSetupDialog extends JDialog {
         int x = (screenSize.width - dialogWidth) / 2;
         int y = (screenSize.height - dialogHeight) / 2;
         setLocation(x, y);
+        
+        // Add resize listener to handle dynamic resizing
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                updateResponsiveLayout();
+            }
+        });
+    }
+    
+    /**
+     * Updates the layout when dialog is resized.
+     */
+    private void updateResponsiveLayout() {
+        if (card == null || scrollPane == null || background == null) {
+            return;
+        }
+        
+        int currentWidth = getWidth();
+        int currentHeight = getHeight();
+        
+        if (currentWidth <= 0 || currentHeight <= 0) {
+            return;
+        }
+        
+        // Calculate new card width based on current dialog size (accounting for padding)
+        int padding = 60; // 30px on each side
+        int newCardWidth = Math.max(600, Math.min(currentWidth - padding, 1000));
+        
+        // Update card maximum width - this allows BoxLayout to respect the width constraint
+        card.setMaximumSize(new Dimension(newCardWidth, Integer.MAX_VALUE));
+        card.setPreferredSize(new Dimension(newCardWidth, card.getPreferredSize().height));
+        
+        // Update text field sizes
+        if (player1TextField != null) {
+            int fieldWidth = (int) (newCardWidth * 0.9);
+            Dimension fieldSize = new Dimension(fieldWidth, 44);
+            player1TextField.setMaximumSize(fieldSize);
+            player1TextField.setPreferredSize(fieldSize);
+        }
+        if (player2TextField != null) {
+            int fieldWidth = (int) (newCardWidth * 0.9);
+            Dimension fieldSize = new Dimension(fieldWidth, 44);
+            player2TextField.setMaximumSize(fieldSize);
+            player2TextField.setPreferredSize(fieldSize);
+        }
+        
+        // Update difficulty row
+        if (difficultyRow != null) {
+            int diffRowWidth = (int) (newCardWidth * 0.9);
+            difficultyRow.setMaximumSize(new Dimension(diffRowWidth, 150));
+            difficultyRow.setPreferredSize(new Dimension(diffRowWidth, 150));
+        }
+        
+        // Update info wrapper
+        if (infoWrapper != null) {
+            int infoWidth = (int) (newCardWidth * 0.85);
+            infoWrapper.setMaximumSize(new Dimension(infoWidth, 70));
+            infoWrapper.setPreferredSize(new Dimension(infoWidth, 70));
+        }
+        
+        // Update button holder
+        if (buttonHolder != null) {
+            int buttonHolderWidth = (int) (newCardWidth * 0.75);
+            buttonHolder.setMaximumSize(new Dimension(buttonHolderWidth, 60));
+            buttonHolder.setPreferredSize(new Dimension(buttonHolderWidth, 60));
+        }
+        
+        // Calculate available height for scroll pane
+        int availableHeight = currentHeight - 60; // Account for dialog border and background padding (30px top + 30px bottom)
+        
+        // Update scroll pane to fill available space
+        // Set preferred size so it uses the available space, but allow it to grow/shrink
+        scrollPane.setPreferredSize(new Dimension(newCardWidth, availableHeight));
+        
+        // Force layout update - start from the dialog and work down
+        SwingUtilities.invokeLater(() -> {
+            if (card != null) {
+                card.revalidate();
+            }
+            if (scrollPane != null) {
+                scrollPane.revalidate();
+            }
+            if (background != null) {
+                background.revalidate();
+            }
+            revalidate();
+            repaint();
+        });
     }
 
     private JTextField createStyledTextField(String placeholder, int width) {
