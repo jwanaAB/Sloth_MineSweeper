@@ -28,6 +28,7 @@ import java.awt.event.MouseEvent;
 public class GamePanel extends JPanel {
 
     private JButton homeButton;
+    private JButton flagModeButton;
     private JLabel player1NameLabel;
     private JLabel player2NameLabel;
     private JLabel sharedLivesLabel;
@@ -42,6 +43,7 @@ public class GamePanel extends JPanel {
     private GameController gameController;
     private Game game;
     private boolean gameOver = false;
+    private boolean flagModeEnabled = false;
 
     /**
      * Constructs a new GamePanel.
@@ -73,6 +75,10 @@ public class GamePanel extends JPanel {
         this.game = game;
         this.gameController = gameController;
         this.gameOver = false; // Reset game over state for new game
+        this.flagModeEnabled = false; // Reset Flag Mode to OFF for new game
+
+        // Update Flag Mode button appearance
+        updateFlagModeButtonAppearance();
 
         // Update player names
         player1NameLabel.setText("Player 1: " + game.getPlayer1Name());
@@ -132,10 +138,87 @@ public class GamePanel extends JPanel {
         });
 
         topBar.add(homeButton, BorderLayout.WEST);
+        
+        // Create Flag Mode button
+        flagModeButton = new JButton("Flag Mode: OFF");
+        flagModeButton.setFocusPainted(false);
+        flagModeButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        flagModeButton.setBackground(new Color(200, 200, 200)); // Gray when OFF
+        flagModeButton.setForeground(Color.BLACK);
+        flagModeButton.setOpaque(true);
+        flagModeButton.setBorderPainted(false);
+        flagModeButton.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(150, 150, 150), 2),
+                BorderFactory.createEmptyBorder(8, 16, 8, 16)));
+        flagModeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        // Add hover effect
+        flagModeButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                if (flagModeEnabled) {
+                    flagModeButton.setBackground(new Color(200, 255, 200)); // Light green on hover when ON
+                } else {
+                    flagModeButton.setBackground(new Color(180, 180, 180)); // Darker gray on hover when OFF
+                }
+            }
+            
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                updateFlagModeButtonAppearance();
+            }
+        });
+        
+        // Add click handler
+        flagModeButton.addActionListener(e -> toggleFlagMode());
+        
+        // Add Flag Mode button to top bar on the right side
+        topBar.add(flagModeButton, BorderLayout.EAST);
+        
         northContainer.add(topBar);
 
         // Add the combined north container to the main panel
         add(northContainer, BorderLayout.NORTH);
+    }
+    
+    /**
+     * Toggles the Flag Mode state and updates the button appearance.
+     */
+    private void toggleFlagMode() {
+        flagModeEnabled = !flagModeEnabled;
+        updateFlagModeButtonAppearance();
+    }
+    
+    /**
+     * Updates the Flag Mode button appearance based on current state.
+     */
+    private void updateFlagModeButtonAppearance() {
+        if (flagModeButton == null) {
+            return;
+        }
+        
+        if (flagModeEnabled) {
+            flagModeButton.setText("Flag Mode: ON");
+            flagModeButton.setBackground(new Color(144, 238, 144)); // Light green when ON
+            flagModeButton.setForeground(new Color(0, 100, 0)); // Dark green text
+            flagModeButton.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(0, 150, 0), 2),
+                    BorderFactory.createEmptyBorder(8, 16, 8, 16)));
+        } else {
+            flagModeButton.setText("Flag Mode: OFF");
+            flagModeButton.setBackground(new Color(200, 200, 200)); // Gray when OFF
+            flagModeButton.setForeground(Color.BLACK);
+            flagModeButton.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(150, 150, 150), 2),
+                    BorderFactory.createEmptyBorder(8, 16, 8, 16)));
+        }
+    }
+    
+    /**
+     * Gets the current Flag Mode state.
+     * 
+     * @return true if Flag Mode is enabled, false otherwise
+     */
+    public boolean isFlagModeEnabled() {
+        return flagModeEnabled;
     }
 
     /**
@@ -616,25 +699,31 @@ public class GamePanel extends JPanel {
                     }
 
                     if (SwingUtilities.isLeftMouseButton(e)) {
-                        // Left click: reveal cell or handle question/surprise cell
-                        Cell cell = game.getBoard(player).getCell(row, col);
-                        if (cell != null && cell.isRevealed()) {
-                            if (cell instanceof QuestionCell && !((QuestionCell) cell).isQuestionOpened()) {
-                                // Question cell already revealed - offer to open
-                                gameController.handleQuestionCellClick(row, col, player);
-                            } else if (cell instanceof SurpriseCell && !((SurpriseCell) cell).isSurpriseActivated()) {
-                                // Surprise cell already revealed - offer to activate
-                                gameController.handleSurpriseCellClick(row, col, player);
-                            } else {
-                                // Already revealed regular cell or already activated - do nothing
-                                return;
-                            }
+                        // Check Flag Mode state
+                        if (flagModeEnabled) {
+                            // Flag Mode ON: left-click toggles flag
+                            gameController.handleCellFlag(row, col, player);
                         } else {
-                            // Reveal cell
-                            gameController.handleCellReveal(row, col, player);
+                            // Flag Mode OFF: left-click reveals cell or handles question/surprise cell
+                            Cell cell = game.getBoard(player).getCell(row, col);
+                            if (cell != null && cell.isRevealed()) {
+                                if (cell instanceof QuestionCell && !((QuestionCell) cell).isQuestionOpened()) {
+                                    // Question cell already revealed - offer to open
+                                    gameController.handleQuestionCellClick(row, col, player);
+                                } else if (cell instanceof SurpriseCell && !((SurpriseCell) cell).isSurpriseActivated()) {
+                                    // Surprise cell already revealed - offer to activate
+                                    gameController.handleSurpriseCellClick(row, col, player);
+                                } else {
+                                    // Already revealed regular cell or already activated - do nothing
+                                    return;
+                                }
+                            } else {
+                                // Reveal cell
+                                gameController.handleCellReveal(row, col, player);
+                            }
                         }
                     } else if (SwingUtilities.isRightMouseButton(e)) {
-                        // Right click: flag cell
+                        // Right click: flag cell (works regardless of Flag Mode state)
                         gameController.handleCellFlag(row, col, player);
                     }
                 }

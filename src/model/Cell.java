@@ -37,12 +37,14 @@ public abstract class Cell {
     }
     
     private CellState state;
+    private boolean hasFlagScoreContributed;
     
     /**
      * Constructs a new Cell in HIDDEN state.
      */
     protected Cell() {
         this.state = CellState.HIDDEN;
+        this.hasFlagScoreContributed = false;
     }
     
     /**
@@ -117,4 +119,22 @@ public abstract class Cell {
      * @return A string representation of the cell content
      */
     public abstract String getDisplayValue();
+    
+    /**
+     * Checks if this cell has already contributed to the score via flagging.
+     * 
+     * @return true if the cell has contributed to score via flagging, false otherwise
+     */
+    public boolean hasFlagScoreContributed() {
+        return hasFlagScoreContributed;
+    }
+    
+    /**
+     * Sets whether this cell has contributed to the score via flagging.
+     * 
+     * @param hasContributed true if the cell has contributed, false otherwise
+     */
+    public void setFlagScoreContributed(boolean hasContributed) {
+        this.hasFlagScoreContributed = hasContributed;
+    }
 }

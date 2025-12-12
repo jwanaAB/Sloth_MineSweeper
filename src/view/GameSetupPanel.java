@@ -19,6 +19,12 @@ public class GameSetupPanel extends JPanel {
     public GameSetupPanel() {
 
         setLayout(new BorderLayout());
+        
+        // Set preferred size for the panel to ensure proper display
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int panelWidth = Math.min(900, (int)(screenSize.width * 0.7));
+        int panelHeight = Math.min(800, (int)(screenSize.height * 0.85));
+        setPreferredSize(new Dimension(panelWidth, panelHeight));
 
         // Background gradient
         GradientPanel bg = new GradientPanel(
@@ -40,19 +46,30 @@ public class GameSetupPanel extends JPanel {
         /** MAIN CARD PANEL **/
         JPanel card = new JPanel();
         card.setBackground(Color.WHITE);
-        card.setPreferredSize(new Dimension(750, 600));
-        card.setMaximumSize(new Dimension(750, 600));
+        // Use flexible sizing - minimum preferred size but allow growth
+        card.setPreferredSize(new Dimension(750, 700));
+        card.setMinimumSize(new Dimension(700, 650));
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
 
         card.setBorder(BorderFactory.createCompoundBorder(
                 new RoundedBorder(30),
-                BorderFactory.createEmptyBorder(35, 45, 35, 45)
+                BorderFactory.createEmptyBorder(35, 45, 60, 45)
         ));
 
-        JPanel wrapper = new JPanel();
+        // Create a scroll pane to ensure all content is accessible
+        JScrollPane scrollPane = new JScrollPane(card);
+        scrollPane.setBorder(null);
+        scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        
+        // Use BorderLayout with padding instead of centering
+        JPanel wrapper = new JPanel(new BorderLayout());
         wrapper.setOpaque(false);
-        wrapper.setLayout(new GridBagLayout());
-        wrapper.add(card);
+        wrapper.setBorder(BorderFactory.createEmptyBorder(10, 20, 20, 20));
+        wrapper.add(scrollPane, BorderLayout.CENTER);
         bg.add(wrapper, BorderLayout.CENTER);
 
         // Title
@@ -132,16 +149,48 @@ public class GameSetupPanel extends JPanel {
         /** START GAME BUTTON **/
         startGameButton = gradientButton("Start Game");
         card.add(startGameButton);
+        
+        // Add extra bottom spacing to ensure button is fully visible and clickable
+        card.add(Box.createVerticalStrut(30));
     }
 
     private JButton createBackButton() {
         JButton b = new JButton("← Back to Menu");
-        b.setOpaque(false);
-        b.setContentAreaFilled(false);
-        b.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
         b.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        b.setForeground(new Color(70, 70, 70));
+        b.setForeground(new Color(110, 110, 150));
         b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        b.setFocusPainted(false);
+        
+        // Set background and border styling
+        b.setBackground(new Color(255, 255, 255, 200));
+        b.setOpaque(true);
+        b.setContentAreaFilled(true);
+        b.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(150, 150, 180), 1, true),
+            BorderFactory.createEmptyBorder(8, 15, 8, 15)
+        ));
+        
+        // Add hover effects
+        b.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                b.setBackground(new Color(240, 240, 255));
+                b.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(120, 120, 180), 2, true),
+                    BorderFactory.createEmptyBorder(7, 14, 7, 14)
+                ));
+            }
+            
+            @Override
+            public void mouseExited(MouseEvent e) {
+                b.setBackground(new Color(255, 255, 255, 200));
+                b.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(150, 150, 180), 1, true),
+                    BorderFactory.createEmptyBorder(8, 15, 8, 15)
+                ));
+            }
+        });
+        
         return b;
     }
 

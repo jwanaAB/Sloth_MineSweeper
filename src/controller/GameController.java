@@ -180,22 +180,35 @@ public class GameController {
             return;
         }
         
-        // Validate that it's the current player's turn
-        if (!game.canFlagCell(row, col, player)) {
+        // Check if it's the current player's turn
+        if (player != game.getCurrentPlayer()) {
             showMessage("It's not your turn!", "Invalid Move", JOptionPane.WARNING_MESSAGE);
             return;
         }
         
-        // Get the cell before toggling to check if it's currently flagged
+        // Get the cell to check if it can be flagged
         Cell cell = game.getBoard(player).getCell(row, col);
-        boolean wasFlagged = cell != null && cell.isFlagged();
+        if (cell == null) {
+            return;
+        }
+        
+        // Check if the cell is revealed (cannot flag revealed cells)
+        if (cell.isRevealed()) {
+            showMessage("Cannot flag revealed cells!", "Invalid Move", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        // Get the flag state before toggling
+        boolean wasFlagged = cell.isFlagged();
         
         // Toggle flag
         game.flagCell(row, col);
         
-        // Score the flag action (only if flagging, not unflagging)
-        if (cell != null && !wasFlagged && cell.isFlagged()) {
+        // Score the flag action (only if flagging, not unflagging, and hasn't contributed to score yet)
+        if (!wasFlagged && cell.isFlagged() && !cell.hasFlagScoreContributed()) {
             scoreCellFlag(cell, row, col, player);
+            // Mark that this cell has now contributed to score via flagging
+            cell.setFlagScoreContributed(true);
         }
         
         // Update UI
