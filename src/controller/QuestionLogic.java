@@ -212,6 +212,7 @@ public class QuestionLogic {
     }
 
     public void updateQuestion(Question updatedQuestion) {
+        validateUniqueOptions(updatedQuestion);
         for (int i = 0; i < questions.size(); i++) {
             if (questions.get(i).getId() == updatedQuestion.getId()) {
                 questions.set(i, updatedQuestion);
@@ -279,7 +280,69 @@ public class QuestionLogic {
         return maxId + 1;
     }
 
+    /**
+     * Validates that all answer options (A, B, C, D) are non-empty and unique,
+     * difficulty is between 1-4, and correct answer is A, B, C, or D
+     * @param question The question to validate
+     * @throws IllegalArgumentException if validation fails
+     */
+    private void validateUniqueOptions(Question question) {
+        String a = question.getA();
+        String b = question.getB();
+        String c = question.getC();
+        String d = question.getD();
+        
+        // Check for empty strings - no field should be left empty
+        if (a == null || a.trim().isEmpty()) {
+            throw new IllegalArgumentException("Answer option A cannot be empty");
+        }
+        if (b == null || b.trim().isEmpty()) {
+            throw new IllegalArgumentException("Answer option B cannot be empty");
+        }
+        if (c == null || c.trim().isEmpty()) {
+            throw new IllegalArgumentException("Answer option C cannot be empty");
+        }
+        if (d == null || d.trim().isEmpty()) {
+            throw new IllegalArgumentException("Answer option D cannot be empty");
+        }
+        
+        // Check all pairs for duplicates
+        if (a.equals(b)) {
+            throw new IllegalArgumentException("Answer options A and B cannot be identical");
+        }
+        if (a.equals(c)) {
+            throw new IllegalArgumentException("Answer options A and C cannot be identical");
+        }
+        if (a.equals(d)) {
+            throw new IllegalArgumentException("Answer options A and D cannot be identical");
+        }
+        if (b.equals(c)) {
+            throw new IllegalArgumentException("Answer options B and C cannot be identical");
+        }
+        if (b.equals(d)) {
+            throw new IllegalArgumentException("Answer options B and D cannot be identical");
+        }
+        if (c.equals(d)) {
+            throw new IllegalArgumentException("Answer options C and D cannot be identical");
+        }
+        
+        // Validate difficulty (must be 1-4)
+        int difficulty = question.getDifficulty();
+        if (difficulty < 1 || difficulty > 4) {
+            throw new IllegalArgumentException("Difficulty must be between 1 and 4");
+        }
+        
+        // Validate correct answer (must be A, B, C, or D)
+        String correctAnswer = question.getCorrectAnswer();
+        if (correctAnswer == null || 
+            (!correctAnswer.equals("A") && !correctAnswer.equals("B") && 
+             !correctAnswer.equals("C") && !correctAnswer.equals("D"))) {
+            throw new IllegalArgumentException("Correct answer must be A, B, C, or D");
+        }
+    }
+
     public void addQuestion(Question question) {
+        validateUniqueOptions(question);
         questions.add(question);
     }
 
