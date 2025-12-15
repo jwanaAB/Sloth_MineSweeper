@@ -1,15 +1,6 @@
 package controller;
 
-import model.Cell;
-import model.EmptyCell;
-import model.MineCell;
-import model.NumberCell;
-import model.QuestionCell;
-import model.SurpriseCell;
-import model.Game;
-import model.GameBoard;
-import model.Question;
-import model.SysData;
+import model.*;
 import view.GamePanel;
 
 import javax.swing.*;
@@ -307,14 +298,12 @@ public class GameController {
             return;
         }
         
-        // Mark question as opened
-        questionCell.markQuestionOpened();
-        
-        // Show question dialog
-        showQuestionDialog(question, player);
-        
-        // Update UI
-        gamePanel.updateUI();
+        // Show question dialog and only mark opened after an answer is provided
+        boolean answered = showQuestionDialog(question, player);
+        if (answered) {
+            questionCell.markQuestionOpened();
+            gamePanel.updateUI();
+        }
     }
     
     /**
@@ -323,51 +312,60 @@ public class GameController {
      * @param question The Question object
      * @param player The player number
      */
-    private void showQuestionDialog(Question question, int player) {
-        // Create question dialog
+    private boolean showQuestionDialog(Question question, int player) {
+        final String playerName = player == 1 ? game.getPlayer1Name() : game.getPlayer2Name();
+
         String[] options = {
             "A) " + question.getA(),
             "B) " + question.getB(),
             "C) " + question.getC(),
             "D) " + question.getD()
         };
-        
-        int answer = JOptionPane.showOptionDialog(
-            gamePanel,
-            question.getQuestionText() + "\n\n" +
-            "A) " + question.getA() + "\n" +
-            "B) " + question.getB() + "\n" +
-            "C) " + question.getC() + "\n" +
-            "D) " + question.getD(),
-            "Question for " + (player == 1 ? 
-                game.getPlayer1Name() : game.getPlayer2Name()),
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.QUESTION_MESSAGE,
-            null,
-            options,
-            options[0]
-        );
-        
-        // Check answer (0=A, 1=B, 2=C, 3=D)
-        String selectedAnswer = "";
-        if (answer == 0) selectedAnswer = "A";
-        else if (answer == 1) selectedAnswer = "B";
-        else if (answer == 2) selectedAnswer = "C";
-        else if (answer == 3) selectedAnswer = "D";
-        else {
-            // User closed dialog without answering
-            return;
+
+        Integer choice = null;
+        while (choice == null) {
+            int selected = JOptionPane.showOptionDialog(
+                gamePanel,
+                question.getQuestionText() + "\n\n" +
+                "A) " + question.getA() + "\n" +
+                "B) " + question.getB() + "\n" +
+                "C) " + question.getC() + "\n" +
+                "D) " + question.getD(),
+                "Question for " + playerName,
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0]
+            );
+
+            if (selected >= 0 && selected <= 3) {
+                choice = selected;
+            } else {
+                JOptionPane.showMessageDialog(
+                    gamePanel,
+                    "You must answer the question before closing.",
+                    "Answer Required",
+                    JOptionPane.ERROR_MESSAGE
+                );
+            }
         }
+
+        String selectedAnswer = "";
+        if (choice == 0) selectedAnswer = "A";
+        else if (choice == 1) selectedAnswer = "B";
+        else if (choice == 2) selectedAnswer = "C";
+        else if (choice == 3) selectedAnswer = "D";
         
         // Check if correct
         boolean isCorrect = question.getCorrectAnswer().equalsIgnoreCase(selectedAnswer);
         
         // Score the question activation
-        String playerName = player == 1 ? game.getPlayer1Name() : game.getPlayer2Name();
+        String scoringPlayerName = playerName;
         int gameDifficulty = convertDifficultyToInt(game.getDifficulty());
         int questionType = question.getDifficulty(); // Question difficulty maps to question type (1-4)
         
-        scoringService.scoreQuestionCellActivated(game, playerName, gameDifficulty, questionType, isCorrect);
+        scoringService.scoreQuestionCellActivated(game, scoringPlayerName, gameDifficulty, questionType, isCorrect);
         
         if (isCorrect) {
             showMessage("Correct! Well done!", "Correct Answer", JOptionPane.INFORMATION_MESSAGE);
@@ -381,6 +379,8 @@ public class GameController {
         
         // Update UI
         gamePanel.updateUI();
+
+        return true;
     }
     
     /**
