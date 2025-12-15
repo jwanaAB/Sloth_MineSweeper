@@ -359,35 +359,83 @@ public class GameBoard {
     }
     
     /**
-     * Calculates and sets the adjacent mine count for all NUMBER cells.
-     * Cells adjacent to mines become NUMBER cells with the appropriate count.
+     * Calculates and sets the adjacent mine count for all non-mine, non-special cells.
+     * <p>
+     * This method is called multiple times during board setup and when mines are moved
+     * (e.g., first-click safety in {@link #moveMineAway(int, int)}). To keep the
+     * numbers consistent, it must always recompute the adjacent mine count and update
+     * existing {@link NumberCell} instances instead of only converting from EMPTY
+     * once.
+     * <p>
+     * Behaviour:
+     * <ul>
+     *   <li>If a position has one or more adjacent mines, it will contain a
+     *       {@link NumberCell} with the correct {@code adjacentMines} value.</li>
+     *   <li>If a position has zero adjacent mines, it will contain an
+     *       {@link EmptyCell}.</li>
+     *   <li>{@link MineCell}, {@link QuestionCell}, and {@link SurpriseCell}
+     *       are left unchanged.</li>
+     * </ul>
      */
     private void calculateAdjacentMines() {
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 Cell cell = cells[i][j];
-                
-                // Skip mines, questions, and surprises - they don't need adjacent counts
-                if (cell.getType() == Cell.CellType.MINE || cell.getType() == Cell.CellType.QUESTION || cell.getType() == Cell.CellType.SURPRISE) {
+
+                // Skip mines, questions, and surprises - they don't get number values
+                if (cell.getType() == Cell.CellType.MINE
+                        || cell.getType() == Cell.CellType.QUESTION
+                        || cell.getType() == Cell.CellType.SURPRISE) {
                     continue;
                 }
-                
-                // Count adjacent mines
+
+                // Recompute adjacent mine count for this position
                 int mineCount = countAdjacentMines(i, j);
-                
-                // If there are adjacent mines, convert to NUMBER cell
-                if (mineCount > 0 && cell.getType() == Cell.CellType.EMPTY) {
-                    // Preserve the revealed/flagged state when converting
-                    Cell.CellState state = cell.getState();
-                    cells[i][j] = new NumberCell(mineCount);
-                    // Restore state if needed
-                    if (state == Cell.CellState.REVEALED) {
-                        cells[i][j].reveal();
-                    } else if (state == Cell.CellState.FLAGGED) {
-                        cells[i][j].toggleFlag();
+
+                // Preserve the current state and scoring flag when we potentially replace the cell
+                Cell.CellState state = cell.getState();
+                boolean flagScoreContributed = cell.hasFlagScoreContributed();
+
+                if (mineCount > 0) {
+                    // Ensure this is a NumberCell with the correct count
+                    NumberCell numberCell;
+                    if (cell instanceof NumberCell) {
+                        numberCell = (NumberCell) cell;
+                        numberCell.setAdjacentMines(mineCount);
+                    } else {
+                        numberCell = new NumberCell(mineCount);
+                        cells[i][j] = numberCell;
                     }
+
+                    // Restore state if we created a new cell
+                    if (cells[i][j] == numberCell) {
+                        if (state == Cell.CellState.REVEALED) {
+                            numberCell.reveal();
+                        } else if (state == Cell.CellState.FLAGGED) {
+                            numberCell.toggleFlag();
+                        }
+                        if (flagScoreContributed) {
+                            numberCell.setFlagScoreContributed(true);
+                        }
+                    }
+                } else {
+                    // No adjacent mines – ensure the cell is an EmptyCell
+                    if (!(cell instanceof EmptyCell)) {
+                        EmptyCell emptyCell = new EmptyCell();
+                        cells[i][j] = emptyCell;
+
+                        // Restore state on the new empty cell
+                        if (state == Cell.CellState.REVEALED) {
+                            emptyCell.reveal();
+                        } else if (state == Cell.CellState.FLAGGED) {
+                            emptyCell.toggleFlag();
+                        }
+                        if (flagScoreContributed) {
+                            emptyCell.setFlagScoreContributed(true);
+                        }
+                    }
+                    // If it was already an EmptyCell and mineCount == 0, nothing to change
                 }
-                // Otherwise, it remains EMPTY
             }
         }
     }
