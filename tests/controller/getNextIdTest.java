@@ -1,9 +1,7 @@
-package unitTests.controller;
+package controller;
 
 import model.Question;
 import org.junit.jupiter.api.Test;
-
-import controller.QuestionLogic;
 
 import org.junit.jupiter.api.BeforeEach;
 import static org.junit.jupiter.api.Assertions.*;
@@ -189,4 +187,5 @@ public class getNextIdTest {
             "getNextId() should return 16 when max ID is 15 (regardless of order)");
     }
 }
+
 
