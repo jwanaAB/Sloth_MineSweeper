@@ -353,10 +353,15 @@ public class QuestionLogic {
      * @param csvFile The CSV file to import from
      * @return ImportResult containing the number of successfully imported questions and any errors
      */
-    public ImportResult importQuestionsFromCSV(File csvFile) {
+    public ImportResult importQuestionsFromCSV(File csvFile) throws Exception {
         int importedCount = 0;
         int skippedCount = 0;
         List<String> errors = new ArrayList<>();
+
+        // Check if file exists before attempting to read
+        if (!csvFile.exists()) {
+            throw new java.io.FileNotFoundException("CSV file does not exist: " + csvFile.getAbsolutePath());
+        }
 
         try (BufferedReader reader = new BufferedReader(new java.io.FileReader(csvFile))) {
             String line;
@@ -433,7 +438,11 @@ public class QuestionLogic {
                     errors.add("Line " + lineNumber + ": Error parsing question - " + e.getMessage());
                 }
             }
+        } catch (java.io.FileNotFoundException e) {
+            // Re-throw FileNotFoundException (file doesn't exist)
+            throw new Exception("CSV file does not exist: " + csvFile.getAbsolutePath(), e);
         } catch (Exception e) {
+            // For other I/O errors, add to errors list and return result
             errors.add("Error reading CSV file: " + e.getMessage());
         }
 
