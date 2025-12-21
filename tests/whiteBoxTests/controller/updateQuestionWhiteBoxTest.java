@@ -1,7 +1,10 @@
-package controller;
+package whiteBoxTests.controller;
 
 import model.Question;
 import org.junit.jupiter.api.Test;
+
+import controller.QuestionLogic;
+
 import org.junit.jupiter.api.BeforeEach;
 import static org.junit.jupiter.api.Assertions.*;
 
