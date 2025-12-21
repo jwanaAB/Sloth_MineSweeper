@@ -3,10 +3,10 @@ package junit;
 import model.Game;
 import model.EmptyCell;
 import controller.QuestionLogic;
-import org.junit.Test;
-import org.junit.Before;
-import org.junit.After;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class GameCanRevealCellTest {
     
@@ -18,7 +18,7 @@ public class GameCanRevealCellTest {
      * Setup method that runs before each test (fixture pattern)
      * Initializes a fresh Game instance for each test to ensure independence
      */
-    @Before
+    @BeforeEach
     public void setUp() {
         // Create QuestionLogic instance
         questionLogic = new QuestionLogic();
@@ -39,7 +39,7 @@ public class GameCanRevealCellTest {
     /**
      * Cleanup method that runs after each test
      */
-    @After
+    @AfterEach
     public void tearDown() {
         // Cleanup: Set references to null to help garbage collection
         game = null;
@@ -61,8 +61,8 @@ public class GameCanRevealCellTest {
         boolean result = game.canRevealCell(row, col, player);
         
         // Assert: Use proper assertion - assertEquals for boolean comparison
-        assertEquals("canRevealCell should return true for valid conditions", 
-                     true, result);
+        assertEquals(true, result, 
+                     "canRevealCell should return true for valid conditions");
     }
 }
 
