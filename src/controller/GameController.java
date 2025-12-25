@@ -19,6 +19,7 @@ public class GameController {
     private final ScoringService scoringService;
     @SuppressWarnings("unused")
     private final Runnable onReturnToMainMenu;
+    private final SoundManager soundManager;
     private boolean gameOver = false;
     
     /**
@@ -34,6 +35,7 @@ public class GameController {
         this.gamePanel = gamePanel;
         this.scoringService = new ScoringService(SysData.getInstance());
         this.onReturnToMainMenu = onReturnToMainMenu;
+        this.soundManager = SoundManager.getInstance();
         
         // Initialize the game panel
         gamePanel.initializeGame(game, this);
@@ -84,7 +86,8 @@ public class GameController {
         int gameDifficulty = convertDifficultyToInt(game.getDifficulty());
         
         if (mineHit) {
-            // Mine hit - score the mine hit
+            // Mine hit - play bomb sound and score the mine hit
+            soundManager.playSound("bomb");
             scoringService.scoreMineHit(game, playerName);
             showMessage(
                 playerName + " hit a mine!",
@@ -194,6 +197,11 @@ public class GameController {
         
         // Toggle flag
         game.flagCell(row, col);
+        
+        // Play flag sound only when placing a flag (not removing)
+        if (!wasFlagged && cell.isFlagged()) {
+            soundManager.playSound("flag");
+        }
         
         // Score the flag action (only if flagging, not unflagging, and hasn't contributed to score yet)
         if (!wasFlagged && cell.isFlagged() && !cell.hasFlagScoreContributed()) {
@@ -368,6 +376,7 @@ public class GameController {
         scoringService.scoreQuestionCellActivated(game, scoringPlayerName, gameDifficulty, questionType, isCorrect);
         
         if (isCorrect) {
+            soundManager.playSound("correct-answer");
             showMessage("Correct! Well done!", "Correct Answer", JOptionPane.INFORMATION_MESSAGE);
         } else {
             showMessage("Incorrect. The correct answer was " + question.getCorrectAnswer() + ".", 
@@ -402,11 +411,13 @@ public class GameController {
         String title;
         
         if (won) {
+            soundManager.playSound("victory");
             message = "Congratulations! Both " + game.getPlayer1Name() + " and " + 
                      game.getPlayer2Name() + " won together!\n" +
                      "Final Score: " + game.getCombinedScore() + " points";
             title = "Game Won";
         } else {
+            soundManager.playSound("game-over");
             message = "Game Over! Both " + game.getPlayer1Name() + " and " + 
                      game.getPlayer2Name() + " lost.\n" +
                      "Shared lives ran out.\n" +
@@ -520,6 +531,9 @@ public class GameController {
         
         // Mark surprise as activated
         surpriseCell.markSurpriseActivated();
+        
+        // Play surprise sound
+        soundManager.playSound("surprise");
         
         String playerName = player == 1 ? game.getPlayer1Name() : game.getPlayer2Name();
         int gameDifficulty = convertDifficultyToInt(game.getDifficulty());

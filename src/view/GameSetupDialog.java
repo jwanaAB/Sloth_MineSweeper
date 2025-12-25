@@ -6,7 +6,6 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.*;
-import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 
@@ -33,36 +32,38 @@ public class GameSetupDialog extends JDialog {
 
         // Get screen dimensions for percentage-based sizing
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        int dialogWidth = (int) (screenSize.width * 0.5); // 50% of screen width
-        int dialogHeight = (int) (screenSize.height * 0.85); // 85% of screen height
+        int dialogWidth = (int) (screenSize.width * 0.50); // 50% of screen width
+        int dialogHeight = (int) (screenSize.height * 0.90); // 90% of screen height (increased to show all content)
         setPreferredSize(new Dimension(dialogWidth, dialogHeight));
         setSize(dialogWidth, dialogHeight);
 
         background = new GradientPanel();
-        background.setBorder(new EmptyBorder(30, 30, 30, 30));
+        int bgPadding = 25; // Reduced padding
+        background.setBorder(new EmptyBorder(bgPadding, bgPadding, bgPadding, bgPadding));
         background.setLayout(new BorderLayout());
 
         card = new RoundedPanel(32);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setOpaque(false);
         card.setAlignmentX(Component.CENTER_ALIGNMENT);
-        // Use percentage-based width instead of fixed
-        int cardWidth = (int) (dialogWidth * 0.85); // 85% of dialog width
+        // Calculate card width accounting for background padding
+        int cardWidth = dialogWidth - (bgPadding * 2) - 10; // Account for padding and some margin
         card.setMaximumSize(new Dimension(cardWidth, Integer.MAX_VALUE));
+        card.setPreferredSize(new Dimension(cardWidth, card.getPreferredSize().height));
 
-        JButton backButton = new JButton("\u2190 Back to Menu");
-        backButton.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        JButton backButton = new JButton("← Back");
+        backButton.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         backButton.setForeground(new Color(110, 110, 150));
         backButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         backButton.setBorder(BorderFactory.createCompoundBorder(
             new LineBorder(new Color(150, 150, 180), 1, true),
-            new EmptyBorder(6, 12, 6, 12)
+            new EmptyBorder(5, 10, 5, 10)
         ));
         backButton.setBackground(new Color(255, 255, 255, 200));
         backButton.setOpaque(true);
         backButton.setContentAreaFilled(true);
         backButton.setFocusPainted(false);
-        backButton.setMargin(new Insets(6, 12, 6, 12));
+        backButton.setMargin(new Insets(5, 10, 5, 10));
         backButton.addActionListener(e -> {
             confirmed = false;
             dispose();
@@ -74,7 +75,7 @@ public class GameSetupDialog extends JDialog {
                 backButton.setBackground(new Color(240, 240, 255));
                 backButton.setBorder(BorderFactory.createCompoundBorder(
                     new LineBorder(new Color(120, 120, 180), 2, true),
-                    new EmptyBorder(5, 11, 5, 11)
+                    new EmptyBorder(4, 9, 4, 9)
                 ));
             }
             @Override
@@ -82,19 +83,19 @@ public class GameSetupDialog extends JDialog {
                 backButton.setBackground(new Color(255, 255, 255, 200));
                 backButton.setBorder(BorderFactory.createCompoundBorder(
                     new LineBorder(new Color(150, 150, 180), 1, true),
-                    new EmptyBorder(6, 12, 6, 12)
+                    new EmptyBorder(5, 10, 5, 10)
                 ));
             }
         });
 
         JLabel title = new JLabel("Setup Game");
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
-        title.setFont(new Font("Segoe UI Semibold", Font.BOLD, 22));
+        title.setFont(new Font("Segoe UI Semibold", Font.BOLD, 20));
         title.setForeground(new Color(76, 63, 125));
-        title.setBorder(new EmptyBorder(0, 0, 20, 0));
+        title.setBorder(new EmptyBorder(0, 0, 12, 0));
 
         // Create text fields with percentage-based sizing
-        int fieldWidth = (int) (cardWidth * 0.9); // 90% of card width
+        int fieldWidth = cardWidth - 50; // Account for card padding
         player1TextField = createStyledTextField("Player 1 name", fieldWidth);
         player2TextField = createStyledTextField("Player 2 name", fieldWidth);
 
@@ -102,16 +103,18 @@ public class GameSetupDialog extends JDialog {
         JLabel player2Label = createSectionLabel("Player 2 Name");
         JLabel difficultyLabel = createSectionLabel("Difficulty Level");
 
-        difficultyRow = new JPanel(new GridLayout(1, 3, 16, 0));
+        difficultyRow = new JPanel(new GridLayout(1, 3, 10, 0));
         difficultyRow.setOpaque(false);
         difficultyRow.setAlignmentX(Component.CENTER_ALIGNMENT);
-        int diffRowWidth = (int) (cardWidth * 0.9);
-        difficultyRow.setMaximumSize(new Dimension(diffRowWidth, 150));
+        // Ensure difficulty row fits within card width (account for card padding ~48px total)
+        int diffRowWidth = cardWidth - 50; // Leave some margin for card padding
+        difficultyRow.setMaximumSize(new Dimension(diffRowWidth, 130));
+        difficultyRow.setPreferredSize(new Dimension(diffRowWidth, 130));
 
         difficultyOptions = new DifficultyOption[]{
-            new DifficultyOption("Easy", "9 × 9", 10, 10, 1, new Color(97, 207, 145)),
-            new DifficultyOption("Medium", "13 × 13", 8, 10, 2, new Color(253, 176, 95)),
-            new DifficultyOption("Hard", "16 × 16", 6, 10, 3, new Color(255, 105, 120))
+            new DifficultyOption("Easy", "9×9", 10, 10, 1, new Color(97, 207, 145)),
+            new DifficultyOption("Medium", "13×13", 8, 10, 2, new Color(253, 176, 95)),
+            new DifficultyOption("Hard", "16×16", 6, 10, 3, new Color(255, 105, 120))
         };
 
         for (DifficultyOption option : difficultyOptions) {
@@ -133,34 +136,35 @@ public class GameSetupDialog extends JDialog {
         infoWrapper.setBackground(new Color(248, 251, 255));
         infoWrapper.setBorder(BorderFactory.createCompoundBorder(
             new LineBorder(new Color(155, 190, 255), 2, true),
-            new EmptyBorder(12, 18, 12, 18)
+            new EmptyBorder(10, 14, 10, 14)
         ));
         infoWrapper.setAlignmentX(Component.CENTER_ALIGNMENT);
-        int infoWidth = (int) (cardWidth * 0.85);
-        infoWrapper.setMaximumSize(new Dimension(infoWidth, 70));
+        int infoWidth = cardWidth - 50; // Account for card padding
+        infoWrapper.setMaximumSize(new Dimension(infoWidth, 60));
+        infoWrapper.setPreferredSize(new Dimension(infoWidth, 60));
 
         JLabel infoIcon = new JLabel("i", SwingConstants.CENTER);
-        infoIcon.setPreferredSize(new Dimension(26, 26));
-        infoIcon.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        infoIcon.setPreferredSize(new Dimension(24, 24));
+        infoIcon.setFont(new Font("Segoe UI", Font.BOLD, 15));
         infoIcon.setOpaque(true);
         infoIcon.setBackground(new Color(35, 123, 255));
         infoIcon.setForeground(Color.WHITE);
         infoIcon.setBorder(new LineBorder(new Color(35, 123, 255), 1, true));
 
-        infoText = new JLabel("Both players will share 10 hearts total");
-        infoText.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        infoText = new JLabel("<html><body style='width: " + (infoWidth - 60) + "px'>Both players will share 10 hearts total</body></html>");
+        infoText.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         infoText.setForeground(new Color(35, 89, 160));
-        infoText.setBorder(new EmptyBorder(0, 12, 0, 0));
+        infoText.setBorder(new EmptyBorder(0, 10, 0, 0));
 
         infoWrapper.add(infoIcon);
         infoWrapper.add(infoText);
 
         startButton = new GradientButton("Start Game");
-        startButton.setFont(new Font("Segoe UI Semibold", Font.BOLD, 16));
+        startButton.setFont(new Font("Segoe UI Semibold", Font.BOLD, 15));
         startButton.setForeground(Color.WHITE);
         startButton.setFocusPainted(false);
-        startButton.setPreferredSize(new Dimension(200, 48));
-        startButton.setBorder(new EmptyBorder(14, 16, 14, 16));
+        startButton.setPreferredSize(new Dimension(180, 44));
+        startButton.setBorder(new EmptyBorder(12, 14, 12, 14));
         startButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         startButton.addActionListener(e -> {
@@ -185,27 +189,28 @@ public class GameSetupDialog extends JDialog {
         backButtonWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         backButtonWrapper.add(backButton);
         card.add(backButtonWrapper);
-        card.add(Box.createVerticalStrut(6));
+        card.add(Box.createVerticalStrut(4));
         card.add(title);
-        card.add(Box.createVerticalStrut(8));
+        card.add(Box.createVerticalStrut(6));
         card.add(player1Label);
         card.add(player1TextField);
-        card.add(Box.createVerticalStrut(12));
+        card.add(Box.createVerticalStrut(10));
         card.add(player2Label);
         card.add(player2TextField);
-        card.add(Box.createVerticalStrut(16));
+        card.add(Box.createVerticalStrut(12));
         card.add(difficultyLabel);
-        card.add(Box.createVerticalStrut(10));
+        card.add(Box.createVerticalStrut(8));
         card.add(difficultyRow);
-        card.add(Box.createVerticalStrut(20));
+        card.add(Box.createVerticalStrut(14));
         card.add(infoWrapper);
-        card.add(Box.createVerticalStrut(28));
+        card.add(Box.createVerticalStrut(20));
 
         buttonHolder = new JPanel();
         buttonHolder.setOpaque(false);
         buttonHolder.setLayout(new BoxLayout(buttonHolder, BoxLayout.X_AXIS));
-        int buttonHolderWidth = (int) (cardWidth * 0.75);
-        buttonHolder.setMaximumSize(new Dimension(buttonHolderWidth, 60));
+        int buttonHolderWidth = cardWidth - 80; // Account for card padding
+        buttonHolder.setMaximumSize(new Dimension(buttonHolderWidth, 55));
+        buttonHolder.setPreferredSize(new Dimension(buttonHolderWidth, 55));
         buttonHolder.add(Box.createHorizontalGlue());
         buttonHolder.add(startButton);
         buttonHolder.add(Box.createHorizontalGlue());
@@ -219,12 +224,10 @@ public class GameSetupDialog extends JDialog {
         scrollPane.getViewport().setOpaque(false);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        // Calculate proper height to end just under start button
-        // Content estimate: back button (~40) + title (~60) + fields (~200) + difficulty (~180) + info (~70) + button (~80) + spacing (~100) = ~730
-        // Add small buffer (30px) so scroll bar ends just a little under the start button
-        int estimatedContentHeight = 730;
-        int scrollPaneHeight = Math.min(estimatedContentHeight + 30, (int)(dialogHeight * 0.75));
-        scrollPane.setPreferredSize(new Dimension(cardWidth, scrollPaneHeight));
+        // Calculate proper height to show all content without scrolling
+        // Use most of the dialog height to minimize scrolling
+        int scrollPaneHeight = dialogHeight - (bgPadding * 2) - 5;
+        scrollPane.setPreferredSize(new Dimension(cardWidth + 5, scrollPaneHeight)); // Add small buffer for scrollbar
         // Don't set maximumSize - let it resize with the dialog
         scrollPane.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
         
@@ -264,8 +267,8 @@ public class GameSetupDialog extends JDialog {
         }
         
         // Calculate new card width based on current dialog size (accounting for padding)
-        int padding = 60; // 30px on each side
-        int newCardWidth = Math.max(600, Math.min(currentWidth - padding, 1000));
+        int bgPadding = 25; // Match the padding used in constructor
+        int newCardWidth = currentWidth - (bgPadding * 2) - 10; // Account for padding and margin
         
         // Update card maximum width - this allows BoxLayout to respect the width constraint
         card.setMaximumSize(new Dimension(newCardWidth, Integer.MAX_VALUE));
@@ -273,41 +276,47 @@ public class GameSetupDialog extends JDialog {
         
         // Update text field sizes
         if (player1TextField != null) {
-            int fieldWidth = (int) (newCardWidth * 0.9);
-            Dimension fieldSize = new Dimension(fieldWidth, 44);
+            int fieldWidth = newCardWidth - 50; // Account for card padding
+            Dimension fieldSize = new Dimension(fieldWidth, 42);
             player1TextField.setMaximumSize(fieldSize);
             player1TextField.setPreferredSize(fieldSize);
         }
         if (player2TextField != null) {
-            int fieldWidth = (int) (newCardWidth * 0.9);
-            Dimension fieldSize = new Dimension(fieldWidth, 44);
+            int fieldWidth = newCardWidth - 50; // Account for card padding
+            Dimension fieldSize = new Dimension(fieldWidth, 42);
             player2TextField.setMaximumSize(fieldSize);
             player2TextField.setPreferredSize(fieldSize);
         }
         
-        // Update difficulty row
+        // Update difficulty row - ensure it fits
+        // GridLayout will automatically divide the width equally among 3 cards
         if (difficultyRow != null) {
-            int diffRowWidth = (int) (newCardWidth * 0.9);
-            difficultyRow.setMaximumSize(new Dimension(diffRowWidth, 150));
-            difficultyRow.setPreferredSize(new Dimension(diffRowWidth, 150));
+            int diffRowWidth = newCardWidth - 50; // Account for card padding
+            difficultyRow.setMaximumSize(new Dimension(diffRowWidth, 130));
+            difficultyRow.setPreferredSize(new Dimension(diffRowWidth, 130));
         }
         
         // Update info wrapper
         if (infoWrapper != null) {
-            int infoWidth = (int) (newCardWidth * 0.85);
-            infoWrapper.setMaximumSize(new Dimension(infoWidth, 70));
-            infoWrapper.setPreferredSize(new Dimension(infoWidth, 70));
+            int infoWidth = newCardWidth - 50; // Account for card padding
+            infoWrapper.setMaximumSize(new Dimension(infoWidth, 60));
+            infoWrapper.setPreferredSize(new Dimension(infoWidth, 60));
+            // Update info text width for word wrapping
+            if (infoText != null) {
+                String plainText = infoText.getText().replaceAll("<[^>]*>", "").replaceAll("&nbsp;", " ");
+                infoText.setText("<html><body style='width: " + Math.max(200, infoWidth - 50) + "px'>" + plainText + "</body></html>");
+            }
         }
         
         // Update button holder
         if (buttonHolder != null) {
-            int buttonHolderWidth = (int) (newCardWidth * 0.75);
-            buttonHolder.setMaximumSize(new Dimension(buttonHolderWidth, 60));
-            buttonHolder.setPreferredSize(new Dimension(buttonHolderWidth, 60));
+            int buttonHolderWidth = newCardWidth - 80; // Account for card padding
+            buttonHolder.setMaximumSize(new Dimension(buttonHolderWidth, 55));
+            buttonHolder.setPreferredSize(new Dimension(buttonHolderWidth, 55));
         }
         
-        // Calculate available height for scroll pane
-        int availableHeight = currentHeight - 60; // Account for dialog border and background padding (30px top + 30px bottom)
+        // Calculate available height for scroll pane - use most of the dialog height
+        int availableHeight = currentHeight - (bgPadding * 2) - 5; // Account for background padding
         
         // Update scroll pane to fill available space
         // Set preferred size so it uses the available space, but allow it to grow/shrink
@@ -331,13 +340,13 @@ public class GameSetupDialog extends JDialog {
 
     private JTextField createStyledTextField(String placeholder, int width) {
         JTextField field = new JTextField();
-        Dimension fieldSize = new Dimension(width, 44);
+        Dimension fieldSize = new Dimension(width, 42);
         field.setMaximumSize(fieldSize);
         field.setPreferredSize(fieldSize);
-        field.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         field.setBorder(BorderFactory.createCompoundBorder(
             new LineBorder(new Color(202, 210, 255), 2, true),
-            new EmptyBorder(10, 14, 10, 14)
+            new EmptyBorder(9, 12, 9, 12)
         ));
         field.setBackground(new Color(250, 251, 255));
         field.setForeground(new Color(60, 60, 95));
@@ -350,9 +359,9 @@ public class GameSetupDialog extends JDialog {
 
     private JLabel createSectionLabel(String text) {
         JLabel label = new JLabel(text);
-        label.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        label.setFont(new Font("Segoe UI", Font.BOLD, 13));
         label.setForeground(new Color(116, 107, 150));
-        label.setBorder(new EmptyBorder(12, 0, 6, 0));
+        label.setBorder(new EmptyBorder(10, 0, 5, 0));
         label.setAlignmentX(Component.CENTER_ALIGNMENT);
         return label;
     }
@@ -382,7 +391,13 @@ public class GameSetupDialog extends JDialog {
                 hearts = 10;
                 break;
         }
-        infoText.setText("Both players will share " + hearts + " hearts total");
+        // Get current info wrapper width for word wrapping
+        int infoWidth = infoWrapper != null ? infoWrapper.getWidth() : 400;
+        if (infoWidth <= 0) {
+            infoWidth = (int) (getWidth() * 0.88 * 0.88); // Estimate based on dialog width
+        }
+        String text = "Both players will share " + hearts + " hearts total";
+        infoText.setText("<html><body style='width: " + Math.max(200, infoWidth - 60) + "px'>" + text + "</body></html>");
     }
 
     private boolean validateInput() {
@@ -493,22 +508,24 @@ public class GameSetupDialog extends JDialog {
             this.filledHearts = filledHearts;
             this.totalHearts = totalHearts;
             setOpaque(false);
-            setBorder(new EmptyBorder(18, 20, 18, 20));
+            setBorder(new EmptyBorder(12, 12, 12, 12));
             setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-            Dimension boxSize = new Dimension(170, 150);
+            // Calculate size dynamically to fit 3 cards with gaps
+            // Will be set by parent container, but set a reasonable default
+            Dimension boxSize = new Dimension(140, 125);
             setPreferredSize(boxSize);
-            setMinimumSize(boxSize);
-            setMaximumSize(boxSize);
+            setMinimumSize(new Dimension(100, 110));
+            // Don't set maximum size - let GridLayout control the width
             setAlignmentY(Component.TOP_ALIGNMENT);
 
             JLabel titleLabel = new JLabel(title);
-            titleLabel.setFont(new Font("Segoe UI Semibold", Font.BOLD, 16));
+            titleLabel.setFont(new Font("Segoe UI Semibold", Font.BOLD, 15));
             titleLabel.setForeground(new Color(78, 66, 120));
 
             JLabel gridLabel = new JLabel(grid);
-            gridLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+            gridLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
             gridLabel.setForeground(new Color(116, 107, 150));
-            gridLabel.setBorder(new EmptyBorder(4, 0, 12, 0));
+            gridLabel.setBorder(new EmptyBorder(3, 0, 10, 0));
 
             JPanel heartsPanel = createHeartsPanel();
             heartsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -521,11 +538,11 @@ public class GameSetupDialog extends JDialog {
         }
 
         private JPanel createHeartsPanel() {
-            JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+            JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
             panel.setOpaque(false);
             for (int i = 0; i < totalHearts; i++) {
                 JLabel heart = new JLabel("\u2665");
-                heart.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+                heart.setFont(new Font("Segoe UI", Font.PLAIN, 14));
                 heart.setForeground(i < filledHearts ? new Color(208, 45, 85) : new Color(191, 196, 214));
                 panel.add(heart);
             }

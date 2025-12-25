@@ -62,8 +62,8 @@ public class MainView extends JFrame {
         
         // Use percentage-based sizing for better screen compatibility
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        int windowWidth = (int) (screenSize.width * 0.6); // 60% of screen width
-        int windowHeight = (int) (screenSize.height * 0.7); // 70% of screen height
+        int windowWidth = (int) (screenSize.width * 0.8); // 80% of screen width
+        int windowHeight = (int) (screenSize.height * 0.85); // 85% of screen height
         setPreferredSize(new Dimension(windowWidth, windowHeight));
 
         startGameButton = buildMenuButton(
@@ -107,8 +107,8 @@ public class MainView extends JFrame {
         
         // Store base dimensions for scaling (use preferred size if width/height is 0)
         Dimension size = getSize();
-        baseWindowWidth = size.width > 0 ? size.width : (int)(Toolkit.getDefaultToolkit().getScreenSize().width * 0.6);
-        baseWindowHeight = size.height > 0 ? size.height : (int)(Toolkit.getDefaultToolkit().getScreenSize().height * 0.7);
+        baseWindowWidth = size.width > 0 ? size.width : (int)(Toolkit.getDefaultToolkit().getScreenSize().width * 0.8);
+        baseWindowHeight = size.height > 0 ? size.height : (int)(Toolkit.getDefaultToolkit().getScreenSize().height * 0.85);
         
         // Add resize listener for responsive UI
         addComponentListener(new ComponentAdapter() {
@@ -159,9 +159,32 @@ public class MainView extends JFrame {
     }
 
     private JPanel buildHeader() {
-        JPanel panel = new JPanel();
-        panel.setOpaque(false);
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        // Main content panel
+        JPanel contentPanel = new JPanel();
+        contentPanel.setOpaque(false);
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+
+        // Top panel with How to Play button on the right
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setOpaque(false);
+        topPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        
+        // How to Play button (small, top right) with visible border
+        JButton smallHowToPlayButton = new JButton("How to Play");
+        smallHowToPlayButton.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        smallHowToPlayButton.setForeground(new Color(91, 161, 255));
+        smallHowToPlayButton.setBackground(new Color(240, 248, 255)); // Light blue background
+        smallHowToPlayButton.setContentAreaFilled(true);
+        smallHowToPlayButton.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(91, 161, 255), 2, true),
+            BorderFactory.createEmptyBorder(6, 12, 6, 12)
+        ));
+        smallHowToPlayButton.setFocusPainted(false);
+        smallHowToPlayButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        smallHowToPlayButton.addActionListener(e -> showHowToPlayDialog());
+        
+        topPanel.add(Box.createHorizontalGlue(), BorderLayout.WEST);
+        topPanel.add(smallHowToPlayButton, BorderLayout.EAST);
 
         iconLabel = new JLabel("\u26CF", SwingConstants.CENTER);
         iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 64));
@@ -173,11 +196,12 @@ public class MainView extends JFrame {
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 46));
         titleLabel.setAlignmentX(CENTER_ALIGNMENT);
 
-        panel.add(iconLabel);
-        panel.add(Box.createVerticalStrut(10));
-        panel.add(titleLabel);
-        panel.add(Box.createVerticalStrut(20));
-        return panel;
+        contentPanel.add(topPanel);
+        contentPanel.add(iconLabel);
+        contentPanel.add(Box.createVerticalStrut(10));
+        contentPanel.add(titleLabel);
+        contentPanel.add(Box.createVerticalStrut(20));
+        return contentPanel;
     }
 
     private JPanel buildMenuGrid() {
@@ -222,6 +246,13 @@ public class MainView extends JFrame {
         historyButton.addActionListener(historyListener);
         questionManagerButton.addActionListener(questionManagerListener);
         exitButton.addActionListener(exitListener);
+    }
+    
+    public void showHowToPlayDialog() {
+        SwingUtilities.invokeLater(() -> {
+            HowToPlayDialog dialog = new HowToPlayDialog(this);
+            dialog.setVisible(true);
+        });
     }
 
     public void showPlaceholderScreen(String featureName) {
@@ -343,8 +374,8 @@ public class MainView extends JFrame {
         setExtendedState(JFrame.NORMAL);
         // Use percentage-based sizing for better screen compatibility
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        int windowWidth = (int) (screenSize.width * 0.6); // 60% of screen width
-        int windowHeight = (int) (screenSize.height * 0.7); // 70% of screen height
+        int windowWidth = (int) (screenSize.width * 0.8); // 80% of screen width
+        int windowHeight = (int) (screenSize.height * 0.85); // 85% of screen height
         setPreferredSize(new Dimension(windowWidth, windowHeight));
         pack();
         setLocationRelativeTo(null); // Center the window on screen
