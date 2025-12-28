@@ -344,6 +344,8 @@ public class MainView extends JFrame {
                 onReturnToMain.run();
             }
         });
+        // Refresh history when showing the panel
+        historyPanel.refresh();
         setTitle("History");
         cardLayout.show(cardPanel, "history");
         SwingUtilities.invokeLater(() -> {

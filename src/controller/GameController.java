@@ -1,9 +1,10 @@
 package controller;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import javax.swing.*;
 import model.*;
 import view.GamePanel;
-
-import javax.swing.*;
 
 /**
  * Controller for managing game logic and interactions between the Game model
@@ -21,6 +22,7 @@ public class GameController {
     private final Runnable onReturnToMainMenu;
     private final SoundManager soundManager;
     private boolean gameOver = false;
+    private final LocalDateTime gameStartTime; // Track when game started
     
     /**
      * Constructs a new GameController.
@@ -36,6 +38,7 @@ public class GameController {
         this.scoringService = new ScoringService(SysData.getInstance());
         this.onReturnToMainMenu = onReturnToMainMenu;
         this.soundManager = SoundManager.getInstance();
+        this.gameStartTime = LocalDateTime.now(); // Record game start time
         
         // Initialize the game panel
         gamePanel.initializeGame(game, this);
@@ -203,12 +206,7 @@ public class GameController {
             soundManager.playSound("flag");
         }
         
-        // Score the flag action (only if flagging, not unflagging, and hasn't contributed to score yet)
-        if (!wasFlagged && cell.isFlagged() && !cell.hasFlagScoreContributed()) {
-            scoreCellFlag(cell, row, col, player);
-            // Mark that this cell has now contributed to score via flagging
-            cell.setFlagScoreContributed(true);
-        }
+        // Flags should not affect scoring - no scoring logic for flags
         
         // Update UI
         gamePanel.updateUI();
@@ -442,7 +440,60 @@ public class GameController {
         // Update UI to show final state with all cells revealed
         gamePanel.updateUI();
         
+        // Save game history
+        saveGameHistory(won);
+        
         // Stay on game board view - do not return to main menu
+    }
+    
+    /**
+     * Saves the completed game to history.
+     * 
+     * @param won true if the game was won, false otherwise
+     */
+    private void saveGameHistory(boolean won) {
+        try {
+            // Calculate game duration
+            LocalDateTime gameEndTime = LocalDateTime.now();
+            long durationSeconds = java.time.Duration.between(gameStartTime, gameEndTime).getSeconds();
+            
+            // Get game data
+            Game.Difficulty difficulty = game.getDifficulty();
+            LocalDate date = LocalDate.now();
+            String player1Name = game.getPlayer1Name();
+            String player2Name = game.getPlayer2Name();
+            int combinedScore = game.getCombinedScore();
+            int remainingHearts = game.getSharedLives(); // Remaining shared lives
+            
+            // Create and save game history entry
+            GameHistory history = new GameHistory(
+                difficulty,
+                date,
+                durationSeconds,
+                player1Name,
+                player2Name,
+                combinedScore,
+                remainingHearts
+            );
+            
+            System.out.println("Saving game history: " + player1Name + " vs " + player2Name + 
+                             ", Score: " + combinedScore + ", Hearts: " + remainingHearts);
+            
+            SysData.getInstance().addGameHistory(history);
+            
+            System.out.println("Game history saved successfully. Total games: " + 
+                             SysData.getInstance().getGameHistory().size());
+        } catch (Exception e) {
+            System.err.println("Error saving game history: " + e.getMessage());
+            e.printStackTrace();
+            // Show error to user
+            JOptionPane.showMessageDialog(
+                gamePanel,
+                "Error saving game history: " + e.getMessage(),
+                "Save Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+        }
     }
     
     /**
@@ -485,36 +536,6 @@ public class GameController {
             scoringService.scoreQuestionCellRevealedCorrectly(game, playerName);
         } else if (cell instanceof SurpriseCell) {
             scoringService.scoreSurpriseCellRevealedCorrectly(game, playerName);
-        }
-    }
-    
-    /**
-     * Scores a cell flag based on whether it's correct or incorrect.
-     * 
-     * @param cell The cell that was flagged
-     * @param row The row index
-     * @param col The column index
-     * @param player The player number
-     */
-    private void scoreCellFlag(Cell cell, int row, int col, int player) {
-        if (cell == null) return;
-        
-        String playerName = player == 1 ? game.getPlayer1Name() : game.getPlayer2Name();
-        
-        if (cell instanceof MineCell) {
-            // Correct flag on a mine
-            scoringService.scoreMineFlaggedCorrectly(game, playerName);
-        } else {
-            // Incorrect flag on non-mine cell
-            if (cell instanceof NumberCell) {
-                scoringService.scoreNumberedCellFlaggedIncorrectly(game, playerName, ((NumberCell) cell).getAdjacentMines());
-            } else if (cell instanceof EmptyCell) {
-                scoringService.scoreEmptyCellFlaggedIncorrectly(game, playerName);
-            } else if (cell instanceof QuestionCell) {
-                scoringService.scoreQuestionCellFlaggedIncorrectly(game, playerName);
-            } else if (cell instanceof SurpriseCell) {
-                scoringService.scoreSurpriseCellFlaggedIncorrectly(game, playerName);
-            }
         }
     }
     
