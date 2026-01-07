@@ -25,16 +25,23 @@ public class HistoryPanel extends JPanel {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
 
-        // Home button - small, top left
-        homeButton = new JButton("\u2190 Home");
+        // Home button - rectangle shape, top left
+        homeButton = new JButton("<- Home");
         homeButton.setFocusPainted(false);
-        homeButton.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        homeButton.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         homeButton.setBackground(new Color(245, 245, 245));
-        homeButton.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 8));
-        // Width wide enough for "← Home" text, height just slightly bigger than font
-        homeButton.setPreferredSize(new Dimension(120, 2));
-        homeButton.setMaximumSize(new Dimension(120, 2));
-        homeButton.setMinimumSize(new Dimension(120, 2));
+        homeButton.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1)); // Rectangle border
+        homeButton.setBorderPainted(true);
+        homeButton.setContentAreaFilled(true);
+        homeButton.setOpaque(true);
+        homeButton.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+            BorderFactory.createEmptyBorder(6, 12, 6, 12)
+        ));
+        // Rectangle button size
+        homeButton.setPreferredSize(new Dimension(90, 32));
+        homeButton.setMaximumSize(new Dimension(90, 32));
+        homeButton.setMinimumSize(new Dimension(90, 32));
 
         // Top bar with home button, title, and filters all together
         JPanel topBar = new JPanel(new BorderLayout());
@@ -211,7 +218,7 @@ public class HistoryPanel extends JPanel {
         container.setAlignmentX(Component.CENTER_ALIGNMENT);
         container.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
         
-        // Top row: Difficulty badge, Date, and Duration (outside the card)
+        // Top row: Difficulty badge, Date, and Delete button (outside the card)
         JPanel headerRow = new JPanel(new BorderLayout());
         headerRow.setOpaque(false);
         headerRow.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
@@ -231,27 +238,32 @@ public class HistoryPanel extends JPanel {
         dateLabel.setForeground(new Color(100, 100, 100));
         leftHeader.add(dateLabel);
         
-        // Right: Duration in rounded rectangle
-        JPanel durationPanel = createRoundedPanel(new Color(173, 216, 255), 15);
-        durationPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 0));
-        durationPanel.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 12));
+        // Right: Delete button (red trash icon)
+        JButton deleteButton = createTrashButton();
+        deleteButton.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "Are you sure you want to delete this game record?",
+                "Delete Game History",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+            );
+            if (confirm == JOptionPane.YES_OPTION) {
+                SysData.getInstance().removeGameHistory(history);
+                refreshHistory();
+            }
+        });
         
-        JLabel clockIcon = new JLabel("\u25A0"); // Square symbol (black square)
-        clockIcon.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        clockIcon.setForeground(new Color(60, 60, 60));
-        durationPanel.add(clockIcon);
-        
-        JLabel durationLabel = new JLabel(history.getFormattedDuration());
-        durationLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        durationLabel.setForeground(new Color(60, 60, 60));
-        durationPanel.add(durationLabel);
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        rightPanel.setOpaque(false);
+        rightPanel.add(deleteButton);
         
         headerRow.add(leftHeader, BorderLayout.WEST);
-        headerRow.add(durationPanel, BorderLayout.EAST);
+        headerRow.add(rightPanel, BorderLayout.EAST);
         
         // The actual card (white with rounded corners)
         JPanel card = new JPanel();
-        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setLayout(new BorderLayout());
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(230, 230, 230), 1),
@@ -259,6 +271,33 @@ public class HistoryPanel extends JPanel {
         ));
         card.setAlignmentX(Component.CENTER_ALIGNMENT);
         card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 300));
+        
+        // Time display in top-right corner as small rectangle
+        JPanel timePanel = createRoundedPanel(new Color(173, 216, 255), 8);
+        timePanel.setLayout(new FlowLayout(FlowLayout.CENTER, 4, 0));
+        timePanel.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+        timePanel.setPreferredSize(new Dimension(70, 24));
+        timePanel.setMaximumSize(new Dimension(70, 24));
+        
+        JLabel clockIcon = new JLabel("\u25A0"); // Square symbol (black square)
+        clockIcon.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        clockIcon.setForeground(new Color(60, 60, 60));
+        timePanel.add(clockIcon);
+        
+        JLabel durationLabel = new JLabel(history.getFormattedDuration());
+        durationLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        durationLabel.setForeground(new Color(60, 60, 60));
+        timePanel.add(durationLabel);
+        
+        // Top panel to hold time in corner
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        topPanel.setOpaque(false);
+        topPanel.add(timePanel);
+        
+        // Content panel for card body
+        JPanel cardContent = new JPanel();
+        cardContent.setLayout(new BoxLayout(cardContent, BoxLayout.Y_AXIS));
+        cardContent.setOpaque(false);
         
         // Player information row
         JPanel playerRow = new JPanel();
@@ -293,9 +332,13 @@ public class HistoryPanel extends JPanel {
             new Color(255, 182, 193)); // Light pink
         heartsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        card.add(playerRow);
-        card.add(scorePanel);
-        card.add(heartsPanel);
+        cardContent.add(playerRow);
+        cardContent.add(scorePanel);
+        cardContent.add(heartsPanel);
+        
+        // Add top panel with time in corner and content to center
+        card.add(topPanel, BorderLayout.NORTH);
+        card.add(cardContent, BorderLayout.CENTER);
         
         // Add header and card to container
         container.add(headerRow);
@@ -321,6 +364,56 @@ public class HistoryPanel extends JPanel {
         };
         panel.setOpaque(false);
         return panel;
+    }
+    
+    private JButton createTrashButton() {
+        JButton button = new JButton() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Draw trash can icon in red
+                g2.setColor(new Color(220, 53, 69)); // Red color
+                
+                int width = getWidth();
+                int height = getHeight();
+                int centerX = width / 2;
+                int centerY = height / 2;
+                
+                // Draw trash can body (rectangle)
+                int bodyWidth = 12;
+                int bodyHeight = 14;
+                g2.fillRect(centerX - bodyWidth/2, centerY - bodyHeight/2 + 2, bodyWidth, bodyHeight);
+                
+                // Draw lid (rectangle on top)
+                int lidWidth = 14;
+                int lidHeight = 2;
+                g2.fillRect(centerX - lidWidth/2, centerY - bodyHeight/2, lidWidth, lidHeight);
+                
+                // Draw handle (small rectangle on lid)
+                int handleWidth = 2;
+                int handleHeight = 3;
+                g2.fillRect(centerX - lidWidth/2 - 2, centerY - bodyHeight/2 - handleHeight, handleWidth, handleHeight);
+                
+                // Draw lines on body (to show it's a trash can)
+                g2.setStroke(new BasicStroke(1.5f));
+                g2.setColor(new Color(255, 255, 255)); // White lines
+                g2.drawLine(centerX - bodyWidth/2 + 3, centerY - 2, centerX + bodyWidth/2 - 3, centerY - 2);
+                g2.drawLine(centerX - bodyWidth/2 + 3, centerY + 2, centerX + bodyWidth/2 - 3, centerY + 2);
+                
+                g2.dispose();
+            }
+        };
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setContentAreaFilled(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setPreferredSize(new Dimension(30, 30));
+        button.setMaximumSize(new Dimension(30, 30));
+        button.setMinimumSize(new Dimension(30, 30));
+        button.setToolTipText("Delete game record");
+        return button;
     }
     
     private JLabel createDifficultyBadge(Game.Difficulty difficulty) {
@@ -464,15 +557,19 @@ public class HistoryPanel extends JPanel {
     public void updateResponsiveLayout(double scaleFactor) {
         // Scale home button font
         if (homeButton != null) {
-            int buttonFontSize = (int) (16 * scaleFactor);
-            buttonFontSize = Math.max(14, Math.min(20, buttonFontSize));
-            homeButton.setFont(new Font("Segoe UI", Font.BOLD, buttonFontSize));
+            int buttonFontSize = (int) (12 * scaleFactor);
+            buttonFontSize = Math.max(11, Math.min(14, buttonFontSize));
+            homeButton.setFont(new Font("Segoe UI", Font.PLAIN, buttonFontSize));
             
-            int padding = (int) (8 * scaleFactor);
-            padding = Math.max(6, Math.min(12, padding));
-            int horizontalPadding = (int) (18 * scaleFactor);
-            horizontalPadding = Math.max(14, Math.min(24, horizontalPadding));
-            homeButton.setBorder(BorderFactory.createEmptyBorder(padding, horizontalPadding, padding, horizontalPadding));
+            int padding = (int) (6 * scaleFactor);
+            padding = Math.max(5, Math.min(8, padding));
+            int horizontalPadding = (int) (12 * scaleFactor);
+            horizontalPadding = Math.max(10, Math.min(15, horizontalPadding));
+            // Maintain rectangle border with responsive padding
+            homeButton.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+                BorderFactory.createEmptyBorder(padding, horizontalPadding, padding, horizontalPadding)
+            ));
         }
         
         revalidate();

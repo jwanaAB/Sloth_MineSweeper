@@ -60,6 +60,12 @@ public final class SysData {
         // Save to CSV whenever a new game is added
         historyManager.saveGameHistoryToCSV(gameHistory);
     }
+    
+    public void removeGameHistory(GameHistory history) {
+        gameHistory.remove(history);
+        // Save to CSV after removal
+        historyManager.saveGameHistoryToCSV(gameHistory);
+    }
 
     public void addQuestion(String question) {
         questions.add(question);
