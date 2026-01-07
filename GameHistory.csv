@@ -1,7 +1,9 @@
 Difficulty,Date,DurationSeconds,Player1Name,Player2Name,CombinedScore,RemainingHearts
 HARD,2025-12-27,522,Sarah,Mike,143,1
-HARD,2025-12-25,680,Chris,Taylor,187,0
 EASY,2025-12-28,230,ana,mosh ana,87,10
+MEDIUM,2025-12-28,420,Aya,mosh Aya,111,3
+MEDIUM,2025-12-28,420,Maya,mosh Maya,123,1
+EASY,2025-12-28,420,Khalil,mosh khalil,134,2
 HARD,2025-12-26,680,Chris,Taylor,187,0
 MEDIUM,2025-12-28,420,Sam,Riley,132,2
-EASY,2025-12-28,327,ana,mosh ana,72,8
+EASY,2025-12-28,420,Morgan,Casey,75,5
