@@ -31,12 +31,14 @@ import javax.swing.SwingUtilities;
 public class GamePanel extends JPanel {
 
     private JButton homeButton;
+    private JButton pauseButton;
     private JButton flagModeButton;
     private JLabel player1NameLabel;
     private JLabel player2NameLabel;
     private JLabel sharedLivesLabel;
     private JLabel combinedScoreLabel;
     private JLabel turnIndicatorLabel;
+    private JLabel timerLabel;
     private final JPanel player1BoardPanel;
     private final JPanel player2BoardPanel;
     private JLabel player1BoardLabel;
@@ -47,6 +49,8 @@ public class GamePanel extends JPanel {
     private Game game;
     private boolean gameOver = false;
     private boolean flagModeEnabled = false;
+    private boolean isPaused = false;
+    private JPanel pauseOverlay;
 
     /**
      * Constructs a new GamePanel.
@@ -93,9 +97,15 @@ public class GamePanel extends JPanel {
         this.gameController = gameController;
         this.gameOver = false; // Reset game over state for new game
         this.flagModeEnabled = false; // Reset Flag Mode to OFF for new game
+        this.isPaused = false; // Reset pause state for new game
 
-        // Update Flag Mode button appearance
+        // Update button appearances
         updateFlagModeButtonAppearance();
+        updatePauseButtonAppearance();
+        hidePauseOverlay();
+        
+        // Reset timer display
+        updateTimerDisplay("0:00");
 
         // Update player names
         player1NameLabel.setText("Player 1: " + game.getPlayer1Name());
@@ -160,6 +170,43 @@ public class GamePanel extends JPanel {
         });
 
         topBar.add(homeButton, BorderLayout.WEST);
+        
+        // Create Pause button in the center
+        pauseButton = new JButton("⏸ Pause");
+        pauseButton.setFocusPainted(false);
+        pauseButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        pauseButton.setBackground(new Color(255, 193, 7)); // Yellow/amber color
+        pauseButton.setForeground(Color.BLACK);
+        pauseButton.setOpaque(true);
+        pauseButton.setBorderPainted(false);
+        pauseButton.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(230, 170, 0), 2),
+                BorderFactory.createEmptyBorder(8, 16, 8, 16)));
+        pauseButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        // Add hover effect
+        pauseButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                if (!isPaused) {
+                    pauseButton.setBackground(new Color(230, 170, 0)); // Darker on hover
+                }
+            }
+            
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                if (!isPaused) {
+                    pauseButton.setBackground(new Color(255, 193, 7)); // Original color
+                }
+            }
+        });
+        
+        // Add click handler
+        pauseButton.addActionListener(e -> togglePause());
+        
+        // Add Pause button to center
+        JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        centerPanel.setOpaque(false);
+        centerPanel.add(pauseButton);
+        topBar.add(centerPanel, BorderLayout.CENTER);
         
         // Create Flag Mode button
         flagModeButton = new JButton("Flag Mode: OFF");
@@ -286,15 +333,32 @@ public class GamePanel extends JPanel {
         turnIndicatorLabel.setForeground(new Color(140, 70, 215));
         turnIndicatorLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
+        // Timer label
+        timerLabel = new JLabel("Time: 0:00");
+        timerLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        timerLabel.setForeground(new Color(255, 193, 7)); // Yellow/amber to match pause button
+        timerLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
         JPanel centerPanel = new JPanel(new BorderLayout());
         centerPanel.setOpaque(false);
         centerPanel.add(sharedLivesLabel, BorderLayout.NORTH);
         centerPanel.add(combinedScoreLabel, BorderLayout.CENTER);
-        centerPanel.add(turnIndicatorLabel, BorderLayout.SOUTH);
+        centerPanel.add(timerLabel, BorderLayout.SOUTH);
         centerPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+        
+        // Add turn indicator below timer
+        JPanel bottomInfoPanel = new JPanel(new BorderLayout());
+        bottomInfoPanel.setOpaque(false);
+        bottomInfoPanel.add(turnIndicatorLabel, BorderLayout.CENTER);
+        bottomInfoPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+        
+        JPanel infoContainer = new JPanel(new BorderLayout());
+        infoContainer.setOpaque(false);
+        infoContainer.add(centerPanel, BorderLayout.CENTER);
+        infoContainer.add(bottomInfoPanel, BorderLayout.SOUTH);
 
         infoPanel.add(namesPanel, BorderLayout.NORTH);
-        infoPanel.add(centerPanel, BorderLayout.CENTER);
+        infoPanel.add(infoContainer, BorderLayout.CENTER);
 
         // Get the north container that was created in buildTopBar
         JPanel northContainer = (JPanel) ((BorderLayout) getLayout()).getLayoutComponent(BorderLayout.NORTH);
@@ -683,6 +747,163 @@ public class GamePanel extends JPanel {
             }
         }
     }
+    
+    /**
+     * Enables cell buttons based on current game state (only if not game over and not paused).
+     */
+    private void enableAllCells() {
+        if (game == null || gameOver || isPaused) {
+            return;
+        }
+        
+        // Re-enable cells by calling updateUI which will update cell states
+        updateUI();
+    }
+    
+    /**
+     * Toggles the pause state and updates the UI accordingly.
+     */
+    private void togglePause() {
+        isPaused = !isPaused;
+        updatePauseButtonAppearance();
+        
+        if (isPaused) {
+            disableAllCells();
+            showPauseOverlay();
+            // Pause the timer
+            if (gameController != null) {
+                gameController.pauseTimer();
+            }
+        } else {
+            enableAllCells();
+            hidePauseOverlay();
+            // Resume the timer
+            if (gameController != null) {
+                gameController.resumeTimer();
+            }
+        }
+    }
+    
+    /**
+     * Updates the timer display with the given time string.
+     * 
+     * @param timeString The formatted time string (e.g., "5:23")
+     */
+    public void updateTimerDisplay(String timeString) {
+        if (timerLabel != null) {
+            timerLabel.setText("Time: " + timeString);
+        }
+    }
+    
+    /**
+     * Updates the Pause button appearance based on current state.
+     */
+    private void updatePauseButtonAppearance() {
+        if (pauseButton == null) {
+            return;
+        }
+        
+        if (isPaused) {
+            pauseButton.setText("▶ Resume");
+            pauseButton.setBackground(new Color(40, 167, 69)); // Green when paused
+            pauseButton.setForeground(Color.WHITE);
+            pauseButton.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(30, 130, 50), 2),
+                    BorderFactory.createEmptyBorder(8, 16, 8, 16)));
+        } else {
+            pauseButton.setText("⏸ Pause");
+            pauseButton.setBackground(new Color(255, 193, 7)); // Yellow/amber when not paused
+            pauseButton.setForeground(Color.BLACK);
+            pauseButton.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(230, 170, 0), 2),
+                    BorderFactory.createEmptyBorder(8, 16, 8, 16)));
+        }
+    }
+    
+    /**
+     * Shows a semi-transparent overlay indicating the game is paused.
+     * This overlay is added on top of the existing layout without modifying board structure.
+     */
+    private void showPauseOverlay() {
+        if (pauseOverlay != null) {
+            pauseOverlay.setVisible(true);
+            pauseOverlay.repaint();
+            return;
+        }
+        
+        // Create overlay panel
+        pauseOverlay = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Semi-transparent background
+                g2.setColor(new Color(0, 0, 0, 180));
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                
+                // Pause message
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("Segoe UI", Font.BOLD, 48));
+                String text = "PAUSED";
+                FontMetrics fm = g2.getFontMetrics();
+                int textWidth = fm.stringWidth(text);
+                int textHeight = fm.getHeight();
+                int x = (getWidth() - textWidth) / 2;
+                int y = (getHeight() - textHeight) / 2 + fm.getAscent();
+                g2.drawString(text, x, y);
+                
+                // Subtitle
+                g2.setFont(new Font("Segoe UI", Font.PLAIN, 20));
+                String subtitle = "Click Resume to continue";
+                fm = g2.getFontMetrics();
+                textWidth = fm.stringWidth(subtitle);
+                x = (getWidth() - textWidth) / 2;
+                y += textHeight + 20;
+                g2.drawString(subtitle, x, y);
+                
+                g2.dispose();
+            }
+        };
+        pauseOverlay.setOpaque(false);
+        pauseOverlay.setLayout(new BorderLayout());
+        
+        // Add overlay as a glass pane using the root pane
+        JFrame rootFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+        if (rootFrame != null) {
+            pauseOverlay.setSize(rootFrame.getSize());
+            rootFrame.setGlassPane(pauseOverlay);
+            pauseOverlay.setVisible(true);
+        } else {
+            // Fallback: add directly to this panel's center (will cover content)
+            add(pauseOverlay, BorderLayout.CENTER);
+            pauseOverlay.setVisible(true);
+        }
+        
+        revalidate();
+        repaint();
+    }
+    
+    /**
+     * Hides the pause overlay.
+     */
+    private void hidePauseOverlay() {
+        if (pauseOverlay != null) {
+            pauseOverlay.setVisible(false);
+            JFrame rootFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+            if (rootFrame != null && rootFrame.getGlassPane() == pauseOverlay) {
+                rootFrame.setGlassPane(new JPanel()); // Reset to empty glass pane
+            } else {
+                // If added to center, remove it
+                if (pauseOverlay.getParent() == this) {
+                    remove(pauseOverlay);
+                }
+            }
+            revalidate();
+            repaint();
+        }
+    }
 
     /**
      * Shows a confirmation dialog before returning to the main menu.
@@ -826,8 +1047,8 @@ public class GamePanel extends JPanel {
                         return;
                     }
                     
-                    // Don't process clicks if game is over
-                    if (gameOver) {
+                    // Don't process clicks if game is over or paused
+                    if (gameOver || isPaused) {
                         return;
                     }
 
