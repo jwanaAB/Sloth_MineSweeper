@@ -40,7 +40,7 @@ public class GameBoard {
     private void initializeBoard() {
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                cells[i][j] = new EmptyCell();
+                cells[i][j] = CellFactory.createEmptyCell();
             }
         }
     }
@@ -86,7 +86,7 @@ public class GameBoard {
         // Allocate mines
         for (int i = 0; i < totalMines && posIndex < positions.size(); i++) {
             int[] pos = positions.get(posIndex++);
-            cells[pos[0]][pos[1]] = new MineCell();
+            cells[pos[0]][pos[1]] = CellFactory.createMineCell();
         }
         
         // Calculate adjacent mine counts after placing mines
@@ -104,15 +104,15 @@ public class GameBoard {
         int questionIndex = 0;
         for (int i = 0; i < totalQuestionCells && emptyPosIndex < emptyCellPositions.size(); i++) {
             int[] pos = emptyCellPositions.get(emptyPosIndex++);
-            QuestionCell questionCell;
+            Cell questionCell;
             // Reuse questions if we need more than available (cycle through the list)
             if (questionIndex >= shuffledQuestions.size()) {
                 questionIndex = 0; // Reset to start if we've used all questions
             }
             if (!shuffledQuestions.isEmpty()) {
-                questionCell = new QuestionCell(shuffledQuestions.get(questionIndex++));
+                questionCell = CellFactory.createQuestionCell(shuffledQuestions.get(questionIndex++));
             } else {
-                questionCell = new QuestionCell();
+                questionCell = CellFactory.createQuestionCell();
             }
             cells[pos[0]][pos[1]] = questionCell;
         }
@@ -124,7 +124,7 @@ public class GameBoard {
         // Allocate surprise cells
         for (int i = 0; i < totalSurpriseCells && emptyPosIndex < emptyCellPositions.size(); i++) {
             int[] pos = emptyCellPositions.get(emptyPosIndex++);
-            cells[pos[0]][pos[1]] = new SurpriseCell();
+            cells[pos[0]][pos[1]] = CellFactory.createSurpriseCell();
         }
         
         // Remaining cells are empty (already initialized as EMPTY type)
@@ -224,7 +224,7 @@ public class GameBoard {
             List<int[]> regularPositions = getRegularCellPositions();
             if (regularPositions.isEmpty()) break;
             int[] pos = regularPositions.get(0);
-            cells[pos[0]][pos[1]] = new MineCell();
+            cells[pos[0]][pos[1]] = CellFactory.createMineCell();
             currentMines++;
         }
         while (currentMines > requiredMines) {
@@ -232,7 +232,7 @@ public class GameBoard {
             for (int i = 0; i < rows && currentMines > requiredMines; i++) {
                 for (int j = 0; j < cols && currentMines > requiredMines; j++) {
                     if (cells[i][j].getType() == Cell.CellType.MINE) {
-                        cells[i][j] = new EmptyCell();
+                        cells[i][j] = CellFactory.createEmptyCell();
                         currentMines--;
                         break;
                     }
@@ -266,10 +266,10 @@ public class GameBoard {
             if (!emptyPositions.isEmpty()) {
                 int[] newPos = emptyPositions.get(0);
                 cells[newPos[0]][newPos[1]] = questionCell;
-                cells[pos[0]][pos[1]] = new EmptyCell();
+                cells[pos[0]][pos[1]] = CellFactory.createEmptyCell();
             } else {
                 // If no empty positions available, convert to empty cell
-                cells[pos[0]][pos[1]] = new EmptyCell();
+                cells[pos[0]][pos[1]] = CellFactory.createEmptyCell();
                 currentQuestions--;
             }
         }
@@ -279,15 +279,15 @@ public class GameBoard {
             List<int[]> emptyPositions = getEmptyCellPositions();
             if (emptyPositions.isEmpty()) break;
             int[] pos = emptyPositions.get(0);
-            QuestionCell questionCell;
+            Cell questionCell;
             // Only assign question if questions are available
             if (!shuffledQuestions.isEmpty()) {
                 if (questionIndex >= shuffledQuestions.size()) {
                     questionIndex = 0; // Cycle through questions
                 }
-                questionCell = new QuestionCell(shuffledQuestions.get(questionIndex++));
+                questionCell = CellFactory.createQuestionCell(shuffledQuestions.get(questionIndex++));
             } else {
-                questionCell = new QuestionCell();
+                questionCell = CellFactory.createQuestionCell();
             }
             cells[pos[0]][pos[1]] = questionCell;
             currentQuestions++;
@@ -297,7 +297,7 @@ public class GameBoard {
             for (int i = 0; i < rows && currentQuestions > requiredQuestions; i++) {
                 for (int j = 0; j < cols && currentQuestions > requiredQuestions; j++) {
                     if (cells[i][j].getType() == Cell.CellType.QUESTION) {
-                        cells[i][j] = new EmptyCell();
+                        cells[i][j] = CellFactory.createEmptyCell();
                         currentQuestions--;
                         break;
                     }
@@ -325,10 +325,10 @@ public class GameBoard {
             if (!emptyPositions.isEmpty()) {
                 int[] newPos = emptyPositions.get(0);
                 cells[newPos[0]][newPos[1]] = surpriseCell;
-                cells[pos[0]][pos[1]] = new EmptyCell();
+                cells[pos[0]][pos[1]] = CellFactory.createEmptyCell();
             } else {
                 // If no empty positions available, convert to empty cell
-                cells[pos[0]][pos[1]] = new EmptyCell();
+                cells[pos[0]][pos[1]] = CellFactory.createEmptyCell();
                 currentSurprises--;
             }
         }
@@ -338,7 +338,7 @@ public class GameBoard {
             List<int[]> emptyPositions = getEmptyCellPositions();
             if (emptyPositions.isEmpty()) break;
             int[] pos = emptyPositions.get(0);
-            cells[pos[0]][pos[1]] = new SurpriseCell();
+            cells[pos[0]][pos[1]] = CellFactory.createSurpriseCell();
             currentSurprises++;
         }
         while (currentSurprises > requiredSurprises) {
@@ -346,7 +346,7 @@ public class GameBoard {
             for (int i = 0; i < rows && currentSurprises > requiredSurprises; i++) {
                 for (int j = 0; j < cols && currentSurprises > requiredSurprises; j++) {
                     if (cells[i][j].getType() == Cell.CellType.SURPRISE) {
-                        cells[i][j] = new EmptyCell();
+                        cells[i][j] = CellFactory.createEmptyCell();
                         currentSurprises--;
                         break;
                     }
@@ -403,7 +403,7 @@ public class GameBoard {
                         numberCell = (NumberCell) cell;
                         numberCell.setAdjacentMines(mineCount);
                     } else {
-                        numberCell = new NumberCell(mineCount);
+                        numberCell = (NumberCell) CellFactory.createNumberCell(mineCount);
                         cells[i][j] = numberCell;
                     }
 
@@ -421,7 +421,7 @@ public class GameBoard {
                 } else {
                     // No adjacent mines – ensure the cell is an EmptyCell
                     if (!(cell instanceof EmptyCell)) {
-                        EmptyCell emptyCell = new EmptyCell();
+                        EmptyCell emptyCell = (EmptyCell) CellFactory.createEmptyCell();
                         cells[i][j] = emptyCell;
 
                         // Restore state on the new empty cell
@@ -591,8 +591,8 @@ public class GameBoard {
                 
                 if (cells[i][j].getType() != Cell.CellType.MINE) {
                     // Swap: move mine here, make first click position empty
-                    cells[i][j] = new MineCell();
-                    cells[row][col] = new EmptyCell();
+                    cells[i][j] = CellFactory.createMineCell();
+                    cells[row][col] = CellFactory.createEmptyCell();
                     
                     // Recalculate adjacent mines
                     calculateAdjacentMines();
