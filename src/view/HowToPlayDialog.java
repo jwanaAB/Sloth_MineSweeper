@@ -52,7 +52,7 @@ public class HowToPlayDialog extends JDialog {
             "🎮",
             new Color(144, 238, 144), // Light green
             "<html><b>Left Click:</b> Reveal a cell<br>" +
-            "<b>Right Click:</b> Cycle through flag ► — question mark ? — hidden<br>" +
+            "<b>Right Click:</b> For A  flag Mark , Or turn flag mode on and start marking cells <br>" +
             "<b>Numbers:</b> Show how many mines are adjacent to that cell</html>"
         ));
         
@@ -84,7 +84,7 @@ public class HowToPlayDialog extends JDialog {
             "Flags & Marks",
             "🚩",
             new Color(221, 160, 221), // Light purple
-            "<html>Use flags to mark suspected mines. Use question marks to indicate uncertainty.<br>" +
+            "<html>Use flags to mark suspected mines.<br>" +
             "These are just visual aids and don't affect gameplay directly.</html>"
         ));
         
@@ -147,17 +147,31 @@ public class HowToPlayDialog extends JDialog {
         overlayPanel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (e.getSource() == overlayPanel) {
+                // Get the component that was actually clicked
+                Component clickedComponent = SwingUtilities.getDeepestComponentAt(
+                    overlayPanel, e.getX(), e.getY());
+                
+                // Don't close if clicking on a button or inside the scroll pane
+                if (clickedComponent != null) {
+                    // Check if clicked component is a button or inside scroll pane
+                    if (clickedComponent instanceof JButton) {
+                        return; // Let button handle the click
+                    }
+                    
+                    // Check if clicked component is inside the scroll pane
+                    Component parent = clickedComponent.getParent();
+                    while (parent != null && parent != overlayPanel) {
+                        if (parent == scrollPane) {
+                            return; // Click was inside scroll pane, don't close
+                        }
+                        parent = parent.getParent();
+                    }
+                }
+                
+                // Only close if clicking directly on the overlay (outside scroll pane)
+                if (e.getComponent() == overlayPanel) {
                     dispose();
                 }
-            }
-        });
-        
-        // Prevent clicks on scroll pane from closing dialog
-        scrollPane.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                e.consume();
             }
         });
         
@@ -234,6 +248,12 @@ public class HowToPlayDialog extends JDialog {
                 closeButton.setBackground(new Color(245, 245, 245));
                 closeButton.setForeground(new Color(80, 80, 80));
             }
+            
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                // Stop event propagation to prevent overlay listener from firing
+                e.consume();
+            }
         });
         // Use actionPerformed directly without lambda to ensure it works on first click
         closeButton.addActionListener(new java.awt.event.ActionListener() {
@@ -309,6 +329,13 @@ public class HowToPlayDialog extends JDialog {
         button.setForeground(Color.WHITE);
         button.setBorder(BorderFactory.createEmptyBorder(12, 40, 12, 40));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                // Stop event propagation to prevent overlay listener from firing
+                e.consume();
+            }
+        });
         button.addActionListener(e -> dispose());
         
         return button;
