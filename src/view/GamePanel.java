@@ -93,6 +93,11 @@ public class GamePanel extends JPanel {
      * @param gameController The GameController to handle interactions
      */
     public void initializeGame(Game game, GameController gameController) {
+        // Stop any existing timer from previous game controller
+        if (this.gameController != null && this.gameController != gameController) {
+            this.gameController.stopTimerForCleanup();
+        }
+        
         this.game = game;
         this.gameController = gameController;
         this.gameOver = false; // Reset game over state for new game
@@ -793,6 +798,15 @@ public class GamePanel extends JPanel {
         if (timerLabel != null) {
             timerLabel.setText("Time: " + timeString);
         }
+    }
+    
+    /**
+     * Gets the current game controller.
+     * 
+     * @return The current GameController instance
+     */
+    public GameController getGameController() {
+        return gameController;
     }
     
     /**

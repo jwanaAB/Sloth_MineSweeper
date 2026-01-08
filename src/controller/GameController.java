@@ -58,14 +58,32 @@ public class GameController {
      * Starts the game timer that updates every second.
      */
     private void startGameTimer() {
+        // Stop any existing timer first
+        if (gameTimer != null) {
+            gameTimer.stop();
+            gameTimer = null;
+        }
+        
+        // Reset timer state
+        totalPausedDurationSeconds = 0;
+        isPaused = false;
+        pauseStartTime = null;
+        
+        // Create and start new timer
         gameTimer = new Timer(1000, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (!gameOver && !isPaused) {
+                // Only update if this controller's game is still active
+                if (gamePanel.getGameController() == GameController.this && !gameOver && !isPaused) {
                     updateTimerDisplay();
                 }
             }
         });
+        
+        // Immediately update display to show 0:00
+        updateTimerDisplay();
+        
+        // Start the timer
         gameTimer.start();
     }
     
@@ -131,7 +149,16 @@ public class GameController {
     private void stopGameTimer() {
         if (gameTimer != null) {
             gameTimer.stop();
+            gameTimer = null;
         }
+    }
+    
+    /**
+     * Stops the game timer for cleanup (called when a new game starts).
+     * This is public so GamePanel can call it to clean up old controllers.
+     */
+    public void stopTimerForCleanup() {
+        stopGameTimer();
     }
     
     /**
