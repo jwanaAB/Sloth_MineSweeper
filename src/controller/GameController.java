@@ -2,9 +2,12 @@ package controller;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Duration;
 import javax.swing.*;
 import model.*;
 import view.GamePanel;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * Controller for managing game logic and interactions between the Game model
@@ -23,6 +26,10 @@ public class GameController {
     private final SoundManager soundManager;
     private boolean gameOver = false;
     private final LocalDateTime gameStartTime; // Track when game started
+    private Timer gameTimer; // Timer that updates every second
+    private LocalDateTime pauseStartTime; // When the game was paused
+    private long totalPausedDurationSeconds = 0; // Total time paused
+    private boolean isPaused = false;
     
     /**
      * Constructs a new GameController.
@@ -42,6 +49,89 @@ public class GameController {
         
         // Initialize the game panel
         gamePanel.initializeGame(game, this);
+        
+        // Start the game timer
+        startGameTimer();
+    }
+    
+    /**
+     * Starts the game timer that updates every second.
+     */
+    private void startGameTimer() {
+        gameTimer = new Timer(1000, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (!gameOver && !isPaused) {
+                    updateTimerDisplay();
+                }
+            }
+        });
+        gameTimer.start();
+    }
+    
+    /**
+     * Updates the timer display in the game panel.
+     */
+    private void updateTimerDisplay() {
+        long elapsedSeconds = getElapsedTimeSeconds();
+        long minutes = elapsedSeconds / 60;
+        long seconds = elapsedSeconds % 60;
+        String timeString = String.format("%d:%02d", minutes, seconds);
+        gamePanel.updateTimerDisplay(timeString);
+    }
+    
+    /**
+     * Gets the elapsed game time in seconds (excluding paused time).
+     * 
+     * @return Elapsed time in seconds
+     */
+    public long getElapsedTimeSeconds() {
+        if (isPaused) {
+            // If currently paused, return time up to when pause started
+            return Duration.between(gameStartTime, pauseStartTime).getSeconds() 
+                   - totalPausedDurationSeconds;
+        } else {
+            // Calculate total elapsed time minus total paused time
+            long totalElapsed = Duration.between(gameStartTime, LocalDateTime.now()).getSeconds();
+            return totalElapsed - totalPausedDurationSeconds;
+        }
+    }
+    
+    /**
+     * Pauses the game timer.
+     */
+    public void pauseTimer() {
+        if (!isPaused) {
+            isPaused = true;
+            pauseStartTime = LocalDateTime.now();
+            if (gameTimer != null) {
+                gameTimer.stop();
+            }
+        }
+    }
+    
+    /**
+     * Resumes the game timer.
+     */
+    public void resumeTimer() {
+        if (isPaused) {
+            // Calculate how long we were paused and add to total paused duration
+            long pauseDuration = Duration.between(pauseStartTime, LocalDateTime.now()).getSeconds();
+            totalPausedDurationSeconds += pauseDuration;
+            isPaused = false;
+            if (gameTimer != null) {
+                gameTimer.start();
+            }
+        }
+    }
+    
+    /**
+     * Stops the game timer (called when game ends).
+     */
+    private void stopGameTimer() {
+        if (gameTimer != null) {
+            gameTimer.stop();
+        }
     }
     
     /**
@@ -453,9 +543,11 @@ public class GameController {
      */
     private void saveGameHistory(boolean won) {
         try {
-            // Calculate game duration
-            LocalDateTime gameEndTime = LocalDateTime.now();
-            long durationSeconds = java.time.Duration.between(gameStartTime, gameEndTime).getSeconds();
+            // Stop the timer
+            stopGameTimer();
+            
+            // Calculate game duration (use elapsed time which accounts for pauses)
+            long durationSeconds = getElapsedTimeSeconds();
             
             // Get game data
             Game.Difficulty difficulty = game.getDifficulty();
