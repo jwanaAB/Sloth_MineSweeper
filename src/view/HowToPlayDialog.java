@@ -36,67 +36,33 @@ public class HowToPlayDialog extends JDialog {
         contentPanel.add(titlePanel);
         contentPanel.add(Box.createVerticalStrut(20));
         
-        // Create guide sections
-        contentPanel.add(createSection(
-            "Objective",
-            "🎯",
-            new Color(173, 216, 230), // Light blue
-            "<html>Work together with your partner to reveal all safe cells without hitting mines.<br>" +
-            "Answer trivia questions to earn bonus points and lives!</html>"
-        ));
+        // Create guide sections - Objective card with special styling
+        contentPanel.add(createObjectiveCard());
         
         contentPanel.add(Box.createVerticalStrut(12));
         
-        contentPanel.add(createSection(
-            "Controls",
-            "🎮",
-            new Color(144, 238, 144), // Light green
-            "<html><b>Left Click:</b> Reveal a cell<br>" +
-            "<b>Right Click:</b> For A  flag Mark , Or turn flag mode on and start marking cells <br>" +
-            "<b>Numbers:</b> Show how many mines are adjacent to that cell</html>"
-        ));
+        // Controls card with special styling
+        contentPanel.add(createControlsCard());
         
         contentPanel.add(Box.createVerticalStrut(12));
         
-        contentPanel.add(createSection(
-            "Shared Hearts (Lives)",
-            "❤️",
-            new Color(255, 182, 193), // Light pink
-            "<html>Both players share a pool of hearts. Hitting a mine or answering a question incorrectly<br>" +
-            "may cost hearts. The game ends when all hearts are lost.</html>"
-        ));
+        // Shared Hearts card with special styling
+        contentPanel.add(createSharedHeartsCard());
         
         contentPanel.add(Box.createVerticalStrut(12));
         
-        contentPanel.add(createSection(
-            "Question Cells",
-            "❓",
-            new Color(255, 255, 153), // Light yellow
-            "<html>Clicking on a question cell (after revealing it) triggers a trivia challenge.<br>" +
-            "Questions have an activation cost (5/8/12 points by difficulty).<br>" +
-            "Correct answers earn points and may grant lives based on question type and difficulty.<br>" +
-            "Wrong answers may cost points and lives depending on the question type.</html>"
-        ));
+        // Question Cells card with colored background
+        contentPanel.add(createQuestionCellsCard());
         
         contentPanel.add(Box.createVerticalStrut(12));
         
-        contentPanel.add(createSection(
-            "Flags & Marks",
-            "🚩",
-            new Color(221, 160, 221), // Light purple
-            "<html>Use flags to mark suspected mines.<br>" +
-            "These are just visual aids and don't affect gameplay directly.</html>"
-        ));
+        // Flags & Marks card with colored background
+        contentPanel.add(createFlagsMarksCard());
         
         contentPanel.add(Box.createVerticalStrut(12));
         
-        contentPanel.add(createSection(
-            "Combined Score",
-            "🏆",
-            new Color(173, 216, 230), // Light blue
-            "<html>Both players share a combined score. Work together to maximize points by answering<br>" +
-            "questions correctly and revealing cells strategically!</html>"
-        ));
+        // Combined Score card with colored background
+        contentPanel.add(createCombinedScoreCard());
         
         contentPanel.add(Box.createVerticalStrut(20));
         
@@ -267,6 +233,450 @@ public class HowToPlayDialog extends JDialog {
         panel.add(closeButton, BorderLayout.EAST);
         
         return panel;
+    }
+    
+    private JPanel createObjectiveCard() {
+        // Light blue-gray background matching the last 3 cards design
+        Color cardBg = new Color(235, 240, 245); // Light blue-gray
+        Color borderColor = new Color(200, 210, 220); // Slightly darker blue-gray for border
+        Color textColor = new Color(50, 50, 50); // Dark grey text
+        
+        // Create card panel with colored background, rounded corners and border
+        JPanel card = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Draw card background
+                g2.setColor(cardBg);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                
+                // Draw border
+                g2.setColor(borderColor);
+                g2.setStroke(new BasicStroke(1.5f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+                
+                g2.dispose();
+            }
+        };
+        
+        card.setLayout(new BorderLayout());
+        card.setOpaque(false);
+        card.setBorder(new EmptyBorder(24, 24, 24, 24));
+        
+        // Main content panel
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        contentPanel.setOpaque(false);
+        
+        // Header row: icon + title (icon directly aligned, no container)
+        JPanel headerRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        headerRow.setOpaque(false);
+        headerRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        // Icon label (directly, no container)
+        JLabel iconLabel = new JLabel("🎯");
+        iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 24));
+        iconLabel.setBorder(new EmptyBorder(0, 0, 0, 12));
+        
+        // Title label
+        JLabel titleLabel = new JLabel("Objective");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        titleLabel.setForeground(textColor);
+        
+        headerRow.add(iconLabel);
+        headerRow.add(titleLabel);
+        
+        // Body text
+        JLabel textLabel = new JLabel("<html><div style='line-height: 1.6;'>" +
+            "Work together with your partner to reveal all safe cells without hitting mines. " +
+            "Answer trivia questions to earn bonus points and lives!</div></html>");
+        textLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        textLabel.setForeground(textColor);
+        textLabel.setVerticalAlignment(SwingConstants.TOP);
+        textLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        textLabel.setBorder(new EmptyBorder(12, 0, 0, 0));
+        textLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        
+        contentPanel.add(headerRow);
+        contentPanel.add(Box.createVerticalStrut(0));
+        contentPanel.add(textLabel);
+        
+        card.add(contentPanel, BorderLayout.CENTER);
+        
+        return card;
+    }
+    
+    private JPanel createControlsCard() {
+        // Light green background matching the last 3 cards design
+        Color cardBg = new Color(220, 255, 220); // Light pastel green
+        Color borderColor = new Color(180, 220, 180); // Slightly darker green for border
+        Color textColor = new Color(50, 50, 50); // Dark grey text
+        Color keywordColor = new Color(34, 139, 34); // Dark green for keywords
+        
+        // Create card panel with colored background, rounded corners and border
+        JPanel card = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Draw card background
+                g2.setColor(cardBg);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                
+                // Draw border
+                g2.setColor(borderColor);
+                g2.setStroke(new BasicStroke(1.5f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+                
+                g2.dispose();
+            }
+        };
+        
+        card.setLayout(new BorderLayout());
+        card.setOpaque(false);
+        card.setBorder(new EmptyBorder(24, 24, 24, 24));
+        
+        // Main content panel
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        contentPanel.setOpaque(false);
+        
+        // Header row: icon + title (icon directly aligned, no container)
+        JPanel headerRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        headerRow.setOpaque(false);
+        headerRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        // Icon label (directly, no container)
+        JLabel iconLabel = new JLabel("🎮");
+        iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 24));
+        iconLabel.setBorder(new EmptyBorder(0, 0, 0, 12));
+        
+        // Title label
+        JLabel titleLabel = new JLabel("Controls");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        titleLabel.setForeground(textColor);
+        
+        headerRow.add(iconLabel);
+        headerRow.add(titleLabel);
+        
+        // Body text with bold green keywords
+        String content = "<html><div style='line-height: 1.6;'>" +
+            "<b style='color: rgb(" + keywordColor.getRed() + ", " + keywordColor.getGreen() + ", " + keywordColor.getBlue() + ");'>Left Click:</b> Reveal a cell<br>" +
+            "<b style='color: rgb(" + keywordColor.getRed() + ", " + keywordColor.getGreen() + ", " + keywordColor.getBlue() + ");'>Right Click:</b> For A flag Mark, Or turn flag mode on and start marking cells<br>" +
+            "<b style='color: rgb(" + keywordColor.getRed() + ", " + keywordColor.getGreen() + ", " + keywordColor.getBlue() + ");'>Numbers:</b> Show how many mines are adjacent to that cell</div></html>";
+        
+        JLabel textLabel = new JLabel(content);
+        textLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        textLabel.setForeground(textColor);
+        textLabel.setVerticalAlignment(SwingConstants.TOP);
+        textLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        textLabel.setBorder(new EmptyBorder(12, 0, 0, 0));
+        textLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        
+        contentPanel.add(headerRow);
+        contentPanel.add(Box.createVerticalStrut(0));
+        contentPanel.add(textLabel);
+        
+        card.add(contentPanel, BorderLayout.CENTER);
+        
+        return card;
+    }
+    
+    private JPanel createSharedHeartsCard() {
+        // Light pink background matching the last 3 cards design
+        Color cardBg = new Color(255, 230, 235); // Light pastel pink
+        Color borderColor = new Color(220, 180, 190); // Slightly darker pink for border
+        Color textColor = new Color(50, 50, 50); // Dark grey text
+        
+        // Create card panel with colored background, rounded corners and border
+        JPanel card = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Draw card background
+                g2.setColor(cardBg);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                
+                // Draw border
+                g2.setColor(borderColor);
+                g2.setStroke(new BasicStroke(1.5f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+                
+                g2.dispose();
+            }
+        };
+        
+        card.setLayout(new BorderLayout());
+        card.setOpaque(false);
+        card.setBorder(new EmptyBorder(24, 24, 24, 24));
+        
+        // Main content panel
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        contentPanel.setOpaque(false);
+        
+        // Header row: icon + title (icon directly aligned, no container)
+        JPanel headerRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        headerRow.setOpaque(false);
+        headerRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        // Icon label (directly, no container)
+        JLabel iconLabel = new JLabel("❤️");
+        iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 24));
+        iconLabel.setBorder(new EmptyBorder(0, 0, 0, 12));
+        
+        // Title label
+        JLabel titleLabel = new JLabel("Shared Hearts (Lives)");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        titleLabel.setForeground(textColor);
+        
+        headerRow.add(iconLabel);
+        headerRow.add(titleLabel);
+        
+        // Body text
+        JLabel textLabel = new JLabel("<html><div style='line-height: 1.6;'>" +
+            "Both players share a pool of hearts. Hitting a mine or answering a question incorrectly " +
+            "may cost hearts. The game ends when all hearts are lost.</div></html>");
+        textLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        textLabel.setForeground(textColor);
+        textLabel.setVerticalAlignment(SwingConstants.TOP);
+        textLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        textLabel.setBorder(new EmptyBorder(12, 0, 0, 0));
+        textLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        
+        contentPanel.add(headerRow);
+        contentPanel.add(Box.createVerticalStrut(0));
+        contentPanel.add(textLabel);
+        
+        card.add(contentPanel, BorderLayout.CENTER);
+        
+        return card;
+    }
+    
+    private JPanel createQuestionCellsCard() {
+        // Light yellow/cream background matching the image
+        Color cardBg = new Color(255, 255, 240); // Light yellow/cream
+        Color borderColor = new Color(255, 220, 100); // Slightly darker yellow for border
+        Color textColor = new Color(50, 50, 50); // Dark grey text
+        
+        // Create card panel with colored background, rounded corners and border
+        JPanel card = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Draw card background
+                g2.setColor(cardBg);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                
+                // Draw border
+                g2.setColor(borderColor);
+                g2.setStroke(new BasicStroke(1.5f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+                
+                g2.dispose();
+            }
+        };
+        
+        card.setLayout(new BorderLayout());
+        card.setOpaque(false);
+        card.setBorder(new EmptyBorder(24, 24, 24, 24));
+        
+        // Main content panel
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        contentPanel.setOpaque(false);
+        
+        // Header row: icon + title (icon directly aligned, no container)
+        JPanel headerRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        headerRow.setOpaque(false);
+        headerRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        // Icon label (directly, no container)
+        JLabel iconLabel = new JLabel("❓");
+        iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 24));
+        iconLabel.setBorder(new EmptyBorder(0, 0, 0, 12));
+        
+        // Title label
+        JLabel titleLabel = new JLabel("Question Cells");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        titleLabel.setForeground(textColor);
+        
+        headerRow.add(iconLabel);
+        headerRow.add(titleLabel);
+        
+        // Body text
+        JLabel textLabel = new JLabel("<html><div style='line-height: 1.6;'>" +
+            "Clicking on a question cell (after revealing it) triggers a trivia challenge.<br>" +
+            "Questions have an activation cost (5/8/12 points by difficulty).<br>" +
+            "Correct answers earn points and may grant lives based on question type and difficulty.<br>" +
+            "Wrong answers may cost points and lives depending on the question type.</div></html>");
+        textLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        textLabel.setForeground(textColor);
+        textLabel.setVerticalAlignment(SwingConstants.TOP);
+        textLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        textLabel.setBorder(new EmptyBorder(12, 0, 0, 0));
+        textLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        
+        contentPanel.add(headerRow);
+        contentPanel.add(Box.createVerticalStrut(0));
+        contentPanel.add(textLabel);
+        
+        card.add(contentPanel, BorderLayout.CENTER);
+        
+        return card;
+    }
+    
+    private JPanel createFlagsMarksCard() {
+        // Light purple/lavender background matching the image
+        Color cardBg = new Color(245, 230, 245); // Light purple/lavender
+        Color borderColor = new Color(200, 150, 200); // Slightly darker purple for border
+        Color textColor = new Color(50, 50, 50); // Dark grey text
+        
+        // Create card panel with colored background, rounded corners and border
+        JPanel card = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Draw card background
+                g2.setColor(cardBg);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                
+                // Draw border
+                g2.setColor(borderColor);
+                g2.setStroke(new BasicStroke(1.5f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+                
+                g2.dispose();
+            }
+        };
+        
+        card.setLayout(new BorderLayout());
+        card.setOpaque(false);
+        card.setBorder(new EmptyBorder(24, 24, 24, 24));
+        
+        // Main content panel
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        contentPanel.setOpaque(false);
+        
+        // Header row: icon + title (icon directly aligned, no container)
+        JPanel headerRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        headerRow.setOpaque(false);
+        headerRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        // Icon label (directly, no container)
+        JLabel iconLabel = new JLabel("🚩");
+        iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 24));
+        iconLabel.setBorder(new EmptyBorder(0, 0, 0, 12));
+        
+        // Title label
+        JLabel titleLabel = new JLabel("Flags & Marks");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        titleLabel.setForeground(textColor);
+        
+        headerRow.add(iconLabel);
+        headerRow.add(titleLabel);
+        
+        // Body text
+        JLabel textLabel = new JLabel("<html><div style='line-height: 1.6;'>" +
+            "Use flags to mark suspected mines.<br>" +
+            "These are just visual aids and don't affect gameplay directly.</div></html>");
+        textLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        textLabel.setForeground(textColor);
+        textLabel.setVerticalAlignment(SwingConstants.TOP);
+        textLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        textLabel.setBorder(new EmptyBorder(12, 0, 0, 0));
+        textLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        
+        contentPanel.add(headerRow);
+        contentPanel.add(Box.createVerticalStrut(0));
+        contentPanel.add(textLabel);
+        
+        card.add(contentPanel, BorderLayout.CENTER);
+        
+        return card;
+    }
+    
+    private JPanel createCombinedScoreCard() {
+        // Light blue background matching the image
+        Color cardBg = new Color(230, 240, 255); // Light blue
+        Color borderColor = new Color(150, 180, 220); // Slightly darker blue for border
+        Color textColor = new Color(50, 50, 50); // Dark grey text
+        
+        // Create card panel with colored background, rounded corners and border
+        JPanel card = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Draw card background
+                g2.setColor(cardBg);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                
+                // Draw border
+                g2.setColor(borderColor);
+                g2.setStroke(new BasicStroke(1.5f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+                
+                g2.dispose();
+            }
+        };
+        
+        card.setLayout(new BorderLayout());
+        card.setOpaque(false);
+        card.setBorder(new EmptyBorder(24, 24, 24, 24));
+        
+        // Main content panel
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        contentPanel.setOpaque(false);
+        
+        // Header row: icon + title (icon directly aligned, no container)
+        JPanel headerRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        headerRow.setOpaque(false);
+        headerRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        // Icon label (directly, no container)
+        JLabel iconLabel = new JLabel("🏆");
+        iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 24));
+        iconLabel.setBorder(new EmptyBorder(0, 0, 0, 12));
+        
+        // Title label
+        JLabel titleLabel = new JLabel("Combined Score");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        titleLabel.setForeground(textColor);
+        
+        headerRow.add(iconLabel);
+        headerRow.add(titleLabel);
+        
+        // Body text
+        JLabel textLabel = new JLabel("<html><div style='line-height: 1.6;'>" +
+            "Both players share a combined score. Work together to maximize points by answering " +
+            "questions correctly and revealing cells strategically!</div></html>");
+        textLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        textLabel.setForeground(textColor);
+        textLabel.setVerticalAlignment(SwingConstants.TOP);
+        textLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        textLabel.setBorder(new EmptyBorder(12, 0, 0, 0));
+        textLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        
+        contentPanel.add(headerRow);
+        contentPanel.add(Box.createVerticalStrut(0));
+        contentPanel.add(textLabel);
+        
+        card.add(contentPanel, BorderLayout.CENTER);
+        
+        return card;
     }
     
     private JPanel createSection(String title, String icon, Color bgColor, String text) {
