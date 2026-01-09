@@ -1,8 +1,15 @@
 ID,Question,Difficulty,A,B,C,D,Correct Answer
-//Khalil's
+//Khalil's,,,,,,,
 1,Which requirement type focuses on system qualities like performance and reliability?,1,Non-Functional,Design,Functional,Domain,A
 2,Which activity answers the question Are we building the right product?,2,Verification,Inspection,Validation,Debugging,C
 3,What does McCabe cyclomatic complexity represent?,3,Lines of code,Independent paths,Memory usage,Runtime speed,B
 4,What is a major risk of very high cyclomatic complexity?,2,Fast execution,Lower cost,Hard testing,Better design,C
 5,Why must documentation be maintained throughout the software life cycle?,2,Reduce testing,Improve speed,Lower cost,Support maintenance,D
 6,Why are legacy systems difficult and risky to replace?,4,Low cost,Simple logic,Poor documentation,Good structure,C
+,,,,,,,
+//Riad's,,,,,,,
+1,What is the main characteristic of the Waterfall development model?,1,Iterative development with continuous customer feedback,Linear progression through phases with no backtracking,Development based on short sprints,Continuous automated testing at every stage,B
+2,What is a functional requirement in a software system?,2,A description of system performance under load,A limitation on system response time,A description of an action the system must perform,A requirement related to information security,C
+3,What is the primary purpose of Code Review in the software development process?,3,To speed up compilation time,To improve the user interface,To identify defects and improve code quality,To replace unit testing,C
+4,What is a key advantage of the MVC (Model-View-Controller) architecture?,4,Reduced memory consumption,"Separation between logic, user interface, and data",Improved network performance,Elimination of the need for testing,B
+5,Which type of testing ensures that new code changes do not break existing functionality?,5,Unit Testing,Integration Testing,Regression Testing,Acceptance Testing,C
