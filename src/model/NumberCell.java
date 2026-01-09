@@ -43,10 +43,7 @@ public class NumberCell extends Cell {
     }
     
     @Override
-    public String getDisplayValue() {
-        if (!isRevealed()) {
-            return "";
-        }
+    protected String getRevealedValue() {
         return String.valueOf(adjacentMines);
     }
 }

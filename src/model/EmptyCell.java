@@ -20,10 +20,7 @@ public class EmptyCell extends Cell {
     }
     
     @Override
-    public String getDisplayValue() {
-        if (!isRevealed()) {
-            return "";
-        }
+    protected String getRevealedValue() {
         return "";
     }
 }
