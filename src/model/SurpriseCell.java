@@ -41,10 +41,7 @@ public class SurpriseCell extends EmptyCell {
     }
     
     @Override
-    public String getDisplayValue() {
-        if (!isRevealed()) {
-            return "";
-        }
+    protected String getRevealedValue() {
         return "S";
     }
 }

@@ -72,10 +72,7 @@ public class QuestionCell extends EmptyCell {
     }
     
     @Override
-    public String getDisplayValue() {
-        if (!isRevealed()) {
-            return "";
-        }
+    protected String getRevealedValue() {
         return "?";
     }
 }

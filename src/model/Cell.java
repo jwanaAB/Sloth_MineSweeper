@@ -114,11 +114,38 @@ public abstract class Cell {
     }
     
     /**
-     * Gets the display value for this cell when revealed.
+     * Gets the display value for this cell.
+     * This is a template method that defines the algorithm for displaying cell values.
+     * The template method pattern is used here: the algorithm structure is defined in
+     * the base class, while the specific step (getting the revealed value) is deferred
+     * to subclasses via the getRevealedValue() method.
+     * 
+     * Template Method Pattern:
+     * - Defines the skeleton of the algorithm (check if revealed, then get value)
+     * - Allows subclasses to redefine specific steps (getRevealedValue)
      * 
      * @return A string representation of the cell content
      */
-    public abstract String getDisplayValue();
+    public final String getDisplayValue() {
+        // Template method: defines the algorithm structure
+        // Step 1: Check if cell is revealed
+        if (!isRevealed()) {
+            // Common behavior: hidden cells show nothing
+            return "";
+        }
+        // Step 2: Delegate to subclass-specific implementation
+        return getRevealedValue();
+    }
+    
+    /**
+     * Gets the display value when this cell is revealed.
+     * This method is part of the Template Method pattern - it represents the
+     * step that varies between different cell types. Each subclass implements
+     * this to provide its specific revealed value.
+     * 
+     * @return The string representation when the cell is revealed
+     */
+    protected abstract String getRevealedValue();
     
     /**
      * Checks if this cell has already contributed to the score via flagging.
