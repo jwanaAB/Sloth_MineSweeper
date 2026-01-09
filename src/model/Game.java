@@ -1,6 +1,7 @@
 package model;
 
 import controller.QuestionLogic;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -62,6 +63,7 @@ public class Game {
     private boolean gameOver;
     private boolean gameWon;
     private int winner; // 1 or 2, or 0 if no winner yet
+    private List<GameObserver> observers; // List of observers for the Observer pattern
     
     /**
      * Constructs a new Game with the specified settings.
@@ -80,6 +82,7 @@ public class Game {
         this.gameOver = false;
         this.gameWon = false;
         this.winner = 0;
+        this.observers = new ArrayList<>();
         
         // Set shared lives based on difficulty
         switch (difficulty) {
@@ -225,6 +228,7 @@ public class Game {
     public void switchTurn() {
         if (!gameOver) {
             currentPlayer = (currentPlayer == 1) ? 2 : 1;
+            notifyTurnChanged();
         }
     }
     
@@ -253,6 +257,7 @@ public class Game {
      */
     public void setCombinedScore(int score) {
         this.combinedScore = score;
+        notifyScoreChanged();
     }
     
     /**
@@ -280,10 +285,12 @@ public class Game {
      */
     public boolean decreaseSharedLives() {
         sharedLives--;
+        notifyLivesChanged();
         if (sharedLives <= 0) {
             gameOver = true;
             // No winner if shared lives run out - it's a draw/loss
             winner = 0;
+            notifyGameOver(false, 0);
             return true;
         }
         return false;
@@ -296,6 +303,7 @@ public class Game {
      */
     public void addSharedScore(int points) {
         this.combinedScore += points;
+        notifyScoreChanged();
     }
     
     /**
@@ -304,6 +312,7 @@ public class Game {
     public void addSharedLife() {
         if (sharedLives < totalLives) {
             sharedLives++;
+            notifyLivesChanged();
         }
     }
     
@@ -314,6 +323,7 @@ public class Game {
      */
     public void setSharedLives(int lives) {
         this.sharedLives = Math.max(0, Math.min(lives, totalLives));
+        notifyLivesChanged();
     }
     
     /**
@@ -332,6 +342,9 @@ public class Game {
      */
     public void setGameOver(boolean gameOver) {
         this.gameOver = gameOver;
+        if (gameOver) {
+            notifyGameOver(gameWon, winner);
+        }
     }
     
     /**
@@ -379,6 +392,9 @@ public class Game {
                 // gameOver will be set by controller after showing message
             }
         }
+        
+        // Notify observers that a cell was revealed
+        notifyCellRevealed(row, col, currentPlayer);
         
         return mineHit;
     }
@@ -446,6 +462,72 @@ public class Game {
     public void revealAllCells() {
         player1Board.revealAllCells();
         player2Board.revealAllCells();
+    }
+    
+    /**
+     * Adds an observer to be notified of game state changes.
+     * 
+     * @param observer The observer to add
+     */
+    public void addObserver(GameObserver observer) {
+        if (observer != null && !observers.contains(observer)) {
+            observers.add(observer);
+        }
+    }
+    
+    /**
+     * Removes an observer from the list of observers.
+     * 
+     * @param observer The observer to remove
+     */
+    public void removeObserver(GameObserver observer) {
+        observers.remove(observer);
+    }
+    
+    /**
+     * Notifies all observers that the score has changed.
+     */
+    private void notifyScoreChanged() {
+        for (GameObserver observer : observers) {
+            observer.onScoreChanged(combinedScore);
+        }
+    }
+    
+    /**
+     * Notifies all observers that the shared lives have changed.
+     */
+    private void notifyLivesChanged() {
+        for (GameObserver observer : observers) {
+            observer.onLivesChanged(sharedLives, totalLives);
+        }
+    }
+    
+    /**
+     * Notifies all observers that the turn has changed.
+     */
+    private void notifyTurnChanged() {
+        String playerName = getCurrentPlayerName();
+        for (GameObserver observer : observers) {
+            observer.onTurnChanged(currentPlayer, playerName);
+        }
+    }
+    
+    /**
+     * Notifies all observers that the game is over.
+     */
+    private void notifyGameOver(boolean won, int winner) {
+        for (GameObserver observer : observers) {
+            observer.onGameOver(won, winner);
+        }
+    }
+    
+    /**
+     * Notifies all observers that a cell has been revealed.
+     */
+    private void notifyCellRevealed(int row, int col, int player) {
+        for (GameObserver observer : observers) {
+            observer.onCellRevealed(row, col, player);
+        }
     }
 }
 
