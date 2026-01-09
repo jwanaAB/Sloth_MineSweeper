@@ -13,3 +13,10 @@ ID,Question,Difficulty,A,B,C,D,Correct Answer
 3,What is the primary purpose of Code Review in the software development process?,3,To speed up compilation time,To improve the user interface,To identify defects and improve code quality,To replace unit testing,C
 4,What is a key advantage of the MVC (Model-View-Controller) architecture?,4,Reduced memory consumption,"Separation between logic, user interface, and data",Improved network performance,Elimination of the need for testing,B
 5,Which type of testing ensures that new code changes do not break existing functionality?,5,Unit Testing,Integration Testing,Regression Testing,Acceptance Testing,C
+,,,,,,,
+//Jwana's,,,,,,,
+1,"According to Lehman’s Laws of Software Evolution, what happens to an E-type software system if it is not continually adapted?",2,It becomes more stable over time,It becomes progressively less useful,It automatically optimizes its performance,It requires fewer resources to maintain,B
+2,Which of the following best describes the difference between evolution and servicing in a software system?,3,"Evolution adds new functionality, while servicing only fixes bugs"," Servicing adds new features, while evolution freezes functionality"," Evolution stops once the system is deployed, servicing begins afterward","Servicing replaces the system, while evolution maintains it",A
+3,Why is legacy system replacement considered risky?,3,Legacy systems cannot be integrated with modern hardware,Legacy systems always have low business value,Business rules are often undocumented and embedded in the system,Replacement systems never meet user requirements,C
+4,Which type of maintenance focuses on adapting software to a new operating environment?,1, Corrective maintenance, Perfective maintenance,Adaptive maintenance,Preventive maintenance,C
+5,What is the primary goal of refactoring?,2,Adding new features to a system,Rewriting the system using new technology,Improving code structure without changing functionality,Fixing runtime bugs discovered by users,C
