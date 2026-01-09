@@ -197,8 +197,7 @@ public class GameController {
         // Reveal the cell (will unflag if needed)
         boolean mineHit = game.revealCell(row, col);
         
-        // Update UI first to show the revealed cell
-        gamePanel.updateUI();
+        // Observer pattern will automatically update UI when cell is revealed
         
         // Get the revealed cell to check its type
         Cell revealedCell = game.getBoard(player).getCell(row, col);
@@ -277,8 +276,7 @@ public class GameController {
             }
         }
         
-        // Update UI again after turn switch
-        gamePanel.updateUI();
+        // Observer pattern will automatically update UI when turn changes
     }
     
     /**
@@ -501,8 +499,7 @@ public class GameController {
         // Switch turn after answering question
         game.switchTurn();
         
-        // Update UI
-        gamePanel.updateUI();
+        // Observer pattern will automatically update UI when turn changes
 
         return true;
     }
@@ -697,8 +694,7 @@ public class GameController {
         // Switch turn after activating surprise
         game.switchTurn();
         
-        // Update UI
-        gamePanel.updateUI();
+        // Observer pattern will automatically update UI when turn changes
     }
     
     /**

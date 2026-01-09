@@ -9,6 +9,7 @@ import model.QuestionCell;
 import model.SurpriseCell;
 import model.Game;
 import model.GameBoard;
+import model.GameObserver;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -25,10 +26,11 @@ import javax.swing.SwingUtilities;
  * The main gameplay panel displaying two gameboards side-by-side for two
  * players.
  * Shows player information, turn indicator, and handles cell interactions.
+ * Implements GameObserver to automatically update UI when game state changes.
  * 
  * @author Team Sloth
  */
-public class GamePanel extends JPanel {
+public class GamePanel extends JPanel implements GameObserver {
 
     private JButton homeButton;
     private JButton pauseButton;
@@ -98,11 +100,19 @@ public class GamePanel extends JPanel {
             this.gameController.stopTimerForCleanup();
         }
         
+        // Remove observer from previous game if it exists
+        if (this.game != null) {
+            this.game.removeObserver(this);
+        }
+        
         this.game = game;
         this.gameController = gameController;
         this.gameOver = false; // Reset game over state for new game
         this.flagModeEnabled = false; // Reset Flag Mode to OFF for new game
         this.isPaused = false; // Reset pause state for new game
+
+        // Register this panel as an observer of the game
+        game.addObserver(this);
 
         // Update button appearances
         updateFlagModeButtonAppearance();
@@ -1217,5 +1227,98 @@ public class GamePanel extends JPanel {
                         BorderFactory.createEmptyBorder(2, 2, 2, 2)));
             }
         }
+    }
+    
+    // ========== GameObserver Implementation ==========
+    
+    /**
+     * Called when the game score changes.
+     * Updates the score label in the UI.
+     * 
+     * @param newScore The new combined score
+     */
+    @Override
+    public void onScoreChanged(int newScore) {
+        SwingUtilities.invokeLater(() -> {
+            if (combinedScoreLabel != null) {
+                combinedScoreLabel.setText("Combined Score: " + newScore);
+            }
+        });
+    }
+    
+    /**
+     * Called when the shared lives change.
+     * Updates the lives label in the UI.
+     * 
+     * @param newLives The new number of shared lives
+     * @param totalLives The total number of lives
+     */
+    @Override
+    public void onLivesChanged(int newLives, int totalLives) {
+        SwingUtilities.invokeLater(() -> {
+            if (sharedLivesLabel != null) {
+                sharedLivesLabel.setText("Shared Lives: " + newLives + "/" + totalLives);
+            }
+        });
+    }
+    
+    /**
+     * Called when the turn changes to a different player.
+     * Updates the turn indicator and board borders in the UI.
+     * 
+     * @param currentPlayer The current player number (1 or 2)
+     * @param playerName The name of the current player
+     */
+    @Override
+    public void onTurnChanged(int currentPlayer, String playerName) {
+        SwingUtilities.invokeLater(() -> {
+            if (turnIndicatorLabel != null) {
+                turnIndicatorLabel.setText("Current Turn: " + playerName);
+                turnIndicatorLabel.setForeground(
+                        currentPlayer == 1 ? new Color(91, 161, 255) : new Color(196, 107, 255));
+            }
+            // Update board borders to highlight active player
+            updateBoardBorders();
+            // Update cell states to enable/disable based on current player
+            updateUI();
+        });
+    }
+    
+    /**
+     * Called when the game ends (either won or lost).
+     * Updates the UI to show the final game state.
+     * 
+     * @param won true if the game was won, false if lost
+     * @param winner The winner player number (1 or 2), or 0 if no winner (loss)
+     */
+    @Override
+    public void onGameOver(boolean won, int winner) {
+        SwingUtilities.invokeLater(() -> {
+            gameOver = true;
+            setGameOver(true);
+            // The full UI update will be handled by the controller's handleGameOver method
+            // but we ensure the UI reflects the game over state
+            updateUI();
+        });
+    }
+    
+    /**
+     * Called when a cell is revealed.
+     * Updates the UI to reflect the revealed cell.
+     * 
+     * @param row The row index of the revealed cell
+     * @param col The column index of the revealed cell
+     * @param player The player number (1 or 2) who revealed the cell
+     */
+    @Override
+    public void onCellRevealed(int row, int col, int player) {
+        SwingUtilities.invokeLater(() -> {
+            // Update the specific board that had a cell revealed
+            if (player == 1 && game != null) {
+                updateBoard(player1Cells, game.getPlayer1Board(), 1);
+            } else if (player == 2 && game != null) {
+                updateBoard(player2Cells, game.getPlayer2Board(), 2);
+            }
+        });
     }
 }
