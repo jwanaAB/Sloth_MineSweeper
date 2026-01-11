@@ -211,34 +211,58 @@ public class HistoryPanel extends JPanel {
     }
     
     private JPanel createGameRecordCard(GameHistory history) {
-        // Outer container for the entire card entry (includes header outside card)
-        JPanel container = new JPanel();
-        container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
-        container.setBackground(Color.WHITE);
-        container.setAlignmentX(Component.CENTER_ALIGNMENT);
-        container.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
+        // Main card container with shadow and rounded corners
+        JPanel card = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Draw shadow
+                g2.setColor(new Color(0, 0, 0, 20));
+                g2.fillRoundRect(2, 2, getWidth() - 4, getHeight() - 4, 12, 12);
+                
+                // Draw white rounded background
+                g2.setColor(Color.WHITE);
+                g2.fillRoundRect(0, 0, getWidth() - 2, getHeight() - 2, 12, 12);
+                
+                // Draw border
+                g2.setColor(new Color(220, 220, 220)); // Light gray border
+                g2.setStroke(new BasicStroke(1.0f));
+                g2.drawRoundRect(0, 0, getWidth() - 2, getHeight() - 2, 12, 12);
+                
+                g2.dispose();
+            }
+        };
+        card.setOpaque(false);
+        card.setLayout(new BorderLayout());
+        card.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        card.setAlignmentX(Component.CENTER_ALIGNMENT);
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 400));
         
-        // Top row: Difficulty badge, Date, and Delete button (outside the card)
-        JPanel headerRow = new JPanel(new BorderLayout());
-        headerRow.setOpaque(false);
-        headerRow.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
-        headerRow.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // Header section at top
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setOpaque(false);
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
         
         // Left: Difficulty badge and date
         JPanel leftHeader = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         leftHeader.setOpaque(false);
         
-        // Difficulty badge (rounded)
         JLabel difficultyLabel = createDifficultyBadge(history.getDifficulty());
         leftHeader.add(difficultyLabel);
         
-        // Date
         JLabel dateLabel = new JLabel(history.getFormattedDate());
         dateLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        dateLabel.setForeground(new Color(100, 100, 100));
+        dateLabel.setForeground(new Color(66, 66, 66)); // Dark gray (#424242)
         leftHeader.add(dateLabel);
         
-        // Right: Delete button (red trash icon)
+        // Right: Delete button and time badge
+        JPanel rightHeader = new JPanel(new BorderLayout());
+        rightHeader.setOpaque(false);
+        
+        // Delete button (top right)
         JButton deleteButton = createTrashButton();
         deleteButton.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(
@@ -254,45 +278,20 @@ public class HistoryPanel extends JPanel {
             }
         });
         
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        rightPanel.setOpaque(false);
-        rightPanel.add(deleteButton);
+        JPanel deletePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        deletePanel.setOpaque(false);
+        deletePanel.add(deleteButton);
+        rightHeader.add(deletePanel, BorderLayout.NORTH);
         
-        headerRow.add(leftHeader, BorderLayout.WEST);
-        headerRow.add(rightPanel, BorderLayout.EAST);
+        // Time badge (below delete button)
+        JPanel timePanel = createTimeBadge(history.getFormattedDuration());
+        JPanel timePanelWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 5));
+        timePanelWrapper.setOpaque(false);
+        timePanelWrapper.add(timePanel);
+        rightHeader.add(timePanelWrapper, BorderLayout.SOUTH);
         
-        // The actual card (white with rounded corners)
-        JPanel card = new JPanel();
-        card.setLayout(new BorderLayout());
-        card.setBackground(Color.WHITE);
-        card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(230, 230, 230), 1),
-            BorderFactory.createEmptyBorder(20, 20, 20, 20)
-        ));
-        card.setAlignmentX(Component.CENTER_ALIGNMENT);
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 300));
-        
-        // Time display in top-right corner as small rectangle
-        JPanel timePanel = createRoundedPanel(new Color(173, 216, 255), 8);
-        timePanel.setLayout(new FlowLayout(FlowLayout.CENTER, 4, 0));
-        timePanel.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
-        timePanel.setPreferredSize(new Dimension(70, 24));
-        timePanel.setMaximumSize(new Dimension(70, 24));
-        
-        JLabel clockIcon = new JLabel("\u25A0"); // Square symbol (black square)
-        clockIcon.setFont(new Font("Segoe UI", Font.PLAIN, 10));
-        clockIcon.setForeground(new Color(60, 60, 60));
-        timePanel.add(clockIcon);
-        
-        JLabel durationLabel = new JLabel(history.getFormattedDuration());
-        durationLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        durationLabel.setForeground(new Color(60, 60, 60));
-        timePanel.add(durationLabel);
-        
-        // Top panel to hold time in corner
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        topPanel.setOpaque(false);
-        topPanel.add(timePanel);
+        headerPanel.add(leftHeader, BorderLayout.WEST);
+        headerPanel.add(rightHeader, BorderLayout.EAST);
         
         // Content panel for card body
         JPanel cardContent = new JPanel();
@@ -300,51 +299,69 @@ public class HistoryPanel extends JPanel {
         cardContent.setOpaque(false);
         
         // Player information row
-        JPanel playerRow = new JPanel();
-        playerRow.setLayout(new BoxLayout(playerRow, BoxLayout.X_AXIS));
+        JPanel playerRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
         playerRow.setOpaque(false);
         playerRow.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
         playerRow.setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        // Player 1
-        JPanel player1Panel = createPlayerPanel("Player 1", history.getPlayer1Name(), new Color(173, 216, 230)); // Light blue
-        playerRow.add(Box.createHorizontalGlue());
+        // Player 1 panel
+        JPanel player1Panel = createPlayerPanel("Player 1", history.getPlayer1Name(), 
+            new Color(179, 224, 242)); // Light blue (#B3E0F2)
         playerRow.add(player1Panel);
-        playerRow.add(Box.createHorizontalStrut(15));
         
-        // Player 2
-        JPanel player2Panel = createPlayerPanel("Player 2", history.getPlayer2Name(), new Color(221, 160, 221)); // Light purple
+        // Player 2 panel
+        JPanel player2Panel = createPlayerPanel("Player 2", history.getPlayer2Name(), 
+            new Color(225, 190, 231)); // Light purple (#E1BEE7)
         playerRow.add(player2Panel);
-        playerRow.add(Box.createHorizontalGlue());
         
-        // Combined Score row
-        JPanel scorePanel = createInfoPanel("Combined Score:", 
-            String.valueOf(history.getCombinedScore()), 
-            "🎯", 
-            new Color(144, 238, 144)); // Light green
+        // Combined Score bar
+        JPanel scorePanel = createScorePanel(history.getCombinedScore());
         scorePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         scorePanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
         
-        // Hearts Remaining row
-        JPanel heartsPanel = createInfoPanel("Hearts Remaining:", 
-            String.valueOf(history.getRemainingHearts()), 
-            "❤", 
-            new Color(255, 182, 193)); // Light pink
+        // Hearts Remaining bar
+        JPanel heartsPanel = createHeartsPanel(history.getRemainingHearts());
         heartsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
         cardContent.add(playerRow);
         cardContent.add(scorePanel);
         cardContent.add(heartsPanel);
         
-        // Add top panel with time in corner and content to center
-        card.add(topPanel, BorderLayout.NORTH);
+        card.add(headerPanel, BorderLayout.NORTH);
         card.add(cardContent, BorderLayout.CENTER);
         
-        // Add header and card to container
-        container.add(headerRow);
+        // Container with spacing
+        JPanel container = new JPanel();
+        container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
+        container.setBackground(Color.WHITE);
+        container.setAlignmentX(Component.CENTER_ALIGNMENT);
+        container.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
         container.add(card);
         
         return container;
+    }
+    
+    /**
+     * Creates a time badge with light blue background.
+     */
+    private JPanel createTimeBadge(String timeText) {
+        JPanel timePanel = createRoundedPanel(new Color(187, 222, 251), 8); // Light blue (#BBDEFB)
+        timePanel.setLayout(new FlowLayout(FlowLayout.CENTER, 4, 0));
+        timePanel.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+        timePanel.setPreferredSize(new Dimension(60, 24));
+        timePanel.setMaximumSize(new Dimension(60, 24));
+        
+        JLabel clockIcon = new JLabel("\u25A0"); // Square symbol (■)
+        clockIcon.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        clockIcon.setForeground(new Color(33, 150, 243)); // Blue (#2196F3)
+        timePanel.add(clockIcon);
+        
+        JLabel durationLabel = new JLabel(timeText);
+        durationLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        durationLabel.setForeground(Color.WHITE);
+        timePanel.add(durationLabel);
+        
+        return timePanel;
     }
     
     /**
@@ -458,96 +475,98 @@ public class HistoryPanel extends JPanel {
     }
     
     private JPanel createPlayerPanel(String label, String name, Color bgColor) {
-        JPanel panel = createRoundedPanel(bgColor, 15);
-        panel.setLayout(new BorderLayout());
+        JPanel panel = createRoundedPanel(bgColor, 12);
+        panel.setLayout(new BorderLayout(0, 8));
         panel.setBorder(BorderFactory.createEmptyBorder(12, 15, 12, 15));
-        panel.setPreferredSize(new Dimension(160, 85));
-        panel.setMaximumSize(new Dimension(160, 85));
+        panel.setPreferredSize(new Dimension(180, 90));
+        panel.setMaximumSize(new Dimension(180, 90));
         panel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
         // Label in top left
         JLabel labelText = new JLabel(label);
         labelText.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        labelText.setForeground(new Color(60, 60, 60));
+        labelText.setForeground(new Color(117, 117, 117)); // Dark gray (#757575)
         labelText.setHorizontalAlignment(SwingConstants.LEFT);
         panel.add(labelText, BorderLayout.NORTH);
         
         // Name centered below
         JLabel nameText = new JLabel(name);
-        nameText.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        nameText.setForeground(new Color(40, 40, 40));
+        nameText.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        if (label.equals("Player 1")) {
+            nameText.setForeground(new Color(33, 150, 243)); // Blue (#2196F3)
+        } else {
+            nameText.setForeground(new Color(156, 39, 176)); // Purple (#9C27B0)
+        }
         nameText.setHorizontalAlignment(SwingConstants.CENTER);
         panel.add(nameText, BorderLayout.CENTER);
         
         return panel;
     }
     
-    private JPanel createInfoPanel(String label, String value, String icon, Color bgColor) {
-        JPanel panel = createRoundedPanel(bgColor, 15);
-        panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
+    /**
+     * Creates the Combined Score panel.
+     */
+    private JPanel createScorePanel(int score) {
+        JPanel panel = createRoundedPanel(new Color(200, 230, 201), 12); // Light green (#C8E6C9)
+        panel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 0));
         panel.setBorder(BorderFactory.createEmptyBorder(12, 15, 12, 15));
         panel.setAlignmentX(Component.CENTER_ALIGNMENT);
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
         
-        // Add horizontal glue to center content
-        panel.add(Box.createHorizontalGlue());
+        // Square bullet
+        JLabel bullet = new JLabel("\u25A0"); // Square symbol (■)
+        bullet.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        bullet.setForeground(new Color(66, 66, 66)); // Dark gray/black
+        panel.add(bullet);
         
-        if (icon != null && !icon.isEmpty()) {
-            String iconChar = "";
-            if (icon.equals("🎯")) {
-                iconChar = "\u25A0"; // Square symbol (black square)
-            } else if (icon.equals("❤")) {
-                iconChar = "\u2665"; // Heart symbol
-            } else {
-                iconChar = "\u25A0"; // Default to square
-            }
-            JLabel iconLabel = new JLabel(iconChar);
-            iconLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-            iconLabel.setForeground(new Color(60, 60, 60));
-            iconLabel.setAlignmentY(Component.CENTER_ALIGNMENT);
-            panel.add(iconLabel);
-            panel.add(Box.createHorizontalStrut(8));
-        }
-        
-        JLabel labelText = new JLabel(label);
+        JLabel labelText = new JLabel("Combined Score:");
         labelText.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        labelText.setForeground(new Color(60, 60, 60));
-        labelText.setAlignmentY(Component.CENTER_ALIGNMENT);
+        labelText.setForeground(new Color(66, 66, 66)); // Dark gray/black
         panel.add(labelText);
         
-        // For score, add target icon before value
-        if (icon != null && icon.equals("🎯")) {
-            panel.add(Box.createHorizontalStrut(5));
-            JLabel targetIcon = new JLabel("\u25A0"); // Square symbol
-            targetIcon.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-            targetIcon.setForeground(new Color(200, 0, 0)); // Red color
-            targetIcon.setAlignmentY(Component.CENTER_ALIGNMENT);
-            panel.add(targetIcon);
-        }
-        
-        panel.add(Box.createHorizontalStrut(5));
-        
-        JLabel valueText = new JLabel(value);
+        JLabel valueText = new JLabel(String.valueOf(score));
         valueText.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        valueText.setForeground(new Color(40, 40, 40));
-        valueText.setAlignmentY(Component.CENTER_ALIGNMENT);
+        valueText.setForeground(new Color(244, 67, 54)); // Red (#F44336)
         panel.add(valueText);
-        
-        // For hearts, add heart icon after value
-        if (icon != null && icon.equals("❤")) {
-            panel.add(Box.createHorizontalStrut(5));
-            JLabel heartIcon = new JLabel("\u2665"); // Heart symbol
-            heartIcon.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-            heartIcon.setForeground(new Color(200, 0, 0)); // Red color
-            heartIcon.setAlignmentY(Component.CENTER_ALIGNMENT);
-            panel.add(heartIcon);
-        }
-        
-        // Add horizontal glue to center content
-        panel.add(Box.createHorizontalGlue());
         
         return panel;
     }
+    
+    /**
+     * Creates the Hearts Remaining panel.
+     */
+    private JPanel createHeartsPanel(int hearts) {
+        JPanel panel = createRoundedPanel(new Color(255, 205, 210), 12); // Light pink (#FFCDD2)
+        panel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        panel.setBorder(BorderFactory.createEmptyBorder(12, 15, 12, 15));
+        panel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        
+        // Heart symbol (outlined)
+        JLabel heartOutlined = new JLabel("\u2665"); // Heart symbol (♥)
+        heartOutlined.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        heartOutlined.setForeground(new Color(66, 66, 66)); // Dark gray/black
+        panel.add(heartOutlined);
+        
+        JLabel labelText = new JLabel("Hearts Remaining:");
+        labelText.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        labelText.setForeground(new Color(66, 66, 66)); // Dark gray/black
+        panel.add(labelText);
+        
+        JLabel valueText = new JLabel(String.valueOf(hearts));
+        valueText.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        valueText.setForeground(new Color(244, 67, 54)); // Red (#F44336)
+        panel.add(valueText);
+        
+        // Heart symbol (solid)
+        JLabel heartSolid = new JLabel("\u2665"); // Heart symbol (❤)
+        heartSolid.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        heartSolid.setForeground(new Color(244, 67, 54)); // Red (#F44336)
+        panel.add(heartSolid);
+        
+        return panel;
+    }
+    
     
     /**
      * Updates the responsive layout based on scale factor.
