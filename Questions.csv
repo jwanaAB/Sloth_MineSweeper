@@ -1,30 +1,22 @@
 ID,Question,Difficulty,A,B,C,D,Correct Answer
-//Khalil's,,,,,,,
 1,Which requirement type focuses on system qualities like performance and reliability?,1,Non-Functional,Design,Functional,Domain,A
 2,Which activity answers the question Are we building the right product?,2,Verification,Inspection,Validation,Debugging,C
 3,What does McCabe cyclomatic complexity represent?,3,Lines of code,Independent paths,Memory usage,Runtime speed,B
 4,What is a major risk of very high cyclomatic complexity?,2,Fast execution,Lower cost,Hard testing,Better design,C
 5,Why must documentation be maintained throughout the software life cycle?,2,Reduce testing,Improve speed,Lower cost,Support maintenance,D
 6,Why are legacy systems difficult and risky to replace?,4,Low cost,Simple logic,Poor documentation,Good structure,C
-,,,,,,,
-//Riad's,,,,,,,
-1,What is the main characteristic of the Waterfall development model?,1,Iterative development with continuous customer feedback,Linear progression through phases with no backtracking,Development based on short sprints,Continuous automated testing at every stage,B
-2,What is a functional requirement in a software system?,2,A description of system performance under load,A limitation on system response time,A description of an action the system must perform,A requirement related to information security,C
-3,What is the primary purpose of Code Review in the software development process?,3,To speed up compilation time,To improve the user interface,To identify defects and improve code quality,To replace unit testing,C
-4,What is a key advantage of the MVC (Model-View-Controller) architecture?,4,Reduced memory consumption,"Separation between logic, user interface, and data",Improved network performance,Elimination of the need for testing,B
-5,Which type of testing ensures that new code changes do not break existing functionality?,5,Unit Testing,Integration Testing,Regression Testing,Acceptance Testing,C
-,,,,,,,
-//Jwana's,,,,,,,
-1,"According to Lehman�s Laws of Software Evolution, what happens to an E-type software system if it is not continually adapted?",2,It becomes more stable over time,It becomes progressively less useful,It automatically optimizes its performance,It requires fewer resources to maintain,B
-2,Which of the following best describes the difference between evolution and servicing in a software system?,3,"Evolution adds new functionality, while servicing only fixes bugs"," Servicing adds new features, while evolution freezes functionality"," Evolution stops once the system is deployed, servicing begins afterward","Servicing replaces the system, while evolution maintains it",A
-3,Why is legacy system replacement considered risky?,3,Legacy systems cannot be integrated with modern hardware,Legacy systems always have low business value,Business rules are often undocumented and embedded in the system,Replacement systems never meet user requirements,C
-4,Which type of maintenance focuses on adapting software to a new operating environment?,1, Corrective maintenance, Perfective maintenance,Adaptive maintenance,Preventive maintenance,C
-5,What is the primary goal of refactoring?,2,Adding new features to a system,Rewriting the system using new technology,Improving code structure without changing functionality,Fixing runtime bugs discovered by users,C
-
-,,,,,,,
-//Salwa's,,,,,,,
-1,What is the main purpose of Software Verification?,2,Ensure the product meets user needs,Check compliance with requirements,Improve system performance,Reduce development cost,B
-2,Which document defines WHAT the system should do and not HOW?,1,SDP,SRS,Test Plan,Design Document,B
-3,What does high coupling between software modules usually cause?,3,Easier maintenance,Faster execution,Increased dependency and lower maintainability,Better reuse,C
-4,Which testing level focuses on interactions between combined modules?,2,Unit Testing,System Testing,Integration Testing,Acceptance Testing,C
-5,What is the main goal of a Risk Management Plan?,3,Eliminate all risks,Ignore low-impact risks,Identify analyze and mitigate risks,Delay project decisions,C
+7,What is the main characteristic of the Waterfall development model?,1,Iterative development with continuous customer feedback,Linear progression through phases with no backtracking,Development based on short sprints,Continuous automated testing at every stage,B
+8,What is a functional requirement in a software system?,2,A description of system performance under load,A limitation on system response time,A description of an action the system must perform,A requirement related to information security,C
+9,What is the primary purpose of Code Review in the software development process?,3,To speed up compilation time,To improve the user interface,To identify defects and improve code quality,To replace unit testing,C
+10,What is a key advantage of the MVC (Model-View-Controller) architecture?,4,Reduced memory consumption,"Separation between logic, user interface, and data",Improved network performance,Elimination of the need for testing,B
+11,Which type of testing ensures that new code changes do not break existing functionality?,5,Unit Testing,Integration Testing,Regression Testing,Acceptance Testing,C
+12,According to Lehmans Laws of Software Evolution what happens to an E-type software system if it is not continually adapted?,2,It becomes more stable over time,It becomes progressively less useful,It automatically optimizes its performance,It requires fewer resources to maintain,B
+13,Which of the following best describes the difference between evolution and servicing in a software system?,3,"Evolution adds new functionality, while servicing only fixes bugs"," Servicing adds new features, while evolution freezes functionality"," Evolution stops once the system is deployed, servicing begins afterward","Servicing replaces the system, while evolution maintains it",A
+14,Why is legacy system replacement considered risky?,3,Legacy systems cannot be integrated with modern hardware,Legacy systems always have low business value,Business rules are often undocumented and embedded in the system,Replacement systems never meet user requirements,C
+15,Which type of maintenance focuses on adapting software to a new operating environment?,1, Corrective maintenance, Perfective maintenance,Adaptive maintenance,Preventive maintenance,C
+16,What is the primary goal of refactoring?,2,Adding new features to a system,Rewriting the system using new technology,Improving code structure without changing functionality,Fixing runtime bugs discovered by users,C
+17,What is the main purpose of Software Verification?,2,Ensure the product meets user needs,Check compliance with requirements,Improve system performance,Reduce development cost,B
+18,Which document defines WHAT the system should do and not HOW?,1,SDP,SRS,Test Plan,Design Document,B
+19,What does high coupling between software modules usually cause?,3,Easier maintenance,Faster execution,Increased dependency and lower maintainability,Better reuse,C
+20,Which testing level focuses on interactions between combined modules?,2,Unit Testing,System Testing,Integration Testing,Acceptance Testing,C
+21,What is the main goal of a Risk Management Plan?,3,Eliminate all risks,Ignore low-impact risks,Identify analyze and mitigate risks,Delay project decisions,C

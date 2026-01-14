@@ -113,6 +113,67 @@ public class QuestionLogic {
         }
     }
 
+    /**
+     * Parses a CSV line respecting quoted fields that may contain commas.
+     * Handles fields enclosed in double quotes.
+     * 
+     * @param line The CSV line to parse
+     * @return Array of field values with quotes removed
+     */
+    private String[] parseCSVLine(String line) {
+        List<String> fields = new ArrayList<>();
+        StringBuilder currentField = new StringBuilder();
+        boolean insideQuotes = false;
+        
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            
+            if (c == '"') {
+                if (insideQuotes && i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                    // Escaped quote (double quote)
+                    currentField.append('"');
+                    i++; // Skip next quote
+                } else {
+                    // Toggle quote state
+                    insideQuotes = !insideQuotes;
+                }
+            } else if (c == ',' && !insideQuotes) {
+                // End of field
+                fields.add(currentField.toString().trim());
+                currentField.setLength(0);
+            } else {
+                currentField.append(c);
+            }
+        }
+        
+        // Add the last field
+        fields.add(currentField.toString().trim());
+        
+        return fields.toArray(new String[0]);
+    }
+
+    /**
+     * Escapes a CSV field value. If the field contains commas, quotes, or newlines,
+     * it will be wrapped in double quotes, and any existing quotes will be escaped.
+     * 
+     * @param field The field value to escape
+     * @return The escaped field value
+     */
+    private String escapeCSVField(String field) {
+        if (field == null) {
+            return "";
+        }
+        
+        // If field contains comma, quote, or newline, wrap in quotes
+        if (field.contains(",") || field.contains("\"") || field.contains("\n") || field.contains("\r")) {
+            // Escape quotes by doubling them
+            String escaped = field.replace("\"", "\"\"");
+            return "\"" + escaped + "\"";
+        }
+        
+        return field;
+    }
+
     public void loadQuestionsFromCSV(String csvPath) {
         // Always use the external CSV file when it exists (for JAR execution)
         ensureExternalCsvExists();
@@ -167,7 +228,7 @@ public class QuestionLogic {
                     continue; // Skip empty lines
                 }
 
-                String[] parts = line.split(",");
+                String[] parts = parseCSVLine(line);
                 if (parts.length >= 8) {
                     try {
                         int id = Integer.parseInt(parts[0].trim());
@@ -253,12 +314,12 @@ public class QuestionLogic {
         for (Question q : questions) {
             writer.write(String.format("%d,%s,%d,%s,%s,%s,%s,%s",
                     q.getId(),
-                    q.getQuestionText(),
+                    escapeCSVField(q.getQuestionText()),
                     q.getDifficulty(),
-                    q.getA(),
-                    q.getB(),
-                    q.getC(),
-                    q.getD(),
+                    escapeCSVField(q.getA()),
+                    escapeCSVField(q.getB()),
+                    escapeCSVField(q.getC()),
+                    escapeCSVField(q.getD()),
                     q.getCorrectAnswer()));
             writer.newLine();
         }
@@ -385,7 +446,7 @@ public class QuestionLogic {
                     continue; // Skip empty lines
                 }
 
-                String[] parts = line.split(",");
+                String[] parts = parseCSVLine(line);
                 if (parts.length < 8) {
                     skippedCount++;
                     errors.add("Line " + lineNumber + ": Insufficient columns (expected 8, found " + parts.length + ")");
