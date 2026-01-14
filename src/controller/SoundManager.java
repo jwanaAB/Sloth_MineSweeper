@@ -39,6 +39,7 @@ public class SoundManager {
         loadSound("game-over", "sounds/game-over.wav");
         loadSound("surprise", "sounds/surprise.wav");
         loadSound("correct-answer", "sounds/correct-answer.wav");
+        loadSound("wrong-answer", "sounds/wrong_Answer.wav");
     }
     
     /**

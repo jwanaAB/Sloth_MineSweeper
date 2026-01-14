@@ -4,8 +4,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Duration;
 import javax.swing.*;
+import java.awt.Window;
 import model.*;
 import view.GamePanel;
+import view.QuestionDialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -436,38 +438,25 @@ public class GameController {
     private boolean showQuestionDialog(Question question, int player) {
         final String playerName = player == 1 ? game.getPlayer1Name() : game.getPlayer2Name();
 
-        String[] options = {
-            "A) " + question.getA(),
-            "B) " + question.getB(),
-            "C) " + question.getC(),
-            "D) " + question.getD()
-        };
+        // Get the parent frame for the dialog
+        JFrame parentFrame = null;
+        Window parentWindow = SwingUtilities.getWindowAncestor(gamePanel);
+        if (parentWindow instanceof JFrame) {
+            parentFrame = (JFrame) parentWindow;
+        }
 
         Integer choice = null;
         while (choice == null) {
-            int selected = JOptionPane.showOptionDialog(
-                gamePanel,
-                question.getQuestionText() + "\n\n" +
-                "A) " + question.getA() + "\n" +
-                "B) " + question.getB() + "\n" +
-                "C) " + question.getC() + "\n" +
-                "D) " + question.getD(),
-                "Question for " + playerName,
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.QUESTION_MESSAGE,
-                null,
-                options,
-                options[0]
-            );
+            QuestionDialog dialog = new QuestionDialog(parentFrame, question, playerName);
+            choice = dialog.showDialog();
 
-            if (selected >= 0 && selected <= 3) {
-                choice = selected;
-            } else {
+            if (choice == null) {
+                // Dialog was closed without selection - show warning and loop again
                 JOptionPane.showMessageDialog(
                     gamePanel,
                     "You must answer the question before closing.",
                     "Answer Required",
-                    JOptionPane.ERROR_MESSAGE
+                    JOptionPane.WARNING_MESSAGE
                 );
             }
         }
@@ -492,7 +481,8 @@ public class GameController {
             soundManager.playSound("correct-answer");
             showMessage("Correct! Well done!", "Correct Answer", JOptionPane.INFORMATION_MESSAGE);
         } else {
-            showMessage("Incorrect. The correct answer was " + question.getCorrectAnswer() + ".", 
+            soundManager.playSound("wrong-answer");
+            showMessage("Incorrect answer.", 
                        "Wrong Answer", JOptionPane.INFORMATION_MESSAGE);
         }
         
