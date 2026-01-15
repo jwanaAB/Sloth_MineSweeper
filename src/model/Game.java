@@ -85,18 +85,19 @@ public class Game {
         this.observers = new ArrayList<>();
         
         // Set shared lives based on difficulty
+        // Total lives is always 10, but starting lives vary by difficulty
+        this.totalLives = 10;
         switch (difficulty) {
             case EASY:
-                this.totalLives = 10;
+                this.sharedLives = 10; // Start with 10/10
                 break;
             case MEDIUM:
-                this.totalLives = 8;
+                this.sharedLives = 8; // Start with 8/10
                 break;
             case HARD:
-                this.totalLives = 6;
+                this.sharedLives = 6; // Start with 6/10
                 break;
         }
-        this.sharedLives = totalLives; // Both players share the same lives pool
         
         // Initialize boards
         initializeBoards(questionLogic);

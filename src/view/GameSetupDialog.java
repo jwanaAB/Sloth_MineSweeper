@@ -97,7 +97,9 @@ public class GameSetupDialog extends JDialog {
         // Create text fields with percentage-based sizing
         int fieldWidth = cardWidth - 50; // Account for card padding
         player1TextField = createStyledTextField("Player 1 name", fieldWidth);
+        player1TextField.setText("player1"); // Set default value
         player2TextField = createStyledTextField("Player 2 name", fieldWidth);
+        player2TextField.setText("player2"); // Set default value
 
         JLabel player1Label = createSectionLabel("Player 1 Name");
         JLabel player2Label = createSectionLabel("Player 2 Name");

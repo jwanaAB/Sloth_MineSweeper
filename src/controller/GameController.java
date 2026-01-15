@@ -178,7 +178,8 @@ public class GameController {
         
         // Validate that it's the current player's turn
         if (!game.canRevealCell(row, col, player)) {
-            showMessage("It's not your turn!", "Invalid Move", JOptionPane.WARNING_MESSAGE);
+            // Show visual indicator instead of message
+            gamePanel.showWrongTurnIndicator();
             return;
         }
         
@@ -251,22 +252,10 @@ public class GameController {
             if (revealedCell != null) {
                 // Check if it's a question or surprise cell
                 if (revealedCell instanceof QuestionCell) {
-                    // Question cell revealed - player must wait until next turn to activate
-                    showMessage(
-                        "Question cell revealed! You can activate it on your next turn.",
-                        "Question Cell Found",
-                        JOptionPane.INFORMATION_MESSAGE
-                    );
-                    // Switch turn - player cannot activate in same turn
+                    // Question cell revealed - switch turn (no message)
                     game.switchTurn();
                 } else if (revealedCell instanceof SurpriseCell) {
-                    // Surprise cell revealed - player must wait until next turn to activate
-                    showMessage(
-                        "Surprise cell revealed! You can activate it on your next turn.",
-                        "Surprise Cell Found",
-                        JOptionPane.INFORMATION_MESSAGE
-                    );
-                    // Switch turn - player cannot activate in same turn
+                    // Surprise cell revealed - switch turn (no message)
                     game.switchTurn();
                 } else {
                     // Regular cell (number, empty) - switch turn
@@ -296,7 +285,8 @@ public class GameController {
         
         // Check if it's the current player's turn
         if (player != game.getCurrentPlayer()) {
-            showMessage("It's not your turn!", "Invalid Move", JOptionPane.WARNING_MESSAGE);
+            // Show visual indicator instead of message
+            gamePanel.showWrongTurnIndicator();
             return;
         }
         
@@ -345,7 +335,8 @@ public class GameController {
         
         // Validate that it's the current player's turn
         if (player != game.getCurrentPlayer()) {
-            showMessage("It's not your turn!", "Invalid Move", JOptionPane.WARNING_MESSAGE);
+            // Show visual indicator instead of message
+            gamePanel.showWrongTurnIndicator();
             return;
         }
         
@@ -384,7 +375,8 @@ public class GameController {
         
         // Validate that it's the current player's turn
         if (player != game.getCurrentPlayer()) {
-            showMessage("It's not your turn!", "Invalid Move", JOptionPane.WARNING_MESSAGE);
+            // Show visual indicator instead of message
+            gamePanel.showWrongTurnIndicator();
             return;
         }
         

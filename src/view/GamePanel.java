@@ -21,6 +21,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+import java.util.List;
 
 /**
  * The main gameplay panel displaying two gameboards side-by-side for two
@@ -53,14 +55,23 @@ public class GamePanel extends JPanel implements GameObserver {
     private boolean flagModeEnabled = false;
     private boolean isPaused = false;
     private JPanel pauseOverlay;
+    private JButton themeButton;
+    private ThemeManager themeManager;
+    private JPanel topBar;
+    private JPanel infoPanel;
+    private JPanel boardsContainer;
+    private JPanel northContainer;
 
     /**
      * Constructs a new GamePanel.
      */
     public GamePanel() {
         setLayout(new BorderLayout());
-        setBackground(new Color(240, 240, 250));
-
+        
+        // Initialize theme manager
+        themeManager = ThemeManager.getInstance();
+        applyTheme();
+        
         // Initialize board panels
         player1BoardPanel = new JPanel();
         player2BoardPanel = new JPanel();
@@ -152,14 +163,16 @@ public class GamePanel extends JPanel implements GameObserver {
      */
     private void buildTopBar() {
         // Create a container panel for both top bar and player info
-        JPanel northContainer = new JPanel();
+        northContainer = new JPanel();
         northContainer.setLayout(new BoxLayout(northContainer, BoxLayout.Y_AXIS));
-        northContainer.setBackground(Color.WHITE);
+        Theme theme = themeManager.getCurrentTheme();
+        northContainer.setBackground(theme.getBoardBackgroundColor());
 
-        // Top bar with home button
-        JPanel topBar = new JPanel(new BorderLayout());
-        topBar.setBackground(Color.WHITE);
+        // Top bar with GridBagLayout for proper centering
+        topBar = new JPanel(new GridBagLayout());
+        topBar.setBackground(theme.getBoardBackgroundColor());
         topBar.setBorder(BorderFactory.createEmptyBorder(12, 12, 8, 12));
+        GridBagConstraints gbc = new GridBagConstraints();
 
         homeButton = new JButton("\u2190 Home");
         homeButton.setFocusPainted(false);
@@ -184,7 +197,12 @@ public class GamePanel extends JPanel implements GameObserver {
             }
         });
 
-        topBar.add(homeButton, BorderLayout.WEST);
+        // Home button on the left
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        topBar.add(homeButton, gbc);
         
         // Create Pause button in the center
         pauseButton = new JButton("⏸ Pause");
@@ -217,11 +235,13 @@ public class GamePanel extends JPanel implements GameObserver {
         // Add click handler
         pauseButton.addActionListener(e -> togglePause());
         
-        // Add Pause button to center
-        JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        centerPanel.setOpaque(false);
-        centerPanel.add(pauseButton);
-        topBar.add(centerPanel, BorderLayout.CENTER);
+        // Pause button in the center with expanding space
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.weightx = 1.0; // Take up remaining space to center
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.fill = GridBagConstraints.NONE;
+        topBar.add(pauseButton, gbc);
         
         // Create Flag Mode button
         flagModeButton = new JButton("Flag Mode: OFF");
@@ -254,8 +274,45 @@ public class GamePanel extends JPanel implements GameObserver {
         // Add click handler
         flagModeButton.addActionListener(e -> toggleFlagMode());
         
-        // Add Flag Mode button to top bar on the right side
-        topBar.add(flagModeButton, BorderLayout.EAST);
+        // Create Theme button
+        themeButton = new JButton("Theme");
+        themeButton.setFocusPainted(false);
+        themeButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        themeButton.setBackground(new Color(150, 150, 200));
+        themeButton.setForeground(Color.WHITE);
+        themeButton.setOpaque(true);
+        themeButton.setBorderPainted(false);
+        themeButton.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(120, 120, 180), 2),
+                BorderFactory.createEmptyBorder(8, 16, 8, 16)));
+        themeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        // Add hover effect
+        themeButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                themeButton.setBackground(new Color(120, 120, 180));
+            }
+            
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                themeButton.setBackground(new Color(150, 150, 200));
+            }
+        });
+        
+        // Add click handler to show theme selector
+        themeButton.addActionListener(e -> showThemeSelector());
+        
+        // Create right panel for Flag Mode and Theme buttons
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        rightPanel.setOpaque(false);
+        rightPanel.add(themeButton);
+        rightPanel.add(flagModeButton);
+        
+        // Right panel on the right side
+        gbc.gridx = 2;
+        gbc.gridy = 0;
+        gbc.weightx = 0; // Don't expand
+        gbc.anchor = GridBagConstraints.EAST;
+        topBar.add(rightPanel, gbc);
         
         northContainer.add(topBar);
 
@@ -309,10 +366,11 @@ public class GamePanel extends JPanel implements GameObserver {
      * Builds the player information panel showing names and combined score.
      */
     private void buildPlayerInfoPanel() {
-        JPanel infoPanel = new JPanel(new BorderLayout());
-        infoPanel.setBackground(new Color(255, 255, 255));
+        Theme theme = themeManager.getCurrentTheme();
+        infoPanel = new JPanel(new BorderLayout());
+        infoPanel.setBackground(theme.getBoardBackgroundColor());
         infoPanel.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(220, 220, 220), 1),
+                new LineBorder(theme.getInactiveBorderColor(), 1),
                 new EmptyBorder(15, 20, 15, 20)));
 
         // Player names panel
@@ -386,8 +444,9 @@ public class GamePanel extends JPanel implements GameObserver {
      * Builds the gameboards panel with two boards side-by-side.
      */
     private void buildGameBoards() {
-        JPanel boardsContainer = new JPanel(new BorderLayout());
-        boardsContainer.setBackground(new Color(240, 240, 250));
+        Theme theme = themeManager.getCurrentTheme();
+        boardsContainer = new JPanel(new BorderLayout());
+        boardsContainer.setBackground(theme.getBackgroundColor());
         boardsContainer.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         // Container for both boards
@@ -403,9 +462,10 @@ public class GamePanel extends JPanel implements GameObserver {
         player1Container.add(player1BoardLabel, BorderLayout.NORTH);
         
         // Player 1 board panel with custom border
-        player1BoardPanel.setBackground(new Color(255, 255, 255));
+        Theme currentTheme = themeManager.getCurrentTheme();
+        player1BoardPanel.setBackground(currentTheme.getBoardBackgroundColor());
         player1BoardPanel.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(200, 200, 200), 2),
+                new LineBorder(currentTheme.getInactiveBorderColor(), 2),
                 new EmptyBorder(10, 10, 10, 10)));
         player1Container.add(player1BoardPanel, BorderLayout.CENTER);
         
@@ -418,9 +478,9 @@ public class GamePanel extends JPanel implements GameObserver {
         player2Container.add(player2BoardLabel, BorderLayout.NORTH);
         
         // Player 2 board panel with custom border
-        player2BoardPanel.setBackground(new Color(255, 255, 255));
+        player2BoardPanel.setBackground(currentTheme.getBoardBackgroundColor());
         player2BoardPanel.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(new Color(200, 200, 200), 2),
+                new LineBorder(currentTheme.getInactiveBorderColor(), 2),
                 new EmptyBorder(10, 10, 10, 10)));
         player2Container.add(player2BoardPanel, BorderLayout.CENTER);
         
@@ -439,10 +499,11 @@ public class GamePanel extends JPanel implements GameObserver {
             return;
         }
         
+        Theme theme = themeManager.getCurrentTheme();
         int currentPlayer = game.getCurrentPlayer();
         Color player1Color = new Color(91, 161, 255); // Blue
         Color player2Color = new Color(196, 107, 255); // Purple
-        Color inactiveColor = new Color(200, 200, 200); // Gray
+        Color inactiveColor = theme.getInactiveBorderColor();
         Color inactiveTextColor = new Color(150, 150, 150); // Light gray for inactive text
         
         // Update Player 1 board border and label
@@ -451,7 +512,7 @@ public class GamePanel extends JPanel implements GameObserver {
             player1BoardPanel.setBorder(BorderFactory.createCompoundBorder(
                     new LineBorder(player1Color, 4),
                     new EmptyBorder(8, 8, 8, 8)));
-            player1BoardPanel.setBackground(new Color(245, 250, 255)); // Very light blue tint
+            player1BoardPanel.setBackground(theme.getBoardBackgroundColor());
             // Make label bold and colored
             if (player1BoardLabel != null) {
                 player1BoardLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
@@ -462,7 +523,7 @@ public class GamePanel extends JPanel implements GameObserver {
             player1BoardPanel.setBorder(BorderFactory.createCompoundBorder(
                     new LineBorder(inactiveColor, 2),
                     new EmptyBorder(10, 10, 10, 10)));
-            player1BoardPanel.setBackground(new Color(255, 255, 255)); // White
+            player1BoardPanel.setBackground(theme.getBoardBackgroundColor());
             // Make label less prominent
             if (player1BoardLabel != null) {
                 player1BoardLabel.setFont(new Font("Segoe UI", Font.PLAIN, 18));
@@ -476,7 +537,7 @@ public class GamePanel extends JPanel implements GameObserver {
             player2BoardPanel.setBorder(BorderFactory.createCompoundBorder(
                     new LineBorder(player2Color, 4),
                     new EmptyBorder(8, 8, 8, 8)));
-            player2BoardPanel.setBackground(new Color(255, 245, 255)); // Very light purple tint
+            player2BoardPanel.setBackground(theme.getBoardBackgroundColor());
             // Make label bold and colored
             if (player2BoardLabel != null) {
                 player2BoardLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
@@ -487,7 +548,7 @@ public class GamePanel extends JPanel implements GameObserver {
             player2BoardPanel.setBorder(BorderFactory.createCompoundBorder(
                     new LineBorder(inactiveColor, 2),
                     new EmptyBorder(10, 10, 10, 10)));
-            player2BoardPanel.setBackground(new Color(255, 255, 255)); // White
+            player2BoardPanel.setBackground(theme.getBoardBackgroundColor());
             // Make label less prominent
             if (player2BoardLabel != null) {
                 player2BoardLabel.setFont(new Font("Segoe UI", Font.PLAIN, 18));
@@ -726,6 +787,51 @@ public class GamePanel extends JPanel implements GameObserver {
                 }
             });
         }
+    }
+    
+    /**
+     * Shows a visual indicator when the wrong board is clicked.
+     * Flashes the correct board to indicate whose turn it is.
+     */
+    public void showWrongTurnIndicator() {
+        if (game == null) {
+            return;
+        }
+        
+        int currentPlayer = game.getCurrentPlayer();
+        JPanel activeBoardPanel = currentPlayer == 1 ? player1BoardPanel : player2BoardPanel;
+        JLabel activeBoardLabel = currentPlayer == 1 ? player1BoardLabel : player2BoardLabel;
+        
+        // Flash color for visual indicator
+        Color flashColor = new Color(255, 200, 0); // Bright yellow/orange for flash
+        
+        // Flash animation: quickly change border color and back
+        Timer flashTimer = new Timer(100, null);
+        int[] flashCount = {0};
+        flashTimer.addActionListener(e -> {
+            if (flashCount[0] < 3) { // Flash 3 times
+                if (flashCount[0] % 2 == 0) {
+                    // Flash on
+                    activeBoardPanel.setBorder(BorderFactory.createCompoundBorder(
+                            new LineBorder(flashColor, 5),
+                            new EmptyBorder(5, 5, 5, 5)));
+                    if (activeBoardLabel != null) {
+                        activeBoardLabel.setForeground(flashColor);
+                        activeBoardLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
+                    }
+                } else {
+                    // Flash off - restore original
+                    updateBoardBorders();
+                }
+                flashCount[0]++;
+            } else {
+                // Restore original state
+                updateBoardBorders();
+                flashTimer.stop();
+            }
+            repaint();
+        });
+        flashTimer.start();
     }
     
     /**
@@ -996,6 +1102,207 @@ public class GamePanel extends JPanel implements GameObserver {
 
         return confirmed[0];
     }
+    
+    /**
+     * Shows an enhanced theme selector dialog with visual previews.
+     */
+    private void showThemeSelector() {
+        List<Theme> themes = themeManager.getAvailableThemes();
+        Theme currentTheme = themeManager.getCurrentTheme();
+        
+        // Create custom dialog
+        JDialog dialog = new JDialog((JFrame) SwingUtilities.getWindowAncestor(this), "Select Theme", true);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialog.setResizable(false);
+        
+        JPanel mainPanel = new JPanel(new BorderLayout(20, 20));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        mainPanel.setBackground(Color.WHITE);
+        
+        // Title
+        JLabel titleLabel = new JLabel("Choose a Theme", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
+        mainPanel.add(titleLabel, BorderLayout.NORTH);
+        
+        // Theme selection panel with previews
+        JPanel themesPanel = new JPanel(new GridLayout(0, 1, 10, 10));
+        themesPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        themesPanel.setBackground(Color.WHITE);
+        
+        ButtonGroup themeGroup = new ButtonGroup();
+        JRadioButton[] themeButtons = new JRadioButton[themes.size()];
+        
+        for (int i = 0; i < themes.size(); i++) {
+            Theme theme = themes.get(i);
+            boolean isSelected = theme.getType() == currentTheme.getType();
+            
+            // Create radio button with theme preview
+            JRadioButton radioButton = new JRadioButton(theme.getName(), isSelected);
+            radioButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+            radioButton.setBackground(Color.WHITE);
+            radioButton.setFocusPainted(false);
+            
+            // Create preview panel with fixed size
+            JPanel previewPanel = createThemePreview(theme);
+            previewPanel.setPreferredSize(new Dimension(500, 80));
+            previewPanel.setMinimumSize(new Dimension(500, 80));
+            previewPanel.setMaximumSize(new Dimension(500, 80));
+            previewPanel.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(isSelected ? new Color(91, 161, 255) : Color.GRAY, 2),
+                    BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+            
+            // Container for radio button and preview
+            JPanel themeContainer = new JPanel(new BorderLayout(10, 5));
+            themeContainer.setBackground(Color.WHITE);
+            themeContainer.add(radioButton, BorderLayout.WEST);
+            themeContainer.add(previewPanel, BorderLayout.CENTER);
+            
+            // Add click listener
+            final int index = i;
+            radioButton.addActionListener(e -> {
+                Theme selectedTheme = themes.get(index);
+                themeManager.setTheme(selectedTheme);
+                applyTheme();
+                updateUI();
+                // Update preview borders
+                for (int j = 0; j < themeButtons.length; j++) {
+                    JPanel container = (JPanel) themesPanel.getComponent(j);
+                    JPanel preview = (JPanel) container.getComponent(1);
+                    preview.setBorder(BorderFactory.createCompoundBorder(
+                            BorderFactory.createLineBorder(
+                                    j == index ? new Color(91, 161, 255) : Color.GRAY, 2),
+                            BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+                }
+            });
+            
+            themeGroup.add(radioButton);
+            themeButtons[i] = radioButton;
+            themesPanel.add(themeContainer);
+        }
+        
+        // Scroll pane for themes
+        JScrollPane scrollPane = new JScrollPane(themesPanel);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.setPreferredSize(new Dimension(650, 500));
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        
+        // Close button
+        JButton closeButton = new JButton("Close");
+        closeButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        closeButton.setBackground(new Color(91, 161, 255));
+        closeButton.setForeground(Color.WHITE);
+        closeButton.setOpaque(true);
+        closeButton.setBorderPainted(false);
+        closeButton.setBorder(BorderFactory.createEmptyBorder(10, 30, 10, 30));
+        closeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        closeButton.addActionListener(e -> dialog.dispose());
+        
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel.setBackground(Color.WHITE);
+        buttonPanel.add(closeButton);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+        
+        dialog.setContentPane(mainPanel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+    }
+    
+    /**
+     * Creates a visual preview panel for a theme.
+     */
+    private JPanel createThemePreview(Theme theme) {
+        JPanel preview = new JPanel(new GridLayout(2, 4, 3, 3));
+        preview.setBackground(theme.getBackgroundColor());
+        // Set fixed size to ensure all previews are exactly the same
+        Dimension fixedSize = new Dimension(500, 80);
+        preview.setPreferredSize(fixedSize);
+        preview.setMinimumSize(fixedSize);
+        preview.setMaximumSize(fixedSize);
+        
+        // Create sample cells
+        Color[] sampleColors = {
+            theme.getHiddenCellColor(),
+            theme.getRevealedCellColor(),
+            theme.getFlaggedCellColor(),
+            theme.getMineCellColor(),
+            theme.getQuestionCellColor(),
+            theme.getSurpriseCellColor(),
+            theme.getEmptyCellColor(),
+            theme.getNumberColor(1)
+        };
+        
+        String[] labels = {"Hidden", "Revealed", "Flagged", "Mine", "Question", "Surprise", "Empty", "Number"};
+        
+        for (int i = 0; i < sampleColors.length; i++) {
+            JPanel cellPreview = new JPanel(new BorderLayout());
+            cellPreview.setBackground(sampleColors[i]);
+            cellPreview.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+            
+            JLabel label = new JLabel(labels[i], SwingConstants.CENTER);
+            label.setFont(new Font("Segoe UI", Font.PLAIN, 8));
+            // Calculate brightness manually (0-1 scale)
+            Color bgColor = theme.getBackgroundColor();
+            double brightness = (bgColor.getRed() * 0.299 + bgColor.getGreen() * 0.587 + bgColor.getBlue() * 0.114) / 255.0;
+            label.setForeground(brightness < 0.5 ? Color.WHITE : Color.BLACK);
+            cellPreview.add(label, BorderLayout.CENTER);
+            
+            preview.add(cellPreview);
+        }
+        
+        return preview;
+    }
+    
+    /**
+     * Applies the current theme to the entire UI panel.
+     */
+    private void applyTheme() {
+        Theme theme = themeManager.getCurrentTheme();
+        
+        // Apply main background
+        setBackground(theme.getBackgroundColor());
+        
+        // Apply top bar background
+        if (topBar != null) {
+            topBar.setBackground(theme.getBoardBackgroundColor());
+        }
+        
+        // Apply north container background
+        if (northContainer != null) {
+            northContainer.setBackground(theme.getBoardBackgroundColor());
+        }
+        
+        // Apply info panel background and border
+        if (infoPanel != null) {
+            infoPanel.setBackground(theme.getBoardBackgroundColor());
+            infoPanel.setBorder(BorderFactory.createCompoundBorder(
+                    new LineBorder(theme.getInactiveBorderColor(), 1),
+                    new EmptyBorder(15, 20, 15, 20)));
+        }
+        
+        // Update board backgrounds
+        if (player1BoardPanel != null) {
+            player1BoardPanel.setBackground(theme.getBoardBackgroundColor());
+        }
+        if (player2BoardPanel != null) {
+            player2BoardPanel.setBackground(theme.getBoardBackgroundColor());
+        }
+        
+        // Update boards container background
+        if (boardsContainer != null) {
+            boardsContainer.setBackground(theme.getBackgroundColor());
+        }
+        
+        // Update all cells to use theme
+        if (game != null) {
+            updateUI();
+        }
+        
+        // Repaint everything
+        revalidate();
+        repaint();
+    }
 
     /**
      * Creates a rounded button for the confirmation dialog.
@@ -1039,6 +1346,9 @@ public class GamePanel extends JPanel implements GameObserver {
         private Cell currentCell;
         @SuppressWarnings("unused")
         private boolean isCurrentPlayer;
+        private boolean wasRevealed = false;
+        private float animationProgress = 0.0f;
+        private Timer animationTimer;
 
         /**
          * Constructs a new CellButton.
@@ -1063,8 +1373,28 @@ public class GamePanel extends JPanel implements GameObserver {
                     BorderFactory.createRaisedBevelBorder(),
                     BorderFactory.createEmptyBorder(2, 2, 2, 2)));
 
-            // Add mouse listeners for left and right click
+            // Add mouse listeners for hover effects
             addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                    if (currentCell != null && !currentCell.isRevealed() && !currentCell.isFlagged() && isCurrentPlayer) {
+                        // Hover effect: slight scale and glow
+                        setBorder(BorderFactory.createCompoundBorder(
+                                BorderFactory.createRaisedBevelBorder(),
+                                BorderFactory.createLineBorder(new Color(255, 255, 255, 100), 2)));
+                    }
+                }
+                
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    if (currentCell != null && !currentCell.isRevealed() && !currentCell.isFlagged()) {
+                        // Restore normal border
+                        setBorder(BorderFactory.createCompoundBorder(
+                                BorderFactory.createRaisedBevelBorder(),
+                                BorderFactory.createEmptyBorder(2, 2, 2, 2)));
+                    }
+                }
+                
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     if (gameController == null || game == null) {
@@ -1110,6 +1440,7 @@ public class GamePanel extends JPanel implements GameObserver {
 
         /**
          * Updates the button's appearance based on the cell state.
+         * Uses theme colors and triggers animations when cells are revealed.
          * 
          * @param cell            The Cell model
          * @param isCurrentPlayer Whether this is the current player's board
@@ -1122,6 +1453,17 @@ public class GamePanel extends JPanel implements GameObserver {
                 return;
             }
 
+            Theme theme = themeManager.getCurrentTheme();
+            
+            // Check if cell was just revealed (animation trigger)
+            boolean justRevealed = cell.isRevealed() && !wasRevealed;
+            wasRevealed = cell.isRevealed();
+            
+            // Start animation if cell was just revealed
+            if (justRevealed) {
+                startRevealAnimation();
+            }
+
             // Calculate font size based on button size for proportional scaling
             int buttonSize = Math.min(Math.max(getWidth(), 20), Math.max(getHeight(), 20)); // Ensure minimum size
             int emojiFontSize = Math.max(10, Math.min(buttonSize * 3 / 4, 24)); // Proportional to button size
@@ -1132,9 +1474,9 @@ public class GamePanel extends JPanel implements GameObserver {
             setFont(new Font("Segoe UI Emoji", Font.BOLD, emojiFontSize));
 
             if (cell.isFlagged()) {
-                // Flagged state - raised appearance, pink/red background
+                // Flagged state - raised appearance
                 setText("🚩");
-                setBackground(new Color(255, 180, 180));
+                setBackground(theme.getFlaggedCellColor());
                 setForeground(Color.BLACK);
                 setEnabled(true);
                 setBorder(BorderFactory.createCompoundBorder(
@@ -1149,36 +1491,21 @@ public class GamePanel extends JPanel implements GameObserver {
 
                 if (cell instanceof MineCell) {
                     setText("💣");
-                    setBackground(new Color(255, 120, 120)); // Bright red
+                    setBackground(theme.getMineCellColor());
                     setForeground(Color.BLACK);
                 } else if (cell instanceof NumberCell) {
                     NumberCell numberCell = (NumberCell) cell;
                     // Use calculated number font size
                     setFont(new Font("Segoe UI", Font.BOLD, numberFontSize));
                     setText(String.valueOf(numberCell.getAdjacentMines()));
-                    setBackground(new Color(250, 250, 250)); // Very light gray/almost white - same as empty
-                    // Color code numbers for better visibility
+                    setBackground(theme.getRevealedCellColor());
+                    // Use theme number colors
                     int num = numberCell.getAdjacentMines();
-                    if (num == 1)
-                        setForeground(new Color(0, 0, 255)); // Blue
-                    else if (num == 2)
-                        setForeground(new Color(0, 150, 0)); // Green
-                    else if (num == 3)
-                        setForeground(new Color(255, 0, 0)); // Red
-                    else if (num == 4)
-                        setForeground(new Color(0, 0, 150)); // Dark blue
-                    else if (num == 5)
-                        setForeground(new Color(150, 0, 0)); // Dark red
-                    else if (num == 6)
-                        setForeground(new Color(0, 150, 150)); // Teal
-                    else if (num == 7)
-                        setForeground(new Color(0, 0, 0)); // Black
-                    else
-                        setForeground(new Color(100, 100, 100)); // Gray
+                    setForeground(theme.getNumberColor(num));
                 } else if (cell instanceof QuestionCell) {
                     QuestionCell questionCell = (QuestionCell) cell;
                     setText("?");
-                    setBackground(new Color(255, 255, 150)); // Bright yellow
+                    setBackground(theme.getQuestionCellColor());
                     setForeground(Color.BLACK);
                     // Question cells should be clickable if not opened yet
                     if (!questionCell.isQuestionOpened()) {
@@ -1186,7 +1513,7 @@ public class GamePanel extends JPanel implements GameObserver {
                         setBorder(BorderFactory.createCompoundBorder(
                                 BorderFactory.createLoweredBevelBorder(),
                                 BorderFactory.createCompoundBorder(
-                                        new LineBorder(new Color(255, 200, 0), 2),
+                                        new LineBorder(theme.getQuestionCellColor().darker(), 2),
                                         new EmptyBorder(0, 0, 0, 0))));
                     } else {
                         setEnabled(false); // Disable if already opened
@@ -1194,7 +1521,7 @@ public class GamePanel extends JPanel implements GameObserver {
                 } else if (cell instanceof SurpriseCell) {
                     SurpriseCell surpriseCell = (SurpriseCell) cell;
                     setText("✨");
-                    setBackground(new Color(255, 180, 255)); // Bright magenta
+                    setBackground(theme.getSurpriseCellColor());
                     setForeground(Color.BLACK);
                     // Surprise cells should be clickable when revealed (if not already activated)
                     if (!surpriseCell.isSurpriseActivated()) {
@@ -1202,29 +1529,84 @@ public class GamePanel extends JPanel implements GameObserver {
                         setBorder(BorderFactory.createCompoundBorder(
                                 BorderFactory.createLoweredBevelBorder(),
                                 BorderFactory.createCompoundBorder(
-                                        new LineBorder(new Color(255, 100, 255), 2),
+                                        new LineBorder(theme.getSurpriseCellColor().darker(), 2),
                                         new EmptyBorder(0, 0, 0, 0))));
                     } else {
                         setEnabled(false); // Disable if already activated
                     }
                 } else if (cell instanceof EmptyCell) {
-                    // Empty revealed cells - very light/white to show they're opened
+                    // Empty revealed cells
                     setFont(new Font("Segoe UI", Font.PLAIN, emptyFontSize));
                     setText("");
-                    setBackground(new Color(250, 250, 250)); // Very light gray/almost white - clearly different
-                                                             // from hidden
+                    setBackground(theme.getEmptyCellColor());
                     setForeground(Color.BLACK);
                 }
             } else {
-                // Hidden state - raised 3D appearance, darker gray background
+                // Hidden state - raised 3D appearance
                 setText("");
-                setBackground(new Color(140, 140, 140)); // Dark gray - clearly different from revealed
+                setBackground(theme.getHiddenCellColor());
                 setForeground(Color.BLACK);
                 setEnabled(isCurrentPlayer); // Only enable if it's current player's turn
                 // Raised border to show it's clickable/unopened
                 setBorder(BorderFactory.createCompoundBorder(
                         BorderFactory.createRaisedBevelBorder(),
                         BorderFactory.createEmptyBorder(2, 2, 2, 2)));
+            }
+        }
+        
+        /**
+         * Starts the reveal animation for this cell.
+         */
+        private void startRevealAnimation() {
+            if (animationTimer != null && animationTimer.isRunning()) {
+                animationTimer.stop();
+            }
+            
+            animationProgress = 0.0f;
+            animationTimer = new Timer(16, e -> { // ~60 FPS
+                animationProgress += 0.05f; // Adjust speed here
+                if (animationProgress >= 1.0f) {
+                    animationProgress = 1.0f;
+                    animationTimer.stop();
+                }
+                repaint();
+            });
+            animationTimer.start();
+        }
+        
+        @Override
+        protected void paintComponent(Graphics g) {
+            // Apply animation effect if in progress
+            if (animationProgress > 0.0f && animationProgress < 1.0f && currentCell != null && currentCell.isRevealed()) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Fade-in effect: interpolate opacity
+                float alpha = animationProgress;
+                g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
+                
+                // Scale effect: slight scale animation
+                double scale = 0.8 + (0.2 * animationProgress); // Scale from 0.8 to 1.0
+                int width = getWidth();
+                int height = getHeight();
+                int newWidth = (int) (width * scale);
+                int newHeight = (int) (height * scale);
+                int x = (width - newWidth) / 2;
+                int y = (height - newHeight) / 2;
+                
+                // Save original clip
+                Shape originalClip = g2.getClip();
+                g2.setClip(x, y, newWidth, newHeight);
+                
+                // Paint normally
+                super.paintComponent(g2);
+                
+                // Restore clip
+                g2.setClip(originalClip);
+                g2.dispose();
+            } else {
+                // Normal painting without animation
+                super.paintComponent(g);
             }
         }
     }
