@@ -124,12 +124,12 @@ public class Theme {
         return new Theme(
             ThemeType.DARK, "Dark Mode",
             new Color(60, 60, 70),     // Hidden - Dark gray
-            new Color(40, 40, 50),     // Revealed - Darker gray
+            new Color(35, 35, 45),     // Revealed - Very dark gray
             new Color(200, 100, 100),  // Flagged - Dark red
             new Color(220, 60, 60),    // Mine - Bright red
             new Color(255, 200, 100),  // Question - Dark yellow
             new Color(200, 100, 200),  // Surprise - Dark magenta
-            new Color(50, 50, 60),     // Empty - Very dark
+            new Color(35, 35, 45),     // Empty - Same as revealed
             numberColors,
             new Color(30, 30, 40),     // Background - Very dark
             new Color(40, 40, 50),     // Board background
@@ -156,12 +156,12 @@ public class Theme {
         return new Theme(
             ThemeType.NEON, "Neon",
             new Color(20, 20, 40),     // Hidden - Dark purple
-            new Color(10, 10, 30),     // Revealed - Very dark
+            new Color(25, 25, 35),     // Revealed - Dark gray
             new Color(255, 0, 100),    // Flagged - Neon pink
             new Color(255, 0, 0),      // Mine - Bright red
             new Color(255, 255, 0),    // Question - Neon yellow
             new Color(255, 0, 255),    // Surprise - Neon magenta
-            new Color(15, 15, 35),     // Empty - Dark
+            new Color(25, 25, 35),     // Empty - Same as revealed
             numberColors,
             new Color(5, 5, 20),       // Background - Very dark blue
             new Color(10, 10, 30),     // Board background
