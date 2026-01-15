@@ -23,30 +23,37 @@ public class HistoryPanel extends JPanel {
     
     public HistoryPanel() {
         setLayout(new BorderLayout());
-        setBackground(Color.WHITE);
+        // Set gradient background
+        setBackground(new Color(230, 240, 255)); // Light blue-purple gradient base
 
-        // Home button - rectangle shape, top left
-        homeButton = new JButton("<- Home");
+        // Back button with arrow icon
+        homeButton = new JButton("← Back to Menu") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getBackground());
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
         homeButton.setFocusPainted(false);
         homeButton.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        homeButton.setBackground(new Color(245, 245, 245));
-        homeButton.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1)); // Rectangle border
-        homeButton.setBorderPainted(true);
-        homeButton.setContentAreaFilled(true);
-        homeButton.setOpaque(true);
-        homeButton.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
-            BorderFactory.createEmptyBorder(6, 12, 6, 12)
-        ));
-        // Rectangle button size
-        homeButton.setPreferredSize(new Dimension(90, 32));
-        homeButton.setMaximumSize(new Dimension(90, 32));
-        homeButton.setMinimumSize(new Dimension(90, 32));
+        homeButton.setBackground(Color.WHITE);
+        homeButton.setForeground(new Color(66, 66, 66));
+        homeButton.setBorder(BorderFactory.createEmptyBorder(6, 12, 6, 12));
+        homeButton.setBorderPainted(false);
+        homeButton.setContentAreaFilled(false);
+        homeButton.setOpaque(false);
+        homeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        homeButton.setPreferredSize(new Dimension(120, 28));
+        homeButton.setMaximumSize(new Dimension(120, 28));
 
-        // Top bar with home button, title, and filters all together
+        // Top bar with back button
         JPanel topBar = new JPanel(new BorderLayout());
-        topBar.setBackground(Color.WHITE);
-        topBar.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+        topBar.setOpaque(false);
+        topBar.setBorder(BorderFactory.createEmptyBorder(15, 20, 10, 20));
         topBar.add(homeButton, BorderLayout.WEST);
 
         // Title panel
@@ -58,8 +65,8 @@ public class HistoryPanel extends JPanel {
         // Combine title and filters in a compact header
         JPanel headerPanel = new JPanel();
         headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
-        headerPanel.setBackground(Color.WHITE);
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 30, 10, 30));
+        headerPanel.setOpaque(false);
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(10, 30, 15, 30));
         headerPanel.add(titlePanel);
         headerPanel.add(filterPanel);
         
@@ -68,24 +75,39 @@ public class HistoryPanel extends JPanel {
         // Content panel for game records
         contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
-        contentPanel.setBackground(Color.WHITE);
+        contentPanel.setOpaque(false);
         contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 30, 10, 30));
         
-        // Scroll pane for content - now takes more space
+        // Scroll pane for content
         JScrollPane scrollPane = new JScrollPane(contentPanel);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        scrollPane.getViewport().setBackground(Color.WHITE);
+        scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
+        
+        // Increase scroll speed - make it less sensitive (scroll more per wheel click)
+        scrollPane.getVerticalScrollBar().setUnitIncrement(30); // Default is usually 1, increase to 30
+        scrollPane.getVerticalScrollBar().setBlockIncrement(100); // Page up/down scroll amount
         
         // Total games label at bottom
-        totalGamesLabel = new JLabel();
+        totalGamesLabel = new JLabel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getBackground());
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
         totalGamesLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        totalGamesLabel.setForeground(new Color(100, 100, 100));
+        totalGamesLabel.setForeground(new Color(66, 66, 66));
         totalGamesLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        totalGamesLabel.setBorder(BorderFactory.createEmptyBorder(15, 0, 15, 0));
-        totalGamesLabel.setOpaque(true);
-        totalGamesLabel.setBackground(new Color(230, 240, 255));
+        totalGamesLabel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
+        totalGamesLabel.setOpaque(false);
+        totalGamesLabel.setBackground(new Color(187, 222, 251)); // Light blue
         
         add(topBar, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
@@ -95,16 +117,44 @@ public class HistoryPanel extends JPanel {
         refreshHistory();
     }
     
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+        // Draw gradient background (light blue to light purple)
+        int width = getWidth();
+        int height = getHeight();
+        GradientPaint gradient = new GradientPaint(
+            0, 0, new Color(230, 240, 255), // Light blue
+            0, height, new Color(243, 229, 245) // Light purple
+        );
+        g2.setPaint(gradient);
+        g2.fillRect(0, 0, width, height);
+        
+        g2.dispose();
+    }
+    
     private JPanel createTitlePanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 0));
-        panel.setBackground(Color.WHITE);
+        panel.setOpaque(false);
         panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         
         // Icon (purple square)
-        JLabel iconLabel = new JLabel("■");
-        iconLabel.setFont(new Font("Segoe UI", Font.PLAIN, 24));
-        iconLabel.setForeground(new Color(156, 39, 176)); // Purple
+        JLabel iconLabel = new JLabel("■") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(156, 39, 176)); // Purple
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 5, 5);
+                g2.dispose();
+            }
+        };
+        iconLabel.setPreferredSize(new Dimension(30, 30));
+        iconLabel.setOpaque(false);
         
         // Title
         JLabel titleLabel = new JLabel("Game History");
@@ -119,7 +169,7 @@ public class HistoryPanel extends JPanel {
     
     private JPanel createFilterPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
-        panel.setBackground(Color.WHITE);
+        panel.setOpaque(false);
         panel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
         
         // Create filter buttons
@@ -140,24 +190,43 @@ public class HistoryPanel extends JPanel {
     }
     
     private JButton createFilterButton(String text, Game.Difficulty difficulty) {
-        JButton button = new JButton(text);
+        final Game.Difficulty filterDifficulty = difficulty; // Final for use in inner class
+        JButton button = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                boolean isSelected = (filterDifficulty == null && currentFilter == null) ||
+                                    (filterDifficulty != null && filterDifficulty == currentFilter);
+                
+                if (isSelected) {
+                    g2.setColor(new Color(33, 150, 243)); // Blue when selected
+                } else {
+                    g2.setColor(Color.WHITE);
+                }
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
         button.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         button.setFocusPainted(false);
         button.setBorderPainted(false);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
-        button.setOpaque(true);
-        button.setContentAreaFilled(true);
+        button.setBorder(BorderFactory.createEmptyBorder(10, 25, 10, 25));
+        button.setOpaque(false);
+        button.setContentAreaFilled(false);
         
         // Set initial state (unselected)
         setFilterButtonSelected(button, false);
         
         button.addActionListener(e -> {
-            currentFilter = difficulty;
-            setFilterButtonSelected(allButton, difficulty == null);
-            setFilterButtonSelected(easyButton, difficulty == Game.Difficulty.EASY);
-            setFilterButtonSelected(mediumButton, difficulty == Game.Difficulty.MEDIUM);
-            setFilterButtonSelected(hardButton, difficulty == Game.Difficulty.HARD);
+            currentFilter = filterDifficulty;
+            setFilterButtonSelected(allButton, filterDifficulty == null);
+            setFilterButtonSelected(easyButton, filterDifficulty == Game.Difficulty.EASY);
+            setFilterButtonSelected(mediumButton, filterDifficulty == Game.Difficulty.MEDIUM);
+            setFilterButtonSelected(hardButton, filterDifficulty == Game.Difficulty.HARD);
             refreshHistory();
         });
         
@@ -169,9 +238,10 @@ public class HistoryPanel extends JPanel {
             button.setBackground(new Color(33, 150, 243)); // Blue
             button.setForeground(Color.WHITE);
         } else {
-            button.setBackground(new Color(240, 240, 240)); // Light gray
-            button.setForeground(new Color(100, 100, 100));
+            button.setBackground(Color.WHITE);
+            button.setForeground(new Color(66, 66, 66)); // Dark gray
         }
+        button.repaint();
     }
     
     private void refreshHistory() {
@@ -195,6 +265,7 @@ public class HistoryPanel extends JPanel {
         // Update total games label
         int totalGames = history.size();
         totalGamesLabel.setText("✓ Total Games Played: " + totalGames);
+        totalGamesLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
         
         // If no games, show message
         if (filteredHistory.isEmpty()) {
@@ -220,17 +291,12 @@ public class HistoryPanel extends JPanel {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 
                 // Draw shadow
-                g2.setColor(new Color(0, 0, 0, 20));
-                g2.fillRoundRect(2, 2, getWidth() - 4, getHeight() - 4, 12, 12);
+                g2.setColor(new Color(0, 0, 0, 15));
+                g2.fillRoundRect(3, 3, getWidth() - 3, getHeight() - 3, 20, 20);
                 
                 // Draw white rounded background
                 g2.setColor(Color.WHITE);
-                g2.fillRoundRect(0, 0, getWidth() - 2, getHeight() - 2, 12, 12);
-                
-                // Draw border
-                g2.setColor(new Color(220, 220, 220)); // Light gray border
-                g2.setStroke(new BasicStroke(1.0f));
-                g2.drawRoundRect(0, 0, getWidth() - 2, getHeight() - 2, 12, 12);
+                g2.fillRoundRect(0, 0, getWidth() - 3, getHeight() - 3, 20, 20);
                 
                 g2.dispose();
             }
@@ -244,7 +310,7 @@ public class HistoryPanel extends JPanel {
         // Header section at top
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
         
         // Left: Difficulty badge and date
         JPanel leftHeader = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
@@ -255,15 +321,19 @@ public class HistoryPanel extends JPanel {
         
         JLabel dateLabel = new JLabel(history.getFormattedDate());
         dateLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        dateLabel.setForeground(new Color(66, 66, 66)); // Dark gray (#424242)
+        dateLabel.setForeground(new Color(66, 66, 66)); // Dark gray
         leftHeader.add(dateLabel);
         
-        // Right: Delete button and time badge
-        JPanel rightHeader = new JPanel(new BorderLayout());
+        // Right: Time badge and delete button (side by side)
+        JPanel rightHeader = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         rightHeader.setOpaque(false);
         
-        // Delete button (top right)
-        JButton deleteButton = createTrashButton();
+        // Time badge
+        JPanel timePanel = createTimeBadge(history.getFormattedDuration());
+        rightHeader.add(timePanel);
+        
+        // Delete button (to the right of timer)
+        JButton deleteButton = createDeleteButton();
         deleteButton.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(
                 this,
@@ -277,18 +347,7 @@ public class HistoryPanel extends JPanel {
                 refreshHistory();
             }
         });
-        
-        JPanel deletePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
-        deletePanel.setOpaque(false);
-        deletePanel.add(deleteButton);
-        rightHeader.add(deletePanel, BorderLayout.NORTH);
-        
-        // Time badge (below delete button)
-        JPanel timePanel = createTimeBadge(history.getFormattedDuration());
-        JPanel timePanelWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 5));
-        timePanelWrapper.setOpaque(false);
-        timePanelWrapper.add(timePanel);
-        rightHeader.add(timePanelWrapper, BorderLayout.SOUTH);
+        rightHeader.add(deleteButton);
         
         headerPanel.add(leftHeader, BorderLayout.WEST);
         headerPanel.add(rightHeader, BorderLayout.EAST);
@@ -319,12 +378,12 @@ public class HistoryPanel extends JPanel {
         scorePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         scorePanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
         
-        // Hearts Remaining bar
-        JPanel heartsPanel = createHeartsPanel(history.getRemainingHearts());
-        heartsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        
         cardContent.add(playerRow);
         cardContent.add(scorePanel);
+        
+        // Hearts Remaining bar (for all difficulties)
+        JPanel heartsPanel = createHeartsPanel(history.getRemainingHearts());
+        heartsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         cardContent.add(heartsPanel);
         
         card.add(headerPanel, BorderLayout.NORTH);
@@ -333,7 +392,7 @@ public class HistoryPanel extends JPanel {
         // Container with spacing
         JPanel container = new JPanel();
         container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
-        container.setBackground(Color.WHITE);
+        container.setOpaque(false);
         container.setAlignmentX(Component.CENTER_ALIGNMENT);
         container.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
         container.add(card);
@@ -342,23 +401,47 @@ public class HistoryPanel extends JPanel {
     }
     
     /**
-     * Creates a time badge with light blue background.
+     * Creates a time badge with light blue background and clock icon.
      */
     private JPanel createTimeBadge(String timeText) {
-        JPanel timePanel = createRoundedPanel(new Color(187, 222, 251), 8); // Light blue (#BBDEFB)
-        timePanel.setLayout(new FlowLayout(FlowLayout.CENTER, 4, 0));
-        timePanel.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
-        timePanel.setPreferredSize(new Dimension(60, 24));
-        timePanel.setMaximumSize(new Dimension(60, 24));
+        JPanel timePanel = createRoundedPanel(new Color(187, 222, 251), 15); // Light blue (#BBDEFB)
+        timePanel.setLayout(new FlowLayout(FlowLayout.CENTER, 6, 0));
+        timePanel.setBorder(BorderFactory.createEmptyBorder(6, 10, 6, 10));
+        timePanel.setPreferredSize(new Dimension(75, 30));
+        timePanel.setMaximumSize(new Dimension(75, 30));
         
-        JLabel clockIcon = new JLabel("\u25A0"); // Square symbol (■)
-        clockIcon.setFont(new Font("Segoe UI", Font.PLAIN, 10));
-        clockIcon.setForeground(new Color(33, 150, 243)); // Blue (#2196F3)
+        // Clock icon (blue circle with clock symbol)
+        JLabel clockIcon = new JLabel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(33, 150, 243)); // Blue
+                int size = 18;
+                int x = (getWidth() - size) / 2;
+                int y = (getHeight() - size) / 2;
+                g2.fillOval(x, y, size, size);
+                
+                // Draw clock hands
+                g2.setColor(Color.WHITE);
+                g2.setStroke(new BasicStroke(1.5f));
+                int centerX = getWidth() / 2;
+                int centerY = getHeight() / 2;
+                // Hour hand
+                g2.drawLine(centerX, centerY, centerX, centerY - 4);
+                // Minute hand
+                g2.drawLine(centerX, centerY, centerX + 3, centerY);
+                
+                g2.dispose();
+            }
+        };
+        clockIcon.setPreferredSize(new Dimension(18, 18));
+        clockIcon.setOpaque(false);
         timePanel.add(clockIcon);
         
         JLabel durationLabel = new JLabel(timeText);
-        durationLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        durationLabel.setForeground(Color.WHITE);
+        durationLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        durationLabel.setForeground(new Color(33, 150, 243)); // Blue text
         timePanel.add(durationLabel);
         
         return timePanel;
@@ -383,55 +466,6 @@ public class HistoryPanel extends JPanel {
         return panel;
     }
     
-    private JButton createTrashButton() {
-        JButton button = new JButton() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                
-                // Draw trash can icon in red
-                g2.setColor(new Color(220, 53, 69)); // Red color
-                
-                int width = getWidth();
-                int height = getHeight();
-                int centerX = width / 2;
-                int centerY = height / 2;
-                
-                // Draw trash can body (rectangle)
-                int bodyWidth = 12;
-                int bodyHeight = 14;
-                g2.fillRect(centerX - bodyWidth/2, centerY - bodyHeight/2 + 2, bodyWidth, bodyHeight);
-                
-                // Draw lid (rectangle on top)
-                int lidWidth = 14;
-                int lidHeight = 2;
-                g2.fillRect(centerX - lidWidth/2, centerY - bodyHeight/2, lidWidth, lidHeight);
-                
-                // Draw handle (small rectangle on lid)
-                int handleWidth = 2;
-                int handleHeight = 3;
-                g2.fillRect(centerX - lidWidth/2 - 2, centerY - bodyHeight/2 - handleHeight, handleWidth, handleHeight);
-                
-                // Draw lines on body (to show it's a trash can)
-                g2.setStroke(new BasicStroke(1.5f));
-                g2.setColor(new Color(255, 255, 255)); // White lines
-                g2.drawLine(centerX - bodyWidth/2 + 3, centerY - 2, centerX + bodyWidth/2 - 3, centerY - 2);
-                g2.drawLine(centerX - bodyWidth/2 + 3, centerY + 2, centerX + bodyWidth/2 - 3, centerY + 2);
-                
-                g2.dispose();
-            }
-        };
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setContentAreaFilled(false);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setPreferredSize(new Dimension(30, 30));
-        button.setMaximumSize(new Dimension(30, 30));
-        button.setMinimumSize(new Dimension(30, 30));
-        button.setToolTipText("Delete game record");
-        return button;
-    }
     
     private JLabel createDifficultyBadge(Game.Difficulty difficulty) {
         Color bgColor;
@@ -508,21 +542,71 @@ public class HistoryPanel extends JPanel {
      */
     private JPanel createScorePanel(int score) {
         JPanel panel = createRoundedPanel(new Color(200, 230, 201), 12); // Light green (#C8E6C9)
-        panel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        panel.setLayout(new FlowLayout(FlowLayout.CENTER, 8, 0));
         panel.setBorder(BorderFactory.createEmptyBorder(12, 15, 12, 15));
         panel.setAlignmentX(Component.CENTER_ALIGNMENT);
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
         
-        // Square bullet
-        JLabel bullet = new JLabel("\u25A0"); // Square symbol (■)
-        bullet.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        bullet.setForeground(new Color(66, 66, 66)); // Dark gray/black
-        panel.add(bullet);
+        // Target icon (red circle with target rings)
+        JLabel targetIcon = new JLabel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int centerX = getWidth() / 2;
+                int centerY = getHeight() / 2;
+                
+                // Outer circle (red)
+                g2.setColor(new Color(244, 67, 54)); // Red
+                g2.fillOval(centerX - 8, centerY - 8, 16, 16);
+                
+                // Middle ring (white)
+                g2.setColor(Color.WHITE);
+                g2.fillOval(centerX - 5, centerY - 5, 10, 10);
+                
+                // Inner circle (red)
+                g2.setColor(new Color(244, 67, 54)); // Red
+                g2.fillOval(centerX - 2, centerY - 2, 4, 4);
+                
+                g2.dispose();
+            }
+        };
+        targetIcon.setPreferredSize(new Dimension(16, 16));
+        targetIcon.setOpaque(false);
+        panel.add(targetIcon);
         
         JLabel labelText = new JLabel("Combined Score:");
         labelText.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         labelText.setForeground(new Color(66, 66, 66)); // Dark gray/black
         panel.add(labelText);
+        
+        // Target icon with score (red circle)
+        JLabel scoreIcon = new JLabel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int centerX = getWidth() / 2;
+                int centerY = getHeight() / 2;
+                
+                // Outer circle (red)
+                g2.setColor(new Color(244, 67, 54)); // Red
+                g2.fillOval(centerX - 9, centerY - 9, 18, 18);
+                
+                // Middle ring (white)
+                g2.setColor(Color.WHITE);
+                g2.fillOval(centerX - 6, centerY - 6, 12, 12);
+                
+                // Inner circle (red)
+                g2.setColor(new Color(244, 67, 54)); // Red
+                g2.fillOval(centerX - 3, centerY - 3, 6, 6);
+                
+                g2.dispose();
+            }
+        };
+        scoreIcon.setPreferredSize(new Dimension(18, 18));
+        scoreIcon.setOpaque(false);
+        panel.add(scoreIcon);
         
         JLabel valueText = new JLabel(String.valueOf(score));
         valueText.setFont(new Font("Segoe UI", Font.BOLD, 14));
@@ -533,20 +617,67 @@ public class HistoryPanel extends JPanel {
     }
     
     /**
+     * Creates a small delete button with trash icon.
+     */
+    private JButton createDeleteButton() {
+        JButton button = new JButton() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Draw trash can icon in red
+                g2.setColor(new Color(220, 53, 69)); // Red color
+                
+                int width = getWidth();
+                int height = getHeight();
+                int centerX = width / 2;
+                int centerY = height / 2;
+                
+                // Draw trash can body (rectangle)
+                int bodyWidth = 10;
+                int bodyHeight = 12;
+                g2.fillRect(centerX - bodyWidth/2, centerY - bodyHeight/2 + 2, bodyWidth, bodyHeight);
+                
+                // Draw lid (rectangle on top)
+                int lidWidth = 12;
+                int lidHeight = 2;
+                g2.fillRect(centerX - lidWidth/2, centerY - bodyHeight/2, lidWidth, lidHeight);
+                
+                // Draw handle (small rectangle on lid)
+                int handleWidth = 2;
+                int handleHeight = 2;
+                g2.fillRect(centerX - lidWidth/2 - 2, centerY - bodyHeight/2 - handleHeight, handleWidth, handleHeight);
+                
+                // Draw lines on body (to show it's a trash can)
+                g2.setStroke(new BasicStroke(1.0f));
+                g2.setColor(new Color(255, 255, 255)); // White lines
+                g2.drawLine(centerX - bodyWidth/2 + 2, centerY - 2, centerX + bodyWidth/2 - 2, centerY - 2);
+                g2.drawLine(centerX - bodyWidth/2 + 2, centerY + 2, centerX + bodyWidth/2 - 2, centerY + 2);
+                
+                g2.dispose();
+            }
+        };
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setContentAreaFilled(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setPreferredSize(new Dimension(24, 24));
+        button.setMaximumSize(new Dimension(24, 24));
+        button.setMinimumSize(new Dimension(24, 24));
+        button.setToolTipText("Delete game record");
+        return button;
+    }
+    
+    /**
      * Creates the Hearts Remaining panel.
      */
     private JPanel createHeartsPanel(int hearts) {
         JPanel panel = createRoundedPanel(new Color(255, 205, 210), 12); // Light pink (#FFCDD2)
-        panel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        panel.setLayout(new FlowLayout(FlowLayout.CENTER, 8, 0));
         panel.setBorder(BorderFactory.createEmptyBorder(12, 15, 12, 15));
         panel.setAlignmentX(Component.CENTER_ALIGNMENT);
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
-        
-        // Heart symbol (outlined)
-        JLabel heartOutlined = new JLabel("\u2665"); // Heart symbol (♥)
-        heartOutlined.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        heartOutlined.setForeground(new Color(66, 66, 66)); // Dark gray/black
-        panel.add(heartOutlined);
         
         JLabel labelText = new JLabel("Hearts Remaining:");
         labelText.setFont(new Font("Segoe UI", Font.PLAIN, 14));
@@ -558,10 +689,37 @@ public class HistoryPanel extends JPanel {
         valueText.setForeground(new Color(244, 67, 54)); // Red (#F44336)
         panel.add(valueText);
         
-        // Heart symbol (solid)
-        JLabel heartSolid = new JLabel("\u2665"); // Heart symbol (❤)
-        heartSolid.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        heartSolid.setForeground(new Color(244, 67, 54)); // Red (#F44336)
+        // Heart symbol (solid red) - drawn as a shape
+        JLabel heartSolid = new JLabel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                
+                int width = getWidth();
+                int height = getHeight();
+                int centerX = width / 2;
+                int centerY = height / 2;
+                
+                // Draw heart shape using two circles and a triangle
+                g2.setColor(new Color(244, 67, 54)); // Red
+                
+                // Left circle of heart (top part)
+                g2.fillOval(centerX - 7, centerY - 6, 7, 7);
+                // Right circle of heart (top part)
+                g2.fillOval(centerX, centerY - 6, 7, 7);
+                
+                // Triangle (point) of heart (bottom part)
+                int[] xPoints = {centerX - 7, centerX, centerX + 7};
+                int[] yPoints = {centerY - 1, centerY + 5, centerY - 1};
+                g2.fillPolygon(xPoints, yPoints, 3);
+                
+                g2.dispose();
+            }
+        };
+        heartSolid.setPreferredSize(new Dimension(18, 16));
+        heartSolid.setOpaque(false);
         panel.add(heartSolid);
         
         return panel;
