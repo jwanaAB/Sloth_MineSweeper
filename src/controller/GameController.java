@@ -29,6 +29,7 @@ public class GameController {
     private MinesweeperBot aiBot; // AI bot for playing when player 2 is AI
     private Timer aiMoveTimer; // Timer for scheduling AI moves with delay
     private Timer aiCheckTimer; // Periodic timer to check if AI should move (fallback)
+    private final java.util.Random random = new java.util.Random(); // Random for AI decision making
     private boolean gameOver = false;
     private final LocalDateTime gameStartTime; // Track when game started
     private Timer gameTimer; // Timer that updates every second
@@ -276,7 +277,27 @@ public class GameController {
             }
         }
         
-        // Priority 2: Select and reveal a cell using bot logic
+        // Priority 2: Sometimes open revealed question cells for the human to answer
+        // Check if there are any revealed but unopened question cells
+        // Open them with 30% probability to make it feel natural (not always, not never)
+        int[] questionCell = aiBot.findUnopenedQuestionCell(aiBoard);
+        if (questionCell != null && random.nextDouble() < 0.30) {
+            // Open the question cell directly (bypassing normal validation since it's AI's turn)
+            // This will show the question dialog to the human, and the turn will switch after
+            Cell cell = aiBoard.getCell(questionCell[0], questionCell[1]);
+            if (cell != null && cell instanceof QuestionCell) {
+                QuestionCell qCell = (QuestionCell) cell;
+                if (!qCell.isQuestionOpened()) {
+                    // Switch turn to human - AI's turn ends when opening question
+                    game.switchTurn();
+                    // Now open the question for the human to answer
+                    openQuestion(qCell, 2);
+                    return;
+                }
+            }
+        }
+        
+        // Priority 3: Select and reveal a cell using bot logic
         // The bot will NOT prioritize question cells - it will reveal them normally
         // and let the human click on them later
         // Try up to 5 times to find a valid unrevealed cell (in case of race conditions)
@@ -698,13 +719,20 @@ public class GameController {
                        "Wrong Answer", JOptionPane.INFORMATION_MESSAGE);
         }
         
-        // Switch turn after answering question
-        game.switchTurn();
-        
-        // If it's now the AI's turn (after answering a question the bot revealed),
-        // schedule the bot to make another move
-        if (game.isCurrentPlayerAI() && !gameOver && !isPaused) {
-            scheduleAIMove();
+        // Handle turn switching after answering question
+        // If AI (player 2) opened the question, the human answered it, so turn should stay with human
+        // If human opened their own question, switch turn normally
+        if (player == 2 && game.isPlayer2AI()) {
+            // AI opened the question - human answered it
+            // Turn should already be with human (switched before opening question)
+            // Don't switch turn - human should play next on their board
+            // Just ensure turn is with human (Player 1)
+            if (game.getCurrentPlayer() != 1) {
+                game.switchTurn(); // Ensure it's human's turn
+            }
+        } else {
+            // Human opened their own question - switch turn normally
+            game.switchTurn();
         }
         
         // Observer pattern will automatically update UI when turn changes

@@ -37,7 +37,7 @@ public class MinesweeperBot {
     
     /**
      * Selects the next cell for the bot to reveal on its board.
-     * Uses a multi-tier strategy: forced safe cells -> educated guesses.
+     * Uses a multi-tier strategy: forced safe cells -> potential question cells -> educated guesses.
      * 
      * @param board The bot's game board (Player 2's board)
      * @return An array [row, col] representing the cell to reveal, or null if no valid move
@@ -54,13 +54,22 @@ public class MinesweeperBot {
             return safeCells.get(random.nextInt(safeCells.size()));
         }
         
-        // Strategy 2: Make educated guesses (prefer cells near revealed numbers)
+        // Strategy 2: Prioritize potential question cells (hidden cells with no adjacent revealed cells)
+        // Question cells are typically placed in areas with zero adjacent mines, so cells
+        // with no adjacent revealed cells are more likely to be question cells
+        List<int[]> potentialQuestionCells = findPotentialQuestionCells(board);
+        if (!potentialQuestionCells.isEmpty()) {
+            // Pick a random potential question cell to reveal
+            return potentialQuestionCells.get(random.nextInt(potentialQuestionCells.size()));
+        }
+        
+        // Strategy 3: Make educated guesses (prefer cells near revealed numbers)
         List<int[]> educatedGuesses = findEducatedGuesses(board);
         if (!educatedGuesses.isEmpty()) {
             return educatedGuesses.get(random.nextInt(educatedGuesses.size()));
         }
         
-        // Strategy 3: Fallback to any unrevealed cell (should rarely happen)
+        // Strategy 4: Fallback to any unrevealed cell (should rarely happen)
         List<int[]> allUnrevealed = getAllUnrevealedCells(board);
         if (!allUnrevealed.isEmpty()) {
             return allUnrevealed.get(random.nextInt(allUnrevealed.size()));
@@ -137,6 +146,56 @@ public class MinesweeperBot {
         
         // Remove duplicates
         return removeDuplicates(safeCells);
+    }
+    
+    /**
+     * Finds potential question cells - hidden cells with no adjacent revealed cells.
+     * Question cells are typically placed in areas with zero adjacent mines, so cells
+     * that are isolated (no revealed neighbors) are more likely to be question cells.
+     * 
+     * @param board The game board to analyze
+     * @return List of potential question cell positions [row, col]
+     */
+    private List<int[]> findPotentialQuestionCells(GameBoard board) {
+        List<int[]> candidates = new ArrayList<>();
+        int rows = board.getRows();
+        int cols = board.getCols();
+        
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                Cell cell = board.getCell(i, j);
+                
+                // Only consider hidden, unflagged cells
+                if (cell != null && cell.isHidden() && !cell.isFlagged()) {
+                    // Check if this cell has no adjacent revealed cells
+                    boolean hasRevealedNeighbor = false;
+                    for (int di = -1; di <= 1; di++) {
+                        for (int dj = -1; dj <= 1; dj++) {
+                            if (di == 0 && dj == 0) continue;
+                            
+                            int ni = i + di;
+                            int nj = j + dj;
+                            
+                            if (ni >= 0 && ni < rows && nj >= 0 && nj < cols) {
+                                Cell adjCell = board.getCell(ni, nj);
+                                if (adjCell != null && adjCell.isRevealed()) {
+                                    hasRevealedNeighbor = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (hasRevealedNeighbor) break;
+                    }
+                    
+                    // If no revealed neighbors, this is a potential question cell location
+                    if (!hasRevealedNeighbor) {
+                        candidates.add(new int[]{i, j});
+                    }
+                }
+            }
+        }
+        
+        return candidates;
     }
     
     /**
@@ -341,4 +400,5 @@ public class MinesweeperBot {
         return null;
     }
 }
+
 

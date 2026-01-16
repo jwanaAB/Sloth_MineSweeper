@@ -407,8 +407,9 @@ public class HistoryPanel extends JPanel {
         JPanel timePanel = createRoundedPanel(new Color(187, 222, 251), 15); // Light blue (#BBDEFB)
         timePanel.setLayout(new FlowLayout(FlowLayout.CENTER, 6, 0));
         timePanel.setBorder(BorderFactory.createEmptyBorder(6, 10, 6, 10));
-        timePanel.setPreferredSize(new Dimension(75, 30));
-        timePanel.setMaximumSize(new Dimension(75, 30));
+        // Set minimum size but allow expansion for longer time strings (e.g., "100:00")
+        timePanel.setMinimumSize(new Dimension(75, 30));
+        // Don't set maximum size - let it expand to fit content
         
         // Clock icon (blue circle with clock symbol)
         JLabel clockIcon = new JLabel() {
