@@ -57,6 +57,7 @@ public class Game {
     private Difficulty difficulty;
     private String player1Name;
     private String player2Name;
+    private boolean player2IsAI; // Whether player 2 is an AI bot
     private int combinedScore; // Placeholder for now
     private int sharedLives; // Shared lives pool for both players
     private int totalLives;
@@ -69,13 +70,15 @@ public class Game {
      * Constructs a new Game with the specified settings.
      * 
      * @param player1Name Name of player 1
-     * @param player2Name Name of player 2
+     * @param player2Name Name of player 2 (or "SlothAI" if AI mode)
      * @param difficulty The difficulty level (EASY, MEDIUM, or HARD)
      * @param questionLogic The QuestionLogic instance to load questions from
+     * @param player2IsAI Whether player 2 is an AI bot
      */
-    public Game(String player1Name, String player2Name, Difficulty difficulty, QuestionLogic questionLogic) {
+    public Game(String player1Name, String player2Name, Difficulty difficulty, QuestionLogic questionLogic, boolean player2IsAI) {
         this.player1Name = player1Name;
         this.player2Name = player2Name;
+        this.player2IsAI = player2IsAI;
         this.difficulty = difficulty;
         this.currentPlayer = 1;
         this.combinedScore = 0;
@@ -220,6 +223,24 @@ public class Game {
      */
     public String getPlayer2Name() {
         return player2Name;
+    }
+    
+    /**
+     * Checks if player 2 is an AI bot.
+     * 
+     * @return true if player 2 is AI, false otherwise
+     */
+    public boolean isPlayer2AI() {
+        return player2IsAI;
+    }
+    
+    /**
+     * Checks if the current player is an AI bot.
+     * 
+     * @return true if current player is AI, false otherwise
+     */
+    public boolean isCurrentPlayerAI() {
+        return currentPlayer == 2 && player2IsAI;
     }
     
     /**

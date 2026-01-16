@@ -38,14 +38,15 @@ public class MainController {
             if (setupDialog.isConfirmed()) {
                 String player1Name = setupDialog.getPlayer1Name();
                 String player2Name = setupDialog.getPlayer2Name();
+                boolean playWithAI = setupDialog.isPlayWithAI();
                 Game.Difficulty difficulty = mapDifficulty(setupDialog.getDifficulty());
 
                 // Load questions
                 QuestionLogic questionLogic = new QuestionLogic();
                 questionLogic.loadQuestionsFromCSV("resources/Questions.csv");
 
-                // Create game
-                Game game = new Game(player1Name, player2Name, difficulty, questionLogic);
+                // Create game with AI flag
+                Game game = new Game(player1Name, player2Name, difficulty, questionLogic, playWithAI);
 
                 // Create game controller with callback to return to main menu
                 new GameController(game, view.getGamePanel(), questionLogic, () -> {
