@@ -26,6 +26,9 @@ public class GameController {
     @SuppressWarnings("unused")
     private final Runnable onReturnToMainMenu;
     private final SoundManager soundManager;
+    private MinesweeperBot aiBot; // AI bot for playing when player 2 is AI
+    private Timer aiMoveTimer; // Timer for scheduling AI moves with delay
+    private Timer aiCheckTimer; // Periodic timer to check if AI should move (fallback)
     private boolean gameOver = false;
     private final LocalDateTime gameStartTime; // Track when game started
     private Timer gameTimer; // Timer that updates every second
@@ -49,11 +52,78 @@ public class GameController {
         this.soundManager = SoundManager.getInstance();
         this.gameStartTime = LocalDateTime.now(); // Record game start time
         
+        // Initialize AI bot if player 2 is AI
+        if (game.isPlayer2AI()) {
+            this.aiBot = new MinesweeperBot();
+        }
+        
         // Initialize the game panel
         gamePanel.initializeGame(game, this);
         
+        // Add observer to detect when it's AI's turn
+        game.addObserver(new GameObserver() {
+            @Override
+            public void onTurnChanged(int currentPlayer, String playerName) {
+                // Use SwingUtilities to ensure this runs on EDT
+                SwingUtilities.invokeLater(() -> {
+                    // Check if it's AI's turn and trigger AI move
+                    if (game.isCurrentPlayerAI() && !gameOver && !isPaused && aiBot != null) {
+                        scheduleAIMove();
+                    }
+                });
+            }
+            
+            @Override
+            public void onCellRevealed(int row, int col, int player) {
+                // Not needed for AI, but required by interface
+            }
+            
+            @Override
+            public void onScoreChanged(int score) {
+                // Not needed for AI, but required by interface
+            }
+            
+            @Override
+            public void onLivesChanged(int lives, int totalLives) {
+                // Not needed for AI, but required by interface
+            }
+            
+            @Override
+            public void onGameOver(boolean won, int winner) {
+                // Stop AI timer when game ends
+                if (aiMoveTimer != null) {
+                    aiMoveTimer.stop();
+                }
+            }
+        });
+        
         // Start the game timer
         startGameTimer();
+        
+        // If AI mode, set up periodic check to ensure AI moves when it should (fallback mechanism)
+        if (game.isPlayer2AI()) {
+            // Initial check if it's AI's turn
+            SwingUtilities.invokeLater(() -> {
+                if (game.isCurrentPlayerAI() && !gameOver && aiBot != null) {
+                    scheduleAIMove();
+                }
+            });
+            
+            // Add a periodic check every 1 second to ensure AI moves if stuck
+            // This is a fallback in case the observer doesn't fire or timer gets cancelled
+            aiCheckTimer = new Timer(1000, e -> {
+                if (game.isCurrentPlayerAI() && !gameOver && !isPaused && aiBot != null) {
+                    // Check if AI timer is not running and it's AI's turn
+                    // If timer is null or not running, schedule a move immediately
+                    boolean shouldMove = (aiMoveTimer == null || !aiMoveTimer.isRunning());
+                    if (shouldMove) {
+                        // Schedule immediately with a short delay
+                        scheduleAIMove();
+                    }
+                }
+            });
+            aiCheckTimer.start();
+        }
     }
     
     /**
@@ -146,12 +216,137 @@ public class GameController {
     }
     
     /**
+     * Schedules an AI move with a delay to make it feel more natural.
+     * The AI will make exactly one move per turn.
+     */
+    private void scheduleAIMove() {
+        // Don't schedule if already scheduled and running (prevent duplicates)
+        if (aiMoveTimer != null && aiMoveTimer.isRunning()) {
+            return;
+        }
+        
+        // Stop any existing timer
+        if (aiMoveTimer != null) {
+            aiMoveTimer.stop();
+        }
+        
+        // Increased delay of 1500-2500ms to make AI moves feel more natural and give human time to see
+        int delay = 1500 + (int)(Math.random() * 1000);
+        
+        aiMoveTimer = new Timer(delay, e -> {
+            // Double-check conditions before making move
+            if (game.isCurrentPlayerAI() && !gameOver && !isPaused && aiBot != null) {
+                makeAIMove();
+            }
+        });
+        aiMoveTimer.setRepeats(false);
+        aiMoveTimer.start();
+    }
+    
+    /**
+     * Makes a move for the AI bot.
+     * The bot will:
+     * 1. First check for unactivated surprise cells (activate these)
+     * 2. Otherwise, select and reveal a cell using bot logic
+     * 
+     * Note: The bot does NOT automatically open question cells. If it reveals a question cell,
+     * the turn switches and the human can click on it later when it's their turn.
+     */
+    private void makeAIMove() {
+        if (gameOver || !game.isCurrentPlayerAI() || aiBot == null) {
+            return;
+        }
+        
+        GameBoard aiBoard = game.getCurrentBoard(); // Player 2's board
+        
+        // Check if game is already won (all non-mine cells revealed)
+        if (aiBoard.isGameWon()) {
+            // Game is won, but let the normal win detection handle it
+            return;
+        }
+        
+        // Priority 1: Check for unactivated surprise cells (these can be activated immediately)
+        int[] surpriseCell = aiBot.findUnactivatedSurpriseCell(aiBoard);
+        if (surpriseCell != null) {
+            // Verify the cell is still unrevealed before trying to reveal it
+            Cell cell = aiBoard.getCell(surpriseCell[0], surpriseCell[1]);
+            if (cell != null && !cell.isRevealed()) {
+                handleCellReveal(surpriseCell[0], surpriseCell[1], 2);
+                return;
+            }
+        }
+        
+        // Priority 2: Select and reveal a cell using bot logic
+        // The bot will NOT prioritize question cells - it will reveal them normally
+        // and let the human click on them later
+        // Try up to 5 times to find a valid unrevealed cell (in case of race conditions)
+        for (int attempt = 0; attempt < 5; attempt++) {
+            int[] cellToReveal = aiBot.selectCellToReveal(aiBoard);
+            if (cellToReveal != null) {
+                // Verify the cell is still unrevealed before trying to reveal it
+                Cell cell = aiBoard.getCell(cellToReveal[0], cellToReveal[1]);
+                if (cell != null && !cell.isRevealed() && !cell.isFlagged()) {
+                    handleCellReveal(cellToReveal[0], cellToReveal[1], 2);
+                    return; // Successfully made a move
+                }
+                // Cell was already revealed or flagged, try again
+            } else {
+                break; // Bot couldn't find a cell, use fallback
+            }
+        }
+        
+        // Fallback: if bot couldn't find a valid cell, manually find any unrevealed cell
+        int[] fallbackCell = findAnyUnrevealedCell(aiBoard);
+        if (fallbackCell != null) {
+            handleCellReveal(fallbackCell[0], fallbackCell[1], 2);
+        } else {
+            // No unrevealed cells - game should be won, but just in case
+            System.out.println("AI: No unrevealed cells found - game may be won");
+        }
+    }
+    
+    /**
+     * Fallback method to find any unrevealed, unflagged cell on the board.
+     * Used when the bot's logic fails to find a cell.
+     * 
+     * @param board The game board
+     * @return An array [row, col] of an unrevealed cell, or null if none found
+     */
+    private int[] findAnyUnrevealedCell(GameBoard board) {
+        if (board == null) {
+            return null;
+        }
+        
+        int rows = board.getRows();
+        int cols = board.getCols();
+        
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                Cell cell = board.getCell(i, j);
+                if (cell != null && cell.isHidden() && !cell.isFlagged()) {
+                    return new int[]{i, j};
+                }
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
      * Stops the game timer (called when game ends).
      */
     private void stopGameTimer() {
         if (gameTimer != null) {
             gameTimer.stop();
             gameTimer = null;
+        }
+        if (aiMoveTimer != null) {
+            aiMoveTimer.stop();
+            aiMoveTimer = null;
+        }
+        if (aiCheckTimer != null) {
+            aiCheckTimer.stop();
+            aiCheckTimer = null;
         }
     }
     
@@ -188,12 +383,24 @@ public class GameController {
         if (cell != null && cell.isRevealed() && 
             cell instanceof QuestionCell && !((QuestionCell) cell).isQuestionOpened()) {
             // Question cell already revealed - offer to open question
+            // If AI revealed it, the human will answer
             handleQuestionCellClick(row, col, player);
             return;
         }
         
         // Don't process if cell is already revealed (except question cells handled above)
         if (cell != null && cell.isRevealed()) {
+            // If it's the AI's turn and it tried to reveal an already-revealed cell,
+            // trigger another AI move attempt (the retry logic in makeAIMove should handle this)
+            if (game.isCurrentPlayerAI() && player == 2) {
+                // Schedule another AI move attempt after a short delay
+                SwingUtilities.invokeLater(() -> {
+                    if (game.isCurrentPlayerAI() && !gameOver && !isPaused && aiBot != null) {
+                        // Try again with a new cell selection
+                        makeAIMove();
+                    }
+                });
+            }
             return;
         }
         
@@ -252,7 +459,9 @@ public class GameController {
             if (revealedCell != null) {
                 // Check if it's a question or surprise cell
                 if (revealedCell instanceof QuestionCell) {
-                    // Question cell revealed - switch turn (no message)
+                    // Question cell revealed - just switch turn
+                    // The human can click on it later when it's their turn to open the question
+                    // The bot does NOT automatically open question cells
                     game.switchTurn();
                 } else if (revealedCell instanceof SurpriseCell) {
                     // Surprise cell revealed - switch turn (no message)
@@ -423,12 +632,22 @@ public class GameController {
     
     /**
      * Shows a dialog with a question for the player to answer.
+     * If the AI revealed the question cell, the human player (Player 1) will answer it.
      * 
      * @param question The Question object
-     * @param player The player number
+     * @param player The player number (the player whose board the question is on)
      */
     private boolean showQuestionDialog(Question question, int player) {
-        final String playerName = player == 1 ? game.getPlayer1Name() : game.getPlayer2Name();
+        // If AI (player 2) revealed a question cell, the human (player 1) answers it
+        // Otherwise, the player who revealed it answers it
+        final String playerName;
+        if (player == 2 && game.isPlayer2AI()) {
+            // AI revealed it - human answers
+            playerName = game.getPlayer1Name();
+        } else {
+            // Normal case - the player who revealed it answers
+            playerName = player == 1 ? game.getPlayer1Name() : game.getPlayer2Name();
+        }
 
         // Get the parent frame for the dialog
         JFrame parentFrame = null;
@@ -463,7 +682,8 @@ public class GameController {
         boolean isCorrect = question.getCorrectAnswer().equalsIgnoreCase(selectedAnswer);
         
         // Score the question activation
-        String scoringPlayerName = playerName;
+        // The scoring player is the one whose board the question is on (the one who revealed it)
+        String scoringPlayerName = player == 1 ? game.getPlayer1Name() : game.getPlayer2Name();
         int gameDifficulty = convertDifficultyToInt(game.getDifficulty());
         int questionType = question.getDifficulty(); // Question difficulty maps to question type (1-4)
         
@@ -480,6 +700,12 @@ public class GameController {
         
         // Switch turn after answering question
         game.switchTurn();
+        
+        // If it's now the AI's turn (after answering a question the bot revealed),
+        // schedule the bot to make another move
+        if (game.isCurrentPlayerAI() && !gameOver && !isPaused) {
+            scheduleAIMove();
+        }
         
         // Observer pattern will automatically update UI when turn changes
 
