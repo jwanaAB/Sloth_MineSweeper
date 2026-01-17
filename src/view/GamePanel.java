@@ -20,8 +20,11 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+import javax.swing.AbstractAction;
+import javax.swing.KeyStroke;
 import java.util.List;
 
 /**
@@ -204,45 +207,6 @@ public class GamePanel extends JPanel implements GameObserver {
         gbc.insets = new Insets(0, 0, 0, 0);
         topBar.add(homeButton, gbc);
         
-        // Create Pause button in the center
-        pauseButton = new JButton("⏸ Pause");
-        pauseButton.setFocusPainted(false);
-        pauseButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        pauseButton.setBackground(new Color(255, 193, 7)); // Yellow/amber color
-        pauseButton.setForeground(Color.BLACK);
-        pauseButton.setOpaque(true);
-        pauseButton.setBorderPainted(false);
-        pauseButton.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(230, 170, 0), 2),
-                BorderFactory.createEmptyBorder(8, 16, 8, 16)));
-        pauseButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
-        // Add hover effect
-        pauseButton.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                if (!isPaused) {
-                    pauseButton.setBackground(new Color(230, 170, 0)); // Darker on hover
-                }
-            }
-            
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                if (!isPaused) {
-                    pauseButton.setBackground(new Color(255, 193, 7)); // Original color
-                }
-            }
-        });
-        
-        // Add click handler
-        pauseButton.addActionListener(e -> togglePause());
-        
-        // Pause button in the center with expanding space
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.weightx = 1.0; // Take up remaining space to center
-        gbc.anchor = GridBagConstraints.CENTER;
-        gbc.fill = GridBagConstraints.NONE;
-        topBar.add(pauseButton, gbc);
-        
         // Create Flag Mode button
         flagModeButton = new JButton("Flag Mode: OFF");
         flagModeButton.setFocusPainted(false);
@@ -301,16 +265,20 @@ public class GamePanel extends JPanel implements GameObserver {
         // Add click handler to show theme selector
         themeButton.addActionListener(e -> showThemeSelector());
         
-        // Create right panel for Flag Mode and Theme buttons
+        // Create mute button for background music
+        JButton muteButton = createMuteButton();
+        
+        // Create right panel for Mute, Theme, and Flag Mode buttons
         JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         rightPanel.setOpaque(false);
+        rightPanel.add(muteButton);
         rightPanel.add(themeButton);
         rightPanel.add(flagModeButton);
         
         // Right panel on the right side
-        gbc.gridx = 2;
+        gbc.gridx = 1;
         gbc.gridy = 0;
-        gbc.weightx = 0; // Don't expand
+        gbc.weightx = 1.0; // Take up remaining space
         gbc.anchor = GridBagConstraints.EAST;
         topBar.add(rightPanel, gbc);
         
@@ -433,11 +401,49 @@ public class GamePanel extends JPanel implements GameObserver {
         infoPanel.add(namesPanel, BorderLayout.NORTH);
         infoPanel.add(infoContainer, BorderLayout.CENTER);
 
+        // Create Pause button in the center, above the boards
+        pauseButton = new JButton("⏸ Pause");
+        pauseButton.setFocusPainted(false);
+        pauseButton.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        pauseButton.setBackground(new Color(255, 193, 7)); // Yellow/amber color
+        pauseButton.setForeground(Color.BLACK);
+        pauseButton.setOpaque(true);
+        pauseButton.setBorderPainted(false);
+        pauseButton.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(230, 170, 0), 2),
+                BorderFactory.createEmptyBorder(10, 24, 10, 24)));
+        pauseButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        // Add hover effect
+        pauseButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                if (!isPaused) {
+                    pauseButton.setBackground(new Color(230, 170, 0)); // Darker on hover
+                }
+            }
+            
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                if (!isPaused) {
+                    pauseButton.setBackground(new Color(255, 193, 7)); // Original color
+                }
+            }
+        });
+        
+        // Add click handler
+        pauseButton.addActionListener(e -> togglePause());
+        
+        // Center the pause button in its own panel
+        JPanel pauseButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 10));
+        pauseButtonPanel.setOpaque(false);
+        pauseButtonPanel.setBackground(theme.getBoardBackgroundColor());
+        pauseButtonPanel.add(pauseButton);
+        
         // Get the north container that was created in buildTopBar
         JPanel northContainer = (JPanel) ((BorderLayout) getLayout()).getLayoutComponent(BorderLayout.NORTH);
 
         // Add to the north container instead of directly to the main panel
         northContainer.add(infoPanel);
+        northContainer.add(pauseButtonPanel);
     }
 
     /**
@@ -445,6 +451,7 @@ public class GamePanel extends JPanel implements GameObserver {
      */
     private void buildGameBoards() {
         Theme theme = themeManager.getCurrentTheme();
+        // Create a wrapper panel with BorderLayout to hold boards and overlay
         boardsContainer = new JPanel(new BorderLayout());
         boardsContainer.setBackground(theme.getBackgroundColor());
         boardsContainer.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -487,6 +494,7 @@ public class GamePanel extends JPanel implements GameObserver {
         boardsWrapper.add(player1Container);
         boardsWrapper.add(player2Container);
         
+        // Add boardsWrapper to boardsContainer
         boardsContainer.add(boardsWrapper, BorderLayout.CENTER);
         add(boardsContainer, BorderLayout.CENTER);
     }
@@ -955,52 +963,119 @@ public class GamePanel extends JPanel implements GameObserver {
      * This overlay is added on top of the existing layout without modifying board structure.
      */
     private void showPauseOverlay() {
+        JFrame rootFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+        
         if (pauseOverlay != null) {
+            // Reattach to glass pane if it was removed
+            if (rootFrame != null && rootFrame.getGlassPane() != pauseOverlay) {
+                pauseOverlay.setSize(rootFrame.getSize());
+                rootFrame.setGlassPane(pauseOverlay);
+            }
             pauseOverlay.setVisible(true);
             pauseOverlay.repaint();
+            
+            // Re-add ESC key binding to root frame if needed
+            if (rootFrame != null) {
+                rootFrame.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
+                    KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "resumeGameFromFrame");
+                rootFrame.getRootPane().getActionMap().put("resumeGameFromFrame", new AbstractAction() {
+                    @Override
+                    public void actionPerformed(java.awt.event.ActionEvent e) {
+                        if (isPaused) {
+                            togglePause();
+                        }
+                    }
+                });
+            }
             return;
         }
         
-        // Create overlay panel
-        pauseOverlay = new JPanel() {
+        // Create overlay panel with BorderLayout to hold content
+        pauseOverlay = new JPanel(new BorderLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 
-                // Semi-transparent background
+                // Semi-transparent background to highlight/darken the whole screen
                 g2.setColor(new Color(0, 0, 0, 180));
                 g2.fillRect(0, 0, getWidth(), getHeight());
-                
-                // Pause message
-                g2.setColor(Color.WHITE);
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 48));
-                String text = "PAUSED";
-                FontMetrics fm = g2.getFontMetrics();
-                int textWidth = fm.stringWidth(text);
-                int textHeight = fm.getHeight();
-                int x = (getWidth() - textWidth) / 2;
-                int y = (getHeight() - textHeight) / 2 + fm.getAscent();
-                g2.drawString(text, x, y);
-                
-                // Subtitle
-                g2.setFont(new Font("Segoe UI", Font.PLAIN, 20));
-                String subtitle = "Click Resume to continue";
-                fm = g2.getFontMetrics();
-                textWidth = fm.stringWidth(subtitle);
-                x = (getWidth() - textWidth) / 2;
-                y += textHeight + 20;
-                g2.drawString(subtitle, x, y);
                 
                 g2.dispose();
             }
         };
         pauseOverlay.setOpaque(false);
-        pauseOverlay.setLayout(new BorderLayout());
+        
+        // Create center panel with pause message and resume button
+        JPanel centerPanel = new JPanel();
+        centerPanel.setOpaque(false);
+        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
+        
+        // Pause message label
+        JLabel pauseLabel = new JLabel("PAUSED");
+        pauseLabel.setFont(new Font("Segoe UI", Font.BOLD, 48));
+        pauseLabel.setForeground(Color.WHITE);
+        pauseLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        // Subtitle label
+        JLabel subtitleLabel = new JLabel("Press ESC or click Resume to continue");
+        subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 20));
+        subtitleLabel.setForeground(Color.WHITE);
+        subtitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        subtitleLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 30, 0));
+        
+        // Resume button
+        JButton resumeButton = new JButton("▶ Resume");
+        resumeButton.setFocusPainted(false);
+        resumeButton.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        resumeButton.setBackground(new Color(40, 167, 69)); // Green
+        resumeButton.setForeground(Color.WHITE);
+        resumeButton.setOpaque(true);
+        resumeButton.setBorderPainted(false);
+        resumeButton.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(30, 130, 50), 2),
+                BorderFactory.createEmptyBorder(12, 32, 12, 32)));
+        resumeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        resumeButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        // Add hover effect to resume button
+        resumeButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                resumeButton.setBackground(new Color(30, 130, 50)); // Darker on hover
+            }
+            
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                resumeButton.setBackground(new Color(40, 167, 69)); // Original color
+            }
+        });
+        
+        // Add click handler to resume button
+        resumeButton.addActionListener(e -> togglePause());
+        
+        // Add components to center panel
+        centerPanel.add(Box.createVerticalGlue());
+        centerPanel.add(pauseLabel);
+        centerPanel.add(subtitleLabel);
+        centerPanel.add(resumeButton);
+        centerPanel.add(Box.createVerticalGlue());
+        
+        // Add center panel to overlay
+        pauseOverlay.add(centerPanel, BorderLayout.CENTER);
+        
+        // Add ESC key binding to resume (works even when overlay doesn't have focus)
+        pauseOverlay.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
+            KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "resumeGame");
+        pauseOverlay.getActionMap().put("resumeGame", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                if (isPaused) {
+                    togglePause();
+                }
+            }
+        });
         
         // Add overlay as a glass pane using the root pane
-        JFrame rootFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
         if (rootFrame != null) {
             pauseOverlay.setSize(rootFrame.getSize());
             rootFrame.setGlassPane(pauseOverlay);
@@ -1009,6 +1084,20 @@ public class GamePanel extends JPanel implements GameObserver {
             // Fallback: add directly to this panel's center (will cover content)
             add(pauseOverlay, BorderLayout.CENTER);
             pauseOverlay.setVisible(true);
+        }
+        
+        // Also add ESC key binding to the root frame for better compatibility
+        if (rootFrame != null) {
+            rootFrame.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
+                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "resumeGameFromFrame");
+            rootFrame.getRootPane().getActionMap().put("resumeGameFromFrame", new AbstractAction() {
+                @Override
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    if (isPaused) {
+                        togglePause();
+                    }
+                }
+            });
         }
         
         revalidate();
@@ -1024,12 +1113,18 @@ public class GamePanel extends JPanel implements GameObserver {
             JFrame rootFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
             if (rootFrame != null && rootFrame.getGlassPane() == pauseOverlay) {
                 rootFrame.setGlassPane(new JPanel()); // Reset to empty glass pane
+                // Remove ESC key binding from root frame when unpaused
+                rootFrame.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).remove(
+                    KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
+                rootFrame.getRootPane().getActionMap().remove("resumeGameFromFrame");
             } else {
                 // If added to center, remove it
                 if (pauseOverlay.getParent() == this) {
                     remove(pauseOverlay);
                 }
             }
+            // Return focus to the main panel
+            requestFocusInWindow();
             revalidate();
             repaint();
         }
@@ -1564,7 +1659,7 @@ public class GamePanel extends JPanel implements GameObserver {
             
             animationProgress = 0.0f;
             animationTimer = new Timer(16, e -> { // ~60 FPS
-                animationProgress += 0.05f; // Adjust speed here
+                animationProgress += 0.15f; // Increased from 0.05f for faster animation (3x speed)
                 if (animationProgress >= 1.0f) {
                     animationProgress = 1.0f;
                     animationTimer.stop();
@@ -1702,5 +1797,40 @@ public class GamePanel extends JPanel implements GameObserver {
                 updateBoard(player2Cells, game.getPlayer2Board(), 2);
             }
         });
+    }
+    
+    /**
+     * Creates a mute button for background music control.
+     */
+    private JButton createMuteButton() {
+        JButton button = new JButton("\uD83D\uDD0A"); // Speaker icon 🔊
+        button.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
+        button.setForeground(new Color(91, 161, 255));
+        button.setBackground(new Color(240, 248, 255));
+        button.setContentAreaFilled(true);
+        button.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(91, 161, 255), 2, true),
+            BorderFactory.createEmptyBorder(6, 12, 6, 12)
+        ));
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setToolTipText("Mute/Unmute Background Music");
+        button.addActionListener(e -> {
+            controller.SoundManager.getInstance().toggleBackgroundMusic();
+            updateMuteButtonIcon(button);
+        });
+        updateMuteButtonIcon(button);
+        return button;
+    }
+    
+    /**
+     * Updates the mute button icon based on music state.
+     */
+    private void updateMuteButtonIcon(JButton button) {
+        if (button != null) {
+            boolean isMuted = !controller.SoundManager.getInstance().isBackgroundMusicEnabled();
+            button.setText(isMuted ? "\uD83D\uDD07" : "\uD83D\uDD0A"); // 🔇 when muted, 🔊 when playing
+            button.setToolTipText(isMuted ? "Unmute Background Music" : "Mute Background Music");
+        }
     }
 }

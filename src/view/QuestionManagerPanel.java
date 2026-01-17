@@ -82,6 +82,8 @@ public class QuestionManagerPanel extends JPanel {
         // Panel for buttons on the right
         JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         buttonsPanel.setBackground(Color.WHITE);
+        JButton muteButton = createMuteButton();
+        buttonsPanel.add(muteButton);
         buttonsPanel.add(importButton);
         buttonsPanel.add(addButton);
 
@@ -897,6 +899,41 @@ public class QuestionManagerPanel extends JPanel {
             g2.drawLine(dx + 2, dy - 1, dx + 2, dy + 5);
             
             g2.dispose();
+        }
+    }
+    
+    /**
+     * Creates a mute button for background music control.
+     */
+    private JButton createMuteButton() {
+        JButton button = new JButton("\uD83D\uDD0A"); // Speaker icon 🔊
+        button.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
+        button.setForeground(new Color(91, 161, 255));
+        button.setBackground(new Color(240, 248, 255));
+        button.setContentAreaFilled(true);
+        button.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(91, 161, 255), 2, true),
+            BorderFactory.createEmptyBorder(6, 12, 6, 12)
+        ));
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setToolTipText("Mute/Unmute Background Music");
+        button.addActionListener(e -> {
+            controller.SoundManager.getInstance().toggleBackgroundMusic();
+            updateMuteButtonIcon(button);
+        });
+        updateMuteButtonIcon(button);
+        return button;
+    }
+    
+    /**
+     * Updates the mute button icon based on music state.
+     */
+    private void updateMuteButtonIcon(JButton button) {
+        if (button != null) {
+            boolean isMuted = !controller.SoundManager.getInstance().isBackgroundMusicEnabled();
+            button.setText(isMuted ? "\uD83D\uDD07" : "\uD83D\uDD0A"); // 🔇 when muted, 🔊 when playing
+            button.setToolTipText(isMuted ? "Unmute Background Music" : "Mute Background Music");
         }
     }
 }
