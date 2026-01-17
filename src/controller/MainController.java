@@ -28,6 +28,8 @@ public class MainController {
                 createQuestionManagerListener(),
                 createExitListener());
         view.setVisible(true);
+        // Start background music
+        controller.SoundManager.getInstance().startBackgroundMusic();
     }
 
     private ActionListener createStartGameListener() {

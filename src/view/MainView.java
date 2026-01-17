@@ -49,6 +49,7 @@ public class MainView extends JFrame {
     private JLabel iconLabel;
     private JLabel titleLabel;
     private GradientPanel gradientRoot;
+    private JButton muteButton;
     
     // Base dimensions for scaling calculations
     private int baseWindowWidth;
@@ -164,10 +165,25 @@ public class MainView extends JFrame {
         contentPanel.setOpaque(false);
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
 
-        // Top panel with How to Play button on the right
+        // Top panel with Mute button on the left and How to Play button on the right
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setOpaque(false);
         topPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        
+        // Mute button (small, top left) with visible border
+        muteButton = new JButton("\uD83D\uDD0A"); // Speaker icon 🔊
+        muteButton.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
+        muteButton.setForeground(new Color(91, 161, 255));
+        muteButton.setBackground(new Color(240, 248, 255)); // Light blue background
+        muteButton.setContentAreaFilled(true);
+        muteButton.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(91, 161, 255), 2, true),
+            BorderFactory.createEmptyBorder(6, 12, 6, 12)
+        ));
+        muteButton.setFocusPainted(false);
+        muteButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        muteButton.setToolTipText("Mute/Unmute Background Music");
+        muteButton.addActionListener(e -> toggleBackgroundMusic());
         
         // How to Play button (small, top right) with visible border
         JButton smallHowToPlayButton = new JButton("How to Play");
@@ -183,8 +199,12 @@ public class MainView extends JFrame {
         smallHowToPlayButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         smallHowToPlayButton.addActionListener(e -> showHowToPlayDialog());
         
-        topPanel.add(Box.createHorizontalGlue(), BorderLayout.WEST);
+        topPanel.add(muteButton, BorderLayout.WEST);
+        topPanel.add(Box.createHorizontalGlue(), BorderLayout.CENTER);
         topPanel.add(smallHowToPlayButton, BorderLayout.EAST);
+        
+        // Update mute button icon to reflect initial state
+        updateMuteButtonIcon();
 
         iconLabel = new JLabel("\u26CF", SwingConstants.CENTER);
         iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 64));
@@ -253,6 +273,64 @@ public class MainView extends JFrame {
             HowToPlayDialog dialog = new HowToPlayDialog(this);
             dialog.setVisible(true);
         });
+    }
+    
+    /**
+     * Toggles the background music on/off.
+     */
+    public void toggleBackgroundMusic() {
+        controller.SoundManager.getInstance().toggleBackgroundMusic();
+        updateMuteButtonIcon();
+    }
+    
+    /**
+     * Updates the mute button icon based on music state.
+     */
+    private void updateMuteButtonIcon() {
+        if (muteButton != null) {
+            boolean isMuted = !controller.SoundManager.getInstance().isBackgroundMusicEnabled();
+            muteButton.setText(isMuted ? "\uD83D\uDD07" : "\uD83D\uDD0A"); // 🔇 when muted, 🔊 when playing
+            muteButton.setToolTipText(isMuted ? "Unmute Background Music" : "Mute Background Music");
+        }
+    }
+    
+    /**
+     * Gets the mute button for use in other panels.
+     */
+    public JButton getMuteButton() {
+        return muteButton;
+    }
+    
+    /**
+     * Creates a new mute button with the same styling and functionality.
+     */
+    public JButton createMuteButton() {
+        JButton button = new JButton("\uD83D\uDD0A"); // Speaker icon 🔊
+        button.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
+        button.setForeground(new Color(91, 161, 255));
+        button.setBackground(new Color(240, 248, 255));
+        button.setContentAreaFilled(true);
+        button.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(91, 161, 255), 2, true),
+            BorderFactory.createEmptyBorder(6, 12, 6, 12)
+        ));
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setToolTipText("Mute/Unmute Background Music");
+        button.addActionListener(e -> toggleBackgroundMusic());
+        updateMuteButtonIconForButton(button);
+        return button;
+    }
+    
+    /**
+     * Updates a mute button icon based on music state.
+     */
+    private void updateMuteButtonIconForButton(JButton button) {
+        if (button != null) {
+            boolean isMuted = !controller.SoundManager.getInstance().isBackgroundMusicEnabled();
+            button.setText(isMuted ? "\uD83D\uDD07" : "\uD83D\uDD0A"); // 🔇 when muted, 🔊 when playing
+            button.setToolTipText(isMuted ? "Unmute Background Music" : "Mute Background Music");
+        }
     }
 
     public void showPlaceholderScreen(String featureName) {

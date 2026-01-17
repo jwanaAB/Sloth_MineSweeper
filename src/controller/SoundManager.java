@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Manages sound effects for the game.
+ * Manages sound effects and background music for the game.
  * Handles loading and playing sound files.
  * 
  * @author Team Sloth
@@ -15,11 +15,15 @@ import java.util.Map;
 public class SoundManager {
     private static SoundManager instance;
     private Map<String, Clip> soundClips;
+    private Clip backgroundMusicClip;
     private boolean soundEnabled = true;
+    private boolean backgroundMusicEnabled = true;
+    private boolean backgroundMusicPlaying = false;
     
     private SoundManager() {
         soundClips = new HashMap<>();
         loadSounds();
+        loadBackgroundMusic();
     }
     
     public static SoundManager getInstance() {
@@ -40,6 +44,26 @@ public class SoundManager {
         loadSound("surprise", "sounds/surprise.wav");
         loadSound("correct-answer", "sounds/correct-answer.wav");
         loadSound("wrong-answer", "sounds/wrong_Answer.wav");
+    }
+    
+    /**
+     * Loads the background music from the sounds folder.
+     */
+    private void loadBackgroundMusic() {
+        try {
+            File musicFile = new File("sounds/Background_Music.wav");
+            if (!musicFile.exists()) {
+                System.err.println("Background music file not found: sounds/Background_Music.wav");
+                return;
+            }
+            
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(musicFile);
+            backgroundMusicClip = AudioSystem.getClip();
+            backgroundMusicClip.open(audioStream);
+            // Note: Loop will be set when starting the music
+        } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
+            System.err.println("Error loading background music: " + e.getMessage());
+        }
     }
     
     /**
@@ -102,9 +126,70 @@ public class SoundManager {
     }
     
     /**
+     * Starts playing the background music if it's enabled.
+     */
+    public void startBackgroundMusic() {
+        if (backgroundMusicClip != null && backgroundMusicEnabled && !backgroundMusicPlaying) {
+            try {
+                backgroundMusicClip.setFramePosition(0);
+                backgroundMusicClip.loop(Clip.LOOP_CONTINUOUSLY);
+                backgroundMusicClip.start();
+                backgroundMusicPlaying = true;
+            } catch (Exception e) {
+                System.err.println("Error starting background music: " + e.getMessage());
+            }
+        }
+    }
+    
+    /**
+     * Stops the background music.
+     */
+    public void stopBackgroundMusic() {
+        if (backgroundMusicClip != null && backgroundMusicClip.isRunning()) {
+            backgroundMusicClip.stop();
+            backgroundMusicPlaying = false;
+        }
+    }
+    
+    /**
+     * Toggles the background music on/off.
+     */
+    public void toggleBackgroundMusic() {
+        backgroundMusicEnabled = !backgroundMusicEnabled;
+        if (backgroundMusicEnabled) {
+            startBackgroundMusic();
+        } else {
+            stopBackgroundMusic();
+        }
+    }
+    
+    /**
+     * Checks if background music is enabled.
+     */
+    public boolean isBackgroundMusicEnabled() {
+        return backgroundMusicEnabled;
+    }
+    
+    /**
+     * Sets whether background music is enabled.
+     */
+    public void setBackgroundMusicEnabled(boolean enabled) {
+        this.backgroundMusicEnabled = enabled;
+        if (enabled) {
+            startBackgroundMusic();
+        } else {
+            stopBackgroundMusic();
+        }
+    }
+    
+    /**
      * Cleans up resources.
      */
     public void cleanup() {
+        stopBackgroundMusic();
+        if (backgroundMusicClip != null && backgroundMusicClip.isOpen()) {
+            backgroundMusicClip.close();
+        }
         for (Clip clip : soundClips.values()) {
             if (clip != null && clip.isOpen()) {
                 clip.stop();

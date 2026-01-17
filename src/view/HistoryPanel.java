@@ -50,11 +50,23 @@ public class HistoryPanel extends JPanel {
         homeButton.setPreferredSize(new Dimension(120, 28));
         homeButton.setMaximumSize(new Dimension(120, 28));
 
-        // Top bar with back button
+        // Top bar with back button and mute button
         JPanel topBar = new JPanel(new BorderLayout());
         topBar.setOpaque(false);
         topBar.setBorder(BorderFactory.createEmptyBorder(15, 20, 10, 20));
-        topBar.add(homeButton, BorderLayout.WEST);
+        
+        // Left panel with home button
+        JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        leftPanel.setOpaque(false);
+        leftPanel.add(homeButton);
+        topBar.add(leftPanel, BorderLayout.WEST);
+        
+        // Right panel with mute button
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        rightPanel.setOpaque(false);
+        JButton muteButton = createMuteButton();
+        rightPanel.add(muteButton);
+        topBar.add(rightPanel, BorderLayout.EAST);
 
         // Title panel
         JPanel titlePanel = createTitlePanel();
@@ -760,6 +772,41 @@ public class HistoryPanel extends JPanel {
         }
         if (actionListener != null) {
             homeButton.addActionListener(actionListener);
+        }
+    }
+    
+    /**
+     * Creates a mute button for background music control.
+     */
+    private JButton createMuteButton() {
+        JButton button = new JButton("\uD83D\uDD0A"); // Speaker icon 🔊
+        button.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
+        button.setForeground(new Color(91, 161, 255));
+        button.setBackground(new Color(240, 248, 255));
+        button.setContentAreaFilled(true);
+        button.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(91, 161, 255), 2, true),
+            BorderFactory.createEmptyBorder(6, 12, 6, 12)
+        ));
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setToolTipText("Mute/Unmute Background Music");
+        button.addActionListener(e -> {
+            controller.SoundManager.getInstance().toggleBackgroundMusic();
+            updateMuteButtonIcon(button);
+        });
+        updateMuteButtonIcon(button);
+        return button;
+    }
+    
+    /**
+     * Updates the mute button icon based on music state.
+     */
+    private void updateMuteButtonIcon(JButton button) {
+        if (button != null) {
+            boolean isMuted = !controller.SoundManager.getInstance().isBackgroundMusicEnabled();
+            button.setText(isMuted ? "\uD83D\uDD07" : "\uD83D\uDD0A"); // 🔇 when muted, 🔊 when playing
+            button.setToolTipText(isMuted ? "Unmute Background Music" : "Mute Background Music");
         }
     }
     
