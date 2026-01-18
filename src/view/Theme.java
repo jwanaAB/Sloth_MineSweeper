@@ -129,7 +129,7 @@ public class Theme {
             new Color(220, 60, 60),    // Mine - Bright red
             new Color(255, 200, 100),  // Question - Dark yellow
             new Color(200, 100, 200),  // Surprise - Dark magenta
-            new Color(35, 35, 45),     // Empty - Same as revealed
+            new Color(70, 70, 85),     // Empty - Lighter than hidden to show it's revealed
             numberColors,
             new Color(30, 30, 40),     // Background - Very dark
             new Color(40, 40, 50),     // Board background
@@ -161,7 +161,7 @@ public class Theme {
             new Color(255, 0, 0),      // Mine - Bright red
             new Color(255, 255, 0),    // Question - Neon yellow
             new Color(255, 0, 255),    // Surprise - Neon magenta
-            new Color(25, 25, 35),     // Empty - Same as revealed
+            new Color(45, 45, 65),     // Empty - Lighter purple-gray to show it's revealed
             numberColors,
             new Color(5, 5, 20),       // Background - Very dark blue
             new Color(10, 10, 30),     // Board background

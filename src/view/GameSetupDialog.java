@@ -36,13 +36,15 @@ public class GameSetupDialog extends JDialog {
 
         // Get screen dimensions for percentage-based sizing
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        int dialogWidth = (int) (screenSize.width * 0.50); // 50% of screen width
-        int dialogHeight = (int) (screenSize.height * 0.90); // 90% of screen height (increased to show all content)
+        // Increase width significantly to show all content properly - need space for 3 difficulty cards
+        int dialogWidth = Math.max((int) (screenSize.width * 0.85), 950); // 85% of screen width, minimum 950px
+        int dialogHeight = (int) (screenSize.height * 0.90); // 90% of screen height to show all content
         setPreferredSize(new Dimension(dialogWidth, dialogHeight));
         setSize(dialogWidth, dialogHeight);
+        setMinimumSize(new Dimension(900, 700)); // Increased minimum size to ensure all content is visible
 
         background = new GradientPanel();
-        int bgPadding = 25; // Reduced padding
+        int bgPadding = 20; // Reduced padding to maximize usable space
         background.setBorder(new EmptyBorder(bgPadding, bgPadding, bgPadding, bgPadding));
         background.setLayout(new BorderLayout());
 
@@ -50,10 +52,11 @@ public class GameSetupDialog extends JDialog {
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setOpaque(false);
         card.setAlignmentX(Component.CENTER_ALIGNMENT);
-        // Calculate card width accounting for background padding
-        int cardWidth = dialogWidth - (bgPadding * 2) - 10; // Account for padding and some margin
+        // Calculate card width accounting for background padding and scrollbar
+        int cardWidth = dialogWidth - (bgPadding * 2) - 30; // Account for padding and scrollbar margin
         card.setMaximumSize(new Dimension(cardWidth, Integer.MAX_VALUE));
-        card.setPreferredSize(new Dimension(cardWidth, card.getPreferredSize().height));
+        // Set a reasonable preferred width, let height be calculated by BoxLayout
+        card.setPreferredSize(new Dimension(cardWidth, 800)); // Estimate height, will adjust
 
         JButton backButton = new JButton("← Back");
         backButton.setFont(new Font("Segoe UI", Font.PLAIN, 13));
@@ -142,13 +145,13 @@ public class GameSetupDialog extends JDialog {
         // Initialize with Two Players mode selected by default - must be after player2Label is created
         selectGameMode(false);
 
-        difficultyRow = new JPanel(new GridLayout(1, 3, 10, 0));
+        difficultyRow = new JPanel(new GridLayout(1, 3, 12, 0)); // Slightly increased gap between cards
         difficultyRow.setOpaque(false);
         difficultyRow.setAlignmentX(Component.CENTER_ALIGNMENT);
-        // Ensure difficulty row fits within card width (account for card padding ~48px total)
-        int diffRowWidth = cardWidth - 50; // Leave some margin for card padding
-        difficultyRow.setMaximumSize(new Dimension(diffRowWidth, 130));
-        difficultyRow.setPreferredSize(new Dimension(diffRowWidth, 130));
+        // Ensure difficulty row fits within card width - use full available width
+        int diffRowWidth = cardWidth - 48; // Account for card padding (24px on each side)
+        difficultyRow.setMaximumSize(new Dimension(diffRowWidth, 140));
+        difficultyRow.setPreferredSize(new Dimension(diffRowWidth, 140));
 
         difficultyOptions = new DifficultyOption[]{
             new DifficultyOption("Easy", "9×9", 10, 10, 1, new Color(97, 207, 145)),
@@ -256,33 +259,43 @@ public class GameSetupDialog extends JDialog {
         card.add(difficultyRow);
         card.add(Box.createVerticalStrut(14));
         card.add(infoWrapper);
-        card.add(Box.createVerticalStrut(20));
+        card.add(Box.createVerticalStrut(25)); // Increased spacing before button
 
         buttonHolder = new JPanel();
         buttonHolder.setOpaque(false);
         buttonHolder.setLayout(new BoxLayout(buttonHolder, BoxLayout.X_AXIS));
         int buttonHolderWidth = cardWidth - 80; // Account for card padding
-        buttonHolder.setMaximumSize(new Dimension(buttonHolderWidth, 55));
-        buttonHolder.setPreferredSize(new Dimension(buttonHolderWidth, 55));
+        buttonHolder.setMaximumSize(new Dimension(buttonHolderWidth, 60));
+        buttonHolder.setPreferredSize(new Dimension(buttonHolderWidth, 60));
         buttonHolder.add(Box.createHorizontalGlue());
         buttonHolder.add(startButton);
         buttonHolder.add(Box.createHorizontalGlue());
         card.add(buttonHolder);
+        // Add extra bottom spacing to ensure button is always visible/scrollable
+        card.add(Box.createVerticalStrut(30));
 
         // Wrap card in scroll pane for scrollability
-        // Don't set preferred size to MAX_VALUE - let it size naturally
+        // Let the card calculate its preferred size naturally based on content
         scrollPane = new JScrollPane(card);
         scrollPane.setBorder(null);
         scrollPane.setOpaque(false);
         scrollPane.getViewport().setOpaque(false);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        // Calculate proper height to show all content without scrolling
-        // Use most of the dialog height to minimize scrolling
-        int scrollPaneHeight = dialogHeight - (bgPadding * 2) - 5;
-        scrollPane.setPreferredSize(new Dimension(cardWidth + 5, scrollPaneHeight)); // Add small buffer for scrollbar
-        // Don't set maximumSize - let it resize with the dialog
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16); // Smooth scrolling
+        // Calculate proper height - use most of the dialog height
+        int scrollPaneHeight = dialogHeight - (bgPadding * 2) - 15; // Account for background padding
+        // Ensure scroll pane uses available space and allows scrolling
+        scrollPane.setPreferredSize(new Dimension(cardWidth + 30, scrollPaneHeight)); // Add buffer for scrollbar
+        // Allow scroll pane to resize with the dialog
         scrollPane.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        
+        // Force initial layout to ensure card size is calculated
+        SwingUtilities.invokeLater(() -> {
+            card.revalidate();
+            scrollPane.revalidate();
+            scrollPane.repaint();
+        });
         
         // Use BorderLayout center to allow the scrollPane to fill available space
         background.add(scrollPane, BorderLayout.CENTER);
@@ -320,8 +333,8 @@ public class GameSetupDialog extends JDialog {
         }
         
         // Calculate new card width based on current dialog size (accounting for padding)
-        int bgPadding = 25; // Match the padding used in constructor
-        int newCardWidth = currentWidth - (bgPadding * 2) - 10; // Account for padding and margin
+        int bgPadding = 20; // Match the padding used in constructor
+        int newCardWidth = currentWidth - (bgPadding * 2) - 20; // Account for padding and scrollbar margin
         
         // Update card maximum width - this allows BoxLayout to respect the width constraint
         card.setMaximumSize(new Dimension(newCardWidth, Integer.MAX_VALUE));
@@ -379,11 +392,11 @@ public class GameSetupDialog extends JDialog {
         }
         
         // Calculate available height for scroll pane - use most of the dialog height
-        int availableHeight = currentHeight - (bgPadding * 2) - 5; // Account for background padding
+        int availableHeight = currentHeight - (bgPadding * 2) - 10; // Account for background padding
         
         // Update scroll pane to fill available space
         // Set preferred size so it uses the available space, but allow it to grow/shrink
-        scrollPane.setPreferredSize(new Dimension(newCardWidth, availableHeight));
+        scrollPane.setPreferredSize(new Dimension(newCardWidth + 20, availableHeight)); // Add buffer for scrollbar
         
         // Force layout update - start from the dialog and work down
         SwingUtilities.invokeLater(() -> {

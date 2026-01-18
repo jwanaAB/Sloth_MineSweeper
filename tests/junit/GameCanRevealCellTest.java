@@ -26,14 +26,14 @@ public class GameCanRevealCellTest {
         // Create a minimal question list for game initialization
         // The game requires questions to initialize boards
         try {
-            questionLogic.loadQuestionsFromCSV("resources/Questions.csv");
+            questionLogic.loadQuestionsFromCSV("Questions.csv");
         } catch (Exception e) {
             // If CSV loading fails, create empty question list
             // Game will still initialize but may have issues with question cells
         }
         
         // Create a new Game instance for each test
-        game = new Game("Player1", "Player2", Game.Difficulty.EASY, questionLogic);
+        game = new Game("Player1", "Player2", Game.Difficulty.EASY, questionLogic, false);
     }
     
     /**
