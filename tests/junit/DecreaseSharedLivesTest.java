@@ -27,13 +27,13 @@ public class DecreaseSharedLivesTest {
         // Try loading questions (tests for decreaseSharedLives don't depend on questions,
         // but Game constructor calls initializeBoards which accesses the question list)
         try {
-            questionLogic.loadQuestionsFromCSV("resources/Questions.csv");
+            questionLogic.loadQuestionsFromCSV("Questions.csv");
         } catch (Exception e) {
             // If loading fails, we still continue (assuming QuestionLogic returns an empty list)
         }
 
         // Create a new Game instance for each test
-        game = new Game("Player1", "Player2", Game.Difficulty.EASY, questionLogic);
+        game = new Game("Player1", "Player2", Game.Difficulty.EASY, questionLogic, false);
     }
 
     /**

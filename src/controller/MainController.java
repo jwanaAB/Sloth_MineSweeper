@@ -45,7 +45,7 @@ public class MainController {
 
                 // Load questions
                 QuestionLogic questionLogic = new QuestionLogic();
-                questionLogic.loadQuestionsFromCSV("resources/Questions.csv");
+                questionLogic.loadQuestionsFromCSV("Questions.csv");
 
                 // Create game with AI flag
                 Game game = new Game(player1Name, player2Name, difficulty, questionLogic, playWithAI);
