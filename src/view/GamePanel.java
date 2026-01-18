@@ -1600,6 +1600,8 @@ public class GamePanel extends JPanel implements GameObserver {
                 } else if (cell instanceof QuestionCell) {
                     QuestionCell questionCell = (QuestionCell) cell;
                     setText("?");
+                    setOpaque(true);
+                    setContentAreaFilled(true);
                     setBackground(theme.getQuestionCellColor());
                     setForeground(Color.BLACK);
                     // Question cells should be clickable if not opened yet
@@ -1616,6 +1618,8 @@ public class GamePanel extends JPanel implements GameObserver {
                 } else if (cell instanceof SurpriseCell) {
                     SurpriseCell surpriseCell = (SurpriseCell) cell;
                     setText("✨");
+                    setOpaque(true);
+                    setContentAreaFilled(true);
                     setBackground(theme.getSurpriseCellColor());
                     setForeground(Color.BLACK);
                     // Surprise cells should be clickable when revealed (if not already activated)
@@ -1630,11 +1634,17 @@ public class GamePanel extends JPanel implements GameObserver {
                         setEnabled(false); // Disable if already activated
                     }
                 } else if (cell instanceof EmptyCell) {
-                    // Empty revealed cells
+                    // Empty revealed cells - light gray background with pushed-down appearance
                     setFont(new Font("Segoe UI", Font.PLAIN, emptyFontSize));
                     setText("");
-                    setBackground(theme.getEmptyCellColor());
+                    setOpaque(true); // Ensure background color is visible
+                    setContentAreaFilled(true); // Ensure content area is filled
+                    setBackground(new Color(210, 210, 210)); // Light gray - pushed back appearance
                     setForeground(Color.BLACK);
+                    // Enhanced pushed-down appearance with lowered bevel border
+                    setBorder(BorderFactory.createCompoundBorder(
+                            BorderFactory.createLoweredBevelBorder(),
+                            BorderFactory.createEmptyBorder(2, 2, 2, 2)));
                 }
             } else {
                 // Hidden state - raised 3D appearance
@@ -1671,6 +1681,9 @@ public class GamePanel extends JPanel implements GameObserver {
         
         @Override
         protected void paintComponent(Graphics g) {
+            // Check if this is an empty cell - we'll handle it specially
+            boolean isEmptyCell = (currentCell != null && currentCell.isRevealed() && currentCell instanceof EmptyCell);
+            
             // Apply animation effect if in progress
             if (animationProgress > 0.0f && animationProgress < 1.0f && currentCell != null && currentCell.isRevealed()) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -1702,6 +1715,20 @@ public class GamePanel extends JPanel implements GameObserver {
             } else {
                 // Normal painting without animation
                 super.paintComponent(g);
+            }
+            
+            // ONLY paint dark gray background for empty cells (not question or surprise cells)
+            if (isEmptyCell && !(currentCell instanceof QuestionCell) && !(currentCell instanceof SurpriseCell)) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Fill background with light gray, accounting for border insets
+                Insets insets = getInsets();
+                g2.setColor(new Color(210, 210, 210));
+                g2.fillRect(insets.left, insets.top, 
+                           getWidth() - insets.left - insets.right, 
+                           getHeight() - insets.top - insets.bottom);
+                g2.dispose();
             }
         }
     }
