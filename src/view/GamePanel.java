@@ -174,19 +174,19 @@ public class GamePanel extends JPanel implements GameObserver {
         // Top bar with GridBagLayout for proper centering
         topBar = new JPanel(new GridBagLayout());
         topBar.setBackground(theme.getBoardBackgroundColor());
-        topBar.setBorder(BorderFactory.createEmptyBorder(12, 12, 8, 12));
+        topBar.setBorder(BorderFactory.createEmptyBorder(6, 12, 4, 12));
         GridBagConstraints gbc = new GridBagConstraints();
 
         homeButton = new JButton("\u2190 Home");
         homeButton.setFocusPainted(false);
-        homeButton.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        homeButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
         homeButton.setBackground(new Color(231, 76, 60)); // Prominent red/orange color
         homeButton.setForeground(Color.WHITE); // White text for contrast
         homeButton.setOpaque(true);
         homeButton.setBorderPainted(false);
         homeButton.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(192, 57, 43), 2),
-                BorderFactory.createEmptyBorder(10, 20, 10, 20)));
+                BorderFactory.createEmptyBorder(6, 14, 6, 14)));
         homeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         // Add hover effect
@@ -210,14 +210,14 @@ public class GamePanel extends JPanel implements GameObserver {
         // Create Flag Mode button
         flagModeButton = new JButton("Flag Mode: OFF");
         flagModeButton.setFocusPainted(false);
-        flagModeButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        flagModeButton.setFont(new Font("Segoe UI", Font.BOLD, 11));
         flagModeButton.setBackground(new Color(200, 200, 200)); // Gray when OFF
         flagModeButton.setForeground(Color.BLACK);
         flagModeButton.setOpaque(true);
         flagModeButton.setBorderPainted(false);
         flagModeButton.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(150, 150, 150), 2),
-                BorderFactory.createEmptyBorder(8, 16, 8, 16)));
+                BorderFactory.createEmptyBorder(5, 12, 5, 12)));
         flagModeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         
         // Add hover effect
@@ -241,14 +241,14 @@ public class GamePanel extends JPanel implements GameObserver {
         // Create Theme button
         themeButton = new JButton("Theme");
         themeButton.setFocusPainted(false);
-        themeButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        themeButton.setFont(new Font("Segoe UI", Font.BOLD, 11));
         themeButton.setBackground(new Color(150, 150, 200));
         themeButton.setForeground(Color.WHITE);
         themeButton.setOpaque(true);
         themeButton.setBorderPainted(false);
         themeButton.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(120, 120, 180), 2),
-                BorderFactory.createEmptyBorder(8, 16, 8, 16)));
+                BorderFactory.createEmptyBorder(5, 12, 5, 12)));
         themeButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         
         // Add hover effect
@@ -310,14 +310,14 @@ public class GamePanel extends JPanel implements GameObserver {
             flagModeButton.setForeground(new Color(0, 100, 0)); // Dark green text
             flagModeButton.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createLineBorder(new Color(0, 150, 0), 2),
-                    BorderFactory.createEmptyBorder(8, 16, 8, 16)));
+                    BorderFactory.createEmptyBorder(5, 12, 5, 12)));
         } else {
             flagModeButton.setText("Flag Mode: OFF");
             flagModeButton.setBackground(new Color(200, 200, 200)); // Gray when OFF
             flagModeButton.setForeground(Color.BLACK);
             flagModeButton.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createLineBorder(new Color(150, 150, 150), 2),
-                    BorderFactory.createEmptyBorder(8, 16, 8, 16)));
+                    BorderFactory.createEmptyBorder(5, 12, 5, 12)));
         }
     }
     
@@ -339,18 +339,18 @@ public class GamePanel extends JPanel implements GameObserver {
         infoPanel.setBackground(theme.getBoardBackgroundColor());
         infoPanel.setBorder(BorderFactory.createCompoundBorder(
                 new LineBorder(theme.getInactiveBorderColor(), 1),
-                new EmptyBorder(15, 20, 15, 20)));
+                new EmptyBorder(8, 20, 8, 20)));
 
         // Player names panel
         JPanel namesPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 40, 0));
         namesPanel.setOpaque(false);
 
         player1NameLabel = new JLabel("Player 1: ");
-        player1NameLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        player1NameLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
         player1NameLabel.setForeground(new Color(91, 161, 255));
 
         player2NameLabel = new JLabel("Player 2: ");
-        player2NameLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        player2NameLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
         player2NameLabel.setForeground(new Color(196, 107, 255));
 
         namesPanel.add(player1NameLabel);
@@ -358,25 +358,25 @@ public class GamePanel extends JPanel implements GameObserver {
 
         // Shared lives label (above combined score)
         sharedLivesLabel = new JLabel("Shared Lives: 0/0");
-        sharedLivesLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        sharedLivesLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
         sharedLivesLabel.setForeground(new Color(78, 214, 137)); // Green color
         sharedLivesLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
         // Combined score label
         combinedScoreLabel = new JLabel("Combined Score: 0");
-        combinedScoreLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        combinedScoreLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
         combinedScoreLabel.setForeground(new Color(78, 214, 137));
         combinedScoreLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
         // Turn indicator
         turnIndicatorLabel = new JLabel("Current Turn: Player 1");
-        turnIndicatorLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        turnIndicatorLabel.setFont(new Font("Segoe UI", Font.BOLD, 11));
         turnIndicatorLabel.setForeground(new Color(140, 70, 215));
         turnIndicatorLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
         // Timer label
         timerLabel = new JLabel("Time: 0:00");
-        timerLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        timerLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
         timerLabel.setForeground(new Color(255, 193, 7)); // Yellow/amber to match pause button
         timerLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
@@ -385,13 +385,13 @@ public class GamePanel extends JPanel implements GameObserver {
         centerPanel.add(sharedLivesLabel, BorderLayout.NORTH);
         centerPanel.add(combinedScoreLabel, BorderLayout.CENTER);
         centerPanel.add(timerLabel, BorderLayout.SOUTH);
-        centerPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+        centerPanel.setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
         
         // Add turn indicator below timer
         JPanel bottomInfoPanel = new JPanel(new BorderLayout());
         bottomInfoPanel.setOpaque(false);
         bottomInfoPanel.add(turnIndicatorLabel, BorderLayout.CENTER);
-        bottomInfoPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+        bottomInfoPanel.setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
         
         JPanel infoContainer = new JPanel(new BorderLayout());
         infoContainer.setOpaque(false);
@@ -404,14 +404,14 @@ public class GamePanel extends JPanel implements GameObserver {
         // Create Pause button in the center, above the boards
         pauseButton = new JButton("⏸ Pause");
         pauseButton.setFocusPainted(false);
-        pauseButton.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        pauseButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
         pauseButton.setBackground(new Color(255, 193, 7)); // Yellow/amber color
         pauseButton.setForeground(Color.BLACK);
         pauseButton.setOpaque(true);
         pauseButton.setBorderPainted(false);
         pauseButton.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(230, 170, 0), 2),
-                BorderFactory.createEmptyBorder(10, 24, 10, 24)));
+                BorderFactory.createEmptyBorder(6, 16, 6, 16)));
         pauseButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         
         // Add hover effect
@@ -433,7 +433,7 @@ public class GamePanel extends JPanel implements GameObserver {
         pauseButton.addActionListener(e -> togglePause());
         
         // Center the pause button in its own panel
-        JPanel pauseButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 10));
+        JPanel pauseButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 5));
         pauseButtonPanel.setOpaque(false);
         pauseButtonPanel.setBackground(theme.getBoardBackgroundColor());
         pauseButtonPanel.add(pauseButton);
@@ -454,17 +454,17 @@ public class GamePanel extends JPanel implements GameObserver {
         // Create a wrapper panel with BorderLayout to hold boards and overlay
         boardsContainer = new JPanel(new BorderLayout());
         boardsContainer.setBackground(theme.getBackgroundColor());
-        boardsContainer.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        boardsContainer.setBorder(BorderFactory.createEmptyBorder(10, 20, 20, 20));
 
         // Container for both boards
         JPanel boardsWrapper = new JPanel(new GridLayout(1, 2, 20, 0));
         boardsWrapper.setOpaque(false);
         
         // Player 1 board container with label
-        JPanel player1Container = new JPanel(new BorderLayout(0, 10));
+        JPanel player1Container = new JPanel(new BorderLayout(0, 5));
         player1Container.setOpaque(false);
         player1BoardLabel = new JLabel("Player 1's Board", SwingConstants.CENTER);
-        player1BoardLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        player1BoardLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
         player1BoardLabel.setForeground(new Color(91, 161, 255));
         player1Container.add(player1BoardLabel, BorderLayout.NORTH);
         
@@ -477,10 +477,10 @@ public class GamePanel extends JPanel implements GameObserver {
         player1Container.add(player1BoardPanel, BorderLayout.CENTER);
         
         // Player 2 board container with label
-        JPanel player2Container = new JPanel(new BorderLayout(0, 10));
+        JPanel player2Container = new JPanel(new BorderLayout(0, 5));
         player2Container.setOpaque(false);
         player2BoardLabel = new JLabel("Player 2's Board", SwingConstants.CENTER);
-        player2BoardLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        player2BoardLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
         player2BoardLabel.setForeground(new Color(196, 107, 255));
         player2Container.add(player2BoardLabel, BorderLayout.NORTH);
         
@@ -523,7 +523,7 @@ public class GamePanel extends JPanel implements GameObserver {
             player1BoardPanel.setBackground(theme.getBoardBackgroundColor());
             // Make label bold and colored
             if (player1BoardLabel != null) {
-                player1BoardLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+                player1BoardLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
                 player1BoardLabel.setForeground(player1Color);
             }
         } else {
@@ -534,7 +534,7 @@ public class GamePanel extends JPanel implements GameObserver {
             player1BoardPanel.setBackground(theme.getBoardBackgroundColor());
             // Make label less prominent
             if (player1BoardLabel != null) {
-                player1BoardLabel.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+                player1BoardLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
                 player1BoardLabel.setForeground(inactiveTextColor);
             }
         }
@@ -548,7 +548,7 @@ public class GamePanel extends JPanel implements GameObserver {
             player2BoardPanel.setBackground(theme.getBoardBackgroundColor());
             // Make label bold and colored
             if (player2BoardLabel != null) {
-                player2BoardLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+                player2BoardLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
                 player2BoardLabel.setForeground(player2Color);
             }
         } else {
@@ -559,7 +559,7 @@ public class GamePanel extends JPanel implements GameObserver {
             player2BoardPanel.setBackground(theme.getBoardBackgroundColor());
             // Make label less prominent
             if (player2BoardLabel != null) {
-                player2BoardLabel.setFont(new Font("Segoe UI", Font.PLAIN, 18));
+                player2BoardLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
                 player2BoardLabel.setForeground(inactiveTextColor);
             }
         }
@@ -696,28 +696,28 @@ public class GamePanel extends JPanel implements GameObserver {
     private void updateFonts(double scaleFactor) {
         // Scale player info fonts
         if (player1NameLabel != null) {
-            int fontSize = (int) (18 * scaleFactor);
-            fontSize = Math.max(14, Math.min(24, fontSize));
+            int fontSize = (int) (13 * scaleFactor);
+            fontSize = Math.max(11, Math.min(18, fontSize));
             player1NameLabel.setFont(new Font("Segoe UI", Font.BOLD, fontSize));
         }
         if (player2NameLabel != null) {
-            int fontSize = (int) (18 * scaleFactor);
-            fontSize = Math.max(14, Math.min(24, fontSize));
+            int fontSize = (int) (13 * scaleFactor);
+            fontSize = Math.max(11, Math.min(18, fontSize));
             player2NameLabel.setFont(new Font("Segoe UI", Font.BOLD, fontSize));
         }
         if (sharedLivesLabel != null) {
-            int fontSize = (int) (16 * scaleFactor);
-            fontSize = Math.max(12, Math.min(22, fontSize));
+            int fontSize = (int) (12 * scaleFactor);
+            fontSize = Math.max(10, Math.min(16, fontSize));
             sharedLivesLabel.setFont(new Font("Segoe UI", Font.BOLD, fontSize));
         }
         if (combinedScoreLabel != null) {
-            int fontSize = (int) (16 * scaleFactor);
-            fontSize = Math.max(12, Math.min(22, fontSize));
+            int fontSize = (int) (12 * scaleFactor);
+            fontSize = Math.max(10, Math.min(16, fontSize));
             combinedScoreLabel.setFont(new Font("Segoe UI", Font.BOLD, fontSize));
         }
         if (turnIndicatorLabel != null) {
-            int fontSize = (int) (14 * scaleFactor);
-            fontSize = Math.max(11, Math.min(20, fontSize));
+            int fontSize = (int) (11 * scaleFactor);
+            fontSize = Math.max(9, Math.min(15, fontSize));
             turnIndicatorLabel.setFont(new Font("Segoe UI", Font.BOLD, fontSize));
         }
         
@@ -825,7 +825,7 @@ public class GamePanel extends JPanel implements GameObserver {
                             new EmptyBorder(5, 5, 5, 5)));
                     if (activeBoardLabel != null) {
                         activeBoardLabel.setForeground(flashColor);
-                        activeBoardLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
+                        activeBoardLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
                     }
                 } else {
                     // Flash off - restore original
@@ -947,14 +947,14 @@ public class GamePanel extends JPanel implements GameObserver {
             pauseButton.setForeground(Color.WHITE);
             pauseButton.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createLineBorder(new Color(30, 130, 50), 2),
-                    BorderFactory.createEmptyBorder(8, 16, 8, 16)));
+                    BorderFactory.createEmptyBorder(6, 16, 6, 16)));
         } else {
             pauseButton.setText("⏸ Pause");
             pauseButton.setBackground(new Color(255, 193, 7)); // Yellow/amber when not paused
             pauseButton.setForeground(Color.BLACK);
             pauseButton.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createLineBorder(new Color(230, 170, 0), 2),
-                    BorderFactory.createEmptyBorder(8, 16, 8, 16)));
+                    BorderFactory.createEmptyBorder(6, 16, 6, 16)));
         }
     }
     
@@ -1804,13 +1804,13 @@ public class GamePanel extends JPanel implements GameObserver {
      */
     private JButton createMuteButton() {
         JButton button = new JButton("\uD83D\uDD0A"); // Speaker icon 🔊
-        button.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
+        button.setFont(new Font("Segoe UI Emoji", Font.BOLD, 14));
         button.setForeground(new Color(91, 161, 255));
         button.setBackground(new Color(240, 248, 255));
         button.setContentAreaFilled(true);
         button.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(91, 161, 255), 2, true),
-            BorderFactory.createEmptyBorder(6, 12, 6, 12)
+            BorderFactory.createEmptyBorder(4, 10, 4, 10)
         ));
         button.setFocusPainted(false);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
