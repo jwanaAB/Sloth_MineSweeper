@@ -36,12 +36,22 @@ public class GameSetupDialog extends JDialog {
 
         // Get screen dimensions for percentage-based sizing
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        // Increase width significantly to show all content properly - need space for 3 difficulty cards
-        int dialogWidth = Math.max((int) (screenSize.width * 0.85), 950); // 85% of screen width, minimum 950px
-        int dialogHeight = (int) (screenSize.height * 0.90); // 90% of screen height to show all content
+        
+        // ===== SIZE SETTINGS (Percentage-based) =====
+        // Width: Change 0.60 to adjust width percentage (0.50 = 50%, 0.70 = 70%, etc.)
+        double widthPercentage = 0.60; // 60% of screen width
+        int minWidth = 950;  // Minimum width in pixels
+        int maxWidth = 1200; // Maximum width in pixels
+        int dialogWidth = Math.max(minWidth, Math.min((int) (screenSize.width * widthPercentage), maxWidth));
+        
+        // Height: Change 0.80 to adjust height percentage (0.60 = 60%, 0.90 = 90%, etc.)
+        double heightPercentage = 0.85; // 80% of screen height
+        int maxHeightPixels = 900; // Maximum height in pixels (optional constraint)
+        int dialogHeight = Math.min(maxHeightPixels, (int) (screenSize.height * heightPercentage));
         setPreferredSize(new Dimension(dialogWidth, dialogHeight));
         setSize(dialogWidth, dialogHeight);
         setMinimumSize(new Dimension(900, 700)); // Increased minimum size to ensure all content is visible
+        setMaximumSize(new Dimension(1200, 850)); // Prevent dialog from being too large
 
         background = new GradientPanel();
         int bgPadding = 20; // Reduced padding to maximize usable space
@@ -259,7 +269,7 @@ public class GameSetupDialog extends JDialog {
         card.add(difficultyRow);
         card.add(Box.createVerticalStrut(14));
         card.add(infoWrapper);
-        card.add(Box.createVerticalStrut(25)); // Increased spacing before button
+        card.add(Box.createVerticalStrut(20)); // Spacing before button
 
         buttonHolder = new JPanel();
         buttonHolder.setOpaque(false);
@@ -271,8 +281,8 @@ public class GameSetupDialog extends JDialog {
         buttonHolder.add(startButton);
         buttonHolder.add(Box.createHorizontalGlue());
         card.add(buttonHolder);
-        // Add extra bottom spacing to ensure button is always visible/scrollable
-        card.add(Box.createVerticalStrut(30));
+        // Add minimal bottom spacing for visual balance
+        card.add(Box.createVerticalStrut(15));
 
         // Wrap card in scroll pane for scrollability
         // Let the card calculate its preferred size naturally based on content
@@ -283,8 +293,8 @@ public class GameSetupDialog extends JDialog {
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16); // Smooth scrolling
-        // Calculate proper height - use most of the dialog height
-        int scrollPaneHeight = dialogHeight - (bgPadding * 2) - 15; // Account for background padding
+        // Calculate proper height - fit content, don't force large height
+        int scrollPaneHeight = Math.min(dialogHeight - (bgPadding * 2) - 10, 750); // Account for background padding, max 750px
         // Ensure scroll pane uses available space and allows scrolling
         scrollPane.setPreferredSize(new Dimension(cardWidth + 30, scrollPaneHeight)); // Add buffer for scrollbar
         // Allow scroll pane to resize with the dialog
@@ -302,10 +312,24 @@ public class GameSetupDialog extends JDialog {
 
         setContentPane(background);
         // Don't use pack() as it overrides our size - use setSize instead
-        // setSize was already called above, just center it now
-        // Manually center on screen
+        // setSize was already called above, just position it now
+        
+        // ===== POSITION SETTINGS (Percentage-based) =====
+        // X Position: Change to position horizontally
+        // Option 1: Center horizontally (current)
         int x = (screenSize.width - dialogWidth) / 2;
-        int y = (screenSize.height - dialogHeight) / 2;
+        // Option 2: Use percentage from left (uncomment to use):
+        // double xPercentage = 0.20; // 20% from left edge
+        // int x = (int) (screenSize.width * xPercentage);
+        
+        // Y Position: Match main menu vertical position (centered)
+        // Main menu uses setLocationRelativeTo(null) which centers vertically
+        // This matches the main menu's vertical position
+        int y = (screenSize.height - dialogHeight) / 3;
+        // Alternative: Use percentage from top (uncomment to use):
+        // double yPercentage = 0.10; // 10% from top (change this value: 0.10 = 10%, 0.20 = 20%, etc.)
+        // int y = (int) (screenSize.height * yPercentage);
+        
         setLocation(x, y);
         
         // Add resize listener to handle dynamic resizing
