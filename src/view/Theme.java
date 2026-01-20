@@ -124,7 +124,7 @@ public class Theme {
         return new Theme(
             ThemeType.DARK, "Dark Mode",
             new Color(60, 60, 70),     // Hidden - Dark gray
-            new Color(35, 35, 45),     // Revealed - Very dark gray
+            new Color(90, 90, 100),    // Revealed - Dark gray (darker than hidden but still visible)
             new Color(200, 100, 100),  // Flagged - Dark red
             new Color(220, 60, 60),    // Mine - Bright red
             new Color(255, 200, 100),  // Question - Dark yellow
@@ -156,7 +156,7 @@ public class Theme {
         return new Theme(
             ThemeType.NEON, "Neon",
             new Color(20, 20, 40),     // Hidden - Dark purple
-            new Color(25, 25, 35),     // Revealed - Dark gray
+            new Color(150, 150, 170),  // Revealed - Very light gray-purple (highly distinct from hidden)
             new Color(255, 0, 100),    // Flagged - Neon pink
             new Color(255, 0, 0),      // Mine - Bright red
             new Color(255, 255, 0),    // Question - Neon yellow
