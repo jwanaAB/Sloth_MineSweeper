@@ -25,6 +25,18 @@ public class ScoringService {
     }
 
     /**
+     * Handles scoring when a player places a flag.
+     * Rule (per latest spec): placing a flag costs -3 points from the shared score.
+     *
+     * @param game The game instance
+     * @param playerName The name of the player who placed the flag
+     */
+    public void scoreFlagPlaced(Game game, String playerName) {
+        game.addSharedScore(-3);
+        sysData.addHistoryEntry(String.format("%s placed a flag (-3pts)", playerName));
+    }
+
+    /**
      * Handles scoring when a mine cell is flagged correctly.
      * Awards +1 point to shared score.
      *
@@ -115,8 +127,16 @@ public class ScoringService {
         // Apply life changes if any
         if (scoreChange[1] != 0) {
             if (scoreChange[1] > 0) {
+                // Try to add lives - if any would exceed max (10), convert to points
                 for (int i = 0; i < scoreChange[1]; i++) {
-                    game.addSharedLife();
+                    boolean added = game.addSharedLife();
+                    if (!added) {
+                        // Life would exceed max - convert to points immediately
+                        int activationCost = calculateSurpriseActivationCost(difficulty);
+                        game.addSharedScore(activationCost);
+                        sysData.addHistoryEntry(String.format(
+                                "Extra life converted to %d points (max lives reached)", activationCost));
+                    }
                 }
             } else {
                 for (int i = 0; i < -scoreChange[1]; i++) {
@@ -242,7 +262,15 @@ public class ScoringService {
         
         game.addSharedScore(reward[0]); // Points change (can be positive or negative)
         if (reward[1] > 0) {
-            game.addSharedLife();
+            // Try to add life - if it would exceed max (10), convert to points immediately
+            boolean added = game.addSharedLife();
+            if (!added) {
+                // Life would exceed max - convert to points immediately
+                int activationCost = calculateSurpriseActivationCost(difficulty);
+                game.addSharedScore(activationCost);
+                sysData.addHistoryEntry(String.format(
+                        "Extra life converted to %d points (max lives reached)", activationCost));
+            }
         } else if (reward[1] < 0) {
             game.decreaseSharedLives();
         }
@@ -321,9 +349,29 @@ public class ScoringService {
 
     /**
      * Calculates the scoring for answering a question based on difficulty and question type.
+     * 
+     * Rules per game mode:
+     * 
+     * EASY MODE:
+     * - Easy Question: Correct → +3pts, +1 heart | Wrong → -3pts OR no change (50/50)
+     * - Intermediate Question: Correct → auto-reveal mine (0pts) + +6pts | Wrong → -6pts OR no change (50/50)
+     * - Hard Question: Correct → reveal 3x3 board + +10pts | Wrong → -10pts
+     * - Expert Question: Correct → +15pts, +2 hearts | Wrong → -15pts, -1 heart
+     * 
+     * MEDIUM MODE:
+     * - Easy Question: Correct → +8pts, +1 heart | Wrong → -8pts
+     * - Intermediate Question: Correct → +10pts, +1 heart | Wrong → -10pts, -1 heart OR no change (50/50)
+     * - Hard Question: Correct → +15pts, +1 heart | Wrong → -15pts, -1 heart
+     * - Expert Question: Correct → +20pts, +2 hearts | Wrong → -20pts, -1 heart OR -20pts, -2 hearts (50/50)
+     * 
+     * HARD MODE:
+     * - Easy Question: Correct → +10pts, +1 heart | Wrong → -10pts, -1 heart
+     * - Intermediate Question: Correct → +15pts, +1 heart OR +15pts, +2 hearts (50/50) | Wrong → -15pts, -1 heart OR -15pts, -2 hearts (50/50)
+     * - Hard Question: Correct → +20pts, +2 hearts | Wrong → -20pts, -2 hearts
+     * - Expert Question: Correct → +40pts, +3 hearts | Wrong → -40pts, -3 hearts
      *
      * @param difficulty The difficulty level (1=Easy, 2=Medium, 3=Hard)
-     * @param questionType The type of question (1=Easy Question, 2=Medium Question, 3=Hard Question, 4=Expert Question)
+     * @param questionType The type of question (1=Easy Question, 2=Intermediate/Medium Question, 3=Hard Question, 4=Expert Question)
      * @param isCorrect Whether the answer was correct
      * @return Array with [pointsChange, lifeChange]
      */
@@ -332,63 +380,63 @@ public class ScoringService {
         int lifeChange = 0;
         
         if (isCorrect) {
-            // Correct usage - positive scoring
+            // Correct answer - positive scoring
             switch (difficulty) {
-                case 1: // Easy game
+                case 1: // Easy game mode
                     switch (questionType) {
-                        case 1: // Easy Question
+                        case 1: // Easy Question: +3pts, +1 heart
                             pointsChange = 3;
                             lifeChange = 1;
                             break;
-                        case 2: // Medium Question - Uncover a mine AND +6pts
+                        case 2: // Intermediate Question: auto-reveal mine (0pts) + +6pts
                             pointsChange = 6;
-                            // Note: Mine uncovering is handled elsewhere in the game logic
+                            // Note: Mine reveal is handled elsewhere in game logic and gives 0 points
                             break;
-                        case 3: // Hard Question - Display 3x3 random cells AND +10pts
+                        case 3: // Hard Question: reveal 3x3 board + +10pts
                             pointsChange = 10;
-                            // Note: 3x3 cell reveal is handled elsewhere in the game logic
+                            // Note: 3x3 cell reveal is handled elsewhere in game logic
                             break;
-                        case 4: // Expert Question
+                        case 4: // Expert Question: +15pts, +2 hearts
                             pointsChange = 15;
                             lifeChange = 2;
                             break;
                     }
                     break;
-                case 2: // Medium game
+                case 2: // Medium game mode
                     switch (questionType) {
-                        case 1: // Easy Question
+                        case 1: // Easy Question: +8pts, +1 heart
                             pointsChange = 8;
                             lifeChange = 1;
                             break;
-                        case 2: // Medium Question
+                        case 2: // Intermediate Question: +10pts, +1 heart
                             pointsChange = 10;
                             lifeChange = 1;
                             break;
-                        case 3: // Hard Question
+                        case 3: // Hard Question: +15pts, +1 heart
                             pointsChange = 15;
                             lifeChange = 1;
                             break;
-                        case 4: // Expert Question
+                        case 4: // Expert Question: +20pts, +2 hearts
                             pointsChange = 20;
                             lifeChange = 2;
                             break;
                     }
                     break;
-                case 3: // Hard game
+                case 3: // Hard game mode
                     switch (questionType) {
-                        case 1: // Easy Question
+                        case 1: // Easy Question: +10pts, +1 heart
                             pointsChange = 10;
                             lifeChange = 1;
                             break;
-                        case 2: // Medium Question - 50% chance: (+1 life and +15pts) OR (+2 lives and +15pts)
+                        case 2: // Intermediate Question: +15pts, +1 heart OR +15pts, +2 hearts (50/50)
                             pointsChange = 15;
-                            lifeChange = random.nextBoolean() ? 1 : 2; // 50% chance for +1 or +2 lives
+                            lifeChange = random.nextBoolean() ? 1 : 2; // 50% chance for +1 or +2 hearts
                             break;
-                        case 3: // Hard Question
+                        case 3: // Hard Question: +20pts, +2 hearts
                             pointsChange = 20;
                             lifeChange = 2;
                             break;
-                        case 4: // Expert Question
+                        case 4: // Expert Question: +40pts, +3 hearts
                             pointsChange = 40;
                             lifeChange = 3;
                             break;
@@ -396,70 +444,72 @@ public class ScoringService {
                     break;
             }
         } else {
-            // Incorrect usage - negative scoring (with chance of "nothing" for some cases)
+            // Wrong answer - negative scoring (with chance of "no change" for some cases)
             switch (difficulty) {
-                case 1: // Easy game
+                case 1: // Easy game mode
                     switch (questionType) {
-                        case 1: // Easy Question - 50% chance for (-3pts) OR nothing
+                        case 1: // Easy Question: -3pts OR no change (50/50)
                             if (random.nextBoolean()) {
                                 pointsChange = -3;
+                            } else {
+                                pointsChange = 0; // No change
                             }
-                            else {pointsChange = 0;}
                             break;
-                        case 2: // Medium Question - 50% chance for (-6pts) OR nothing
+                        case 2: // Intermediate Question: -6pts OR no change (50/50)
                             if (random.nextBoolean()) {
                                 pointsChange = -6;
+                            } else {
+                                pointsChange = 0; // No change
                             }
-                            else {pointsChange = 0;}
                             break;
-                        case 3: // Hard Question
+                        case 3: // Hard Question: -10pts
                             pointsChange = -10;
                             break;
-                        case 4: // Expert Question
+                        case 4: // Expert Question: -15pts, -1 heart
                             pointsChange = -15;
                             lifeChange = -1;
                             break;
                     }
                     break;
-                case 2: // Medium game
+                case 2: // Medium game mode
                     switch (questionType) {
-                        case 1: // Easy Question
-                                pointsChange = -8;
+                        case 1: // Easy Question: -8pts
+                            pointsChange = -8;
                             break;
-                        case 2: // Medium Question
-                        if (random.nextBoolean()) {
-                            pointsChange = -10;
-                            lifeChange = -1;
-                        }else{
-                            pointsChange = 0;
-                            lifeChange = 0;
-                        }
+                        case 2: // Intermediate Question: -10pts, -1 heart OR no change (50/50)
+                            if (random.nextBoolean()) {
+                                pointsChange = -10;
+                                lifeChange = -1;
+                            } else {
+                                pointsChange = 0; // No change
+                                lifeChange = 0;
+                            }
                             break;
-                        case 3: // Hard Question 
+                        case 3: // Hard Question: -15pts, -1 heart
                             pointsChange = -15;
                             lifeChange = -1;
                             break;
-                        case 4: // Expert Question
+                        case 4: // Expert Question: -20pts, -1 heart OR -20pts, -2 hearts (50/50)
                             pointsChange = -20;
-                            lifeChange = random.nextBoolean() ? -1 : -2; // 50% chance for -1 or -2 lives
+                            lifeChange = random.nextBoolean() ? -1 : -2; // 50% chance for -1 or -2 hearts
                             break;
                     }
                     break;
-                case 3: // Hard game
+                case 3: // Hard game mode
                     switch (questionType) {
-                        case 1: // Easy Question 
+                        case 1: // Easy Question: -10pts, -1 heart
                             pointsChange = -10;
                             lifeChange = -1;
                             break;
-                        case 2: // Medium Question - 50% chance: (-1 life and -15pts) OR (-2 lives and -15pts)
+                        case 2: // Intermediate Question: -15pts, -1 heart OR -15pts, -2 hearts (50/50)
                             pointsChange = -15;
-                            lifeChange = random.nextBoolean() ? -1 : -2; // 50% chance for -1 or -2 lives
+                            lifeChange = random.nextBoolean() ? -1 : -2; // 50% chance for -1 or -2 hearts
                             break;
-                        case 3: // Hard Question
+                        case 3: // Hard Question: -20pts, -2 hearts
                             pointsChange = -20;
                             lifeChange = -2;
                             break;
-                        case 4: // Expert Question
+                        case 4: // Expert Question: -40pts, -3 hearts
                             pointsChange = -40;
                             lifeChange = -3;
                             break;
@@ -489,16 +539,18 @@ public class ScoringService {
 
     /**
      * Converts remaining shared lives to points at game end.
-     * Formula: points += lives × activationCost(difficulty)
+     * 
+     * When the game is won: ALL remaining hearts are converted to points.
+     * Each heart is worth the activation cost for the current game mode.
+     * 
+     * When the game is lost: Only extra lives above max (10) are converted.
      * 
      * @param game The game instance
+     * @param won true if the game was won, false if lost
      * @return The points added from remaining lives
      */
-    public int convertRemainingLivesToPoints(Game game) {
+    public int convertRemainingLivesToPoints(Game game, boolean won) {
         int remainingLives = game.getSharedLives();
-        if (remainingLives <= 0) {
-            return 0;
-        }
         
         // Get difficulty (1=Easy, 2=Medium, 3=Hard)
         int difficulty;
@@ -518,11 +570,33 @@ public class ScoringService {
         }
         
         int activationCost = calculateSurpriseActivationCost(difficulty);
-        int pointsToAdd = remainingLives * activationCost;
+        int pointsToAdd;
         
-        game.addSharedScore(pointsToAdd);
-        sysData.addHistoryEntry(String.format("Game ended: %d remaining shared lives converted to %d points (%d lives × %d activation cost)", 
-                remainingLives, pointsToAdd, remainingLives, activationCost));
+        if (won) {
+            // When game is won: convert ALL remaining hearts to points
+            // Each heart = activation cost for this game mode
+            // Note: Hearts count is kept for history display, but points are added
+            pointsToAdd = remainingLives * activationCost;
+            game.addSharedScore(pointsToAdd);
+            // Don't set hearts to 0 - keep them for history display
+            sysData.addHistoryEntry(String.format(
+                    "Game won: %d remaining hearts converted to %d points (%d hearts × %d activation cost)",
+                    remainingLives, pointsToAdd, remainingLives, activationCost));
+        } else {
+            // When game is lost: only convert extra lives above max (10)
+            int maxLives = game.getTotalLives(); // max is 10
+            int extraLives = Math.max(0, remainingLives - maxLives);
+            if (extraLives <= 0) {
+                return 0;
+            }
+            pointsToAdd = extraLives * activationCost;
+            game.addSharedScore(pointsToAdd);
+            // After conversion, clamp lives back to the max for final state/history.
+            game.setSharedLives(maxLives);
+            sysData.addHistoryEntry(String.format(
+                    "Game ended: %d extra shared lives converted to %d points (%d extra lives × %d activation cost)",
+                    extraLives, pointsToAdd, extraLives, activationCost));
+        }
         
         return pointsToAdd;
     }

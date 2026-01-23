@@ -608,7 +608,7 @@ public class HowToPlayDialog extends JDialog {
         // Body text
         JLabel textLabel = new JLabel("<html><div style='line-height: 1.6;'>" +
             "Use flags to mark suspected mines.<br>" +
-            "These are just visual aids and don't affect gameplay directly.</div></html>");
+            "Placing a flag costs 3 points from the combined score.</div></html>");
         textLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         textLabel.setForeground(textColor);
         textLabel.setVerticalAlignment(SwingConstants.TOP);
