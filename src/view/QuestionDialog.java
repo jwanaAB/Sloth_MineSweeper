@@ -16,6 +16,13 @@ public class QuestionDialog extends JDialog {
     public QuestionDialog(JFrame parent, Question question, String playerName) {
         super(parent, "Question for " + playerName, true);
         
+        // Get difficulty text for display - ensure we always have a valid value
+        int difficulty = question != null ? question.getDifficulty() : 1;
+        String difficultyText = getDifficultyText(difficulty);
+        
+        // Update title to include difficulty level
+        setTitle("Question for " + playerName + " - Level: " + difficultyText);
+        
         setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
         setLayout(new BorderLayout());
         
@@ -41,8 +48,10 @@ public class QuestionDialog extends JDialog {
         contentPanel.setBackground(new Color(245, 245, 250));
         contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
         
-        // Question text panel (icon removed to save space)
-        JPanel questionPanel = new JPanel(new BorderLayout());
+        
+        // Question text panel
+        JPanel questionPanel = new JPanel();
+        questionPanel.setLayout(new BoxLayout(questionPanel, BoxLayout.Y_AXIS));
         questionPanel.setBackground(new Color(245, 245, 250));
         questionPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
         questionPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -57,8 +66,9 @@ public class QuestionDialog extends JDialog {
         questionText.setEditable(false);
         questionText.setFocusable(false);
         questionText.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+        questionText.setAlignmentX(Component.LEFT_ALIGNMENT);
         
-        questionPanel.add(questionText, BorderLayout.CENTER);
+        questionPanel.add(questionText);
         
         contentPanel.add(questionPanel);
         contentPanel.add(Box.createVerticalStrut(10));
@@ -163,6 +173,22 @@ public class QuestionDialog extends JDialog {
         });
         
         return panel;
+    }
+    
+    /**
+     * Converts question difficulty number to text.
+     * 
+     * @param difficulty The difficulty level (1-4)
+     * @return Text representation: "Easy", "Medium", "Hard", or "Expert"
+     */
+    private String getDifficultyText(int difficulty) {
+        switch (difficulty) {
+            case 1: return "Easy";
+            case 2: return "Medium";
+            case 3: return "Hard";
+            case 4: return "Expert";
+            default: return "Unknown";
+        }
     }
     
     /**

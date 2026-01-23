@@ -541,10 +541,11 @@ public class GameController {
         // Play flag sound only when placing a flag (not removing)
         if (!wasFlagged && cell.isFlagged()) {
             soundManager.playSound("flag");
+            // New rule: placing a flag costs 3 points
+            String playerName = player == 1 ? game.getPlayer1Name() : game.getPlayer2Name();
+            scoringService.scoreFlagPlaced(game, playerName);
         }
-        
-        // Flags should not affect scoring - no scoring logic for flags
-        
+
         // Update UI
         gamePanel.updateUI();
     }
@@ -753,7 +754,7 @@ public class GameController {
         gamePanel.setGameOver(true);
         
         // Convert remaining lives to points
-        int pointsAdded = scoringService.convertRemainingLivesToPoints(game);
+        int pointsAdded = scoringService.convertRemainingLivesToPoints(game, won);
         
         String message;
         String title;
@@ -763,6 +764,9 @@ public class GameController {
             message = "Congratulations! Both " + game.getPlayer1Name() + " and " + 
                      game.getPlayer2Name() + " won together!\n" +
                      "Final Score: " + game.getCombinedScore() + " points";
+            if (pointsAdded > 0) {
+                message += "\n" + pointsAdded + " points added from remaining hearts.";
+            }
             title = "Game Won";
         } else {
             soundManager.playSound("game-over");
@@ -828,13 +832,7 @@ public class GameController {
                 remainingHearts
             );
             
-            System.out.println("Saving game history: " + player1Name + " vs " + player2Name + 
-                             ", Score: " + combinedScore + ", Hearts: " + remainingHearts);
-            
             SysData.getInstance().addGameHistory(history);
-            
-            System.out.println("Game history saved successfully. Total games: " + 
-                             SysData.getInstance().getGameHistory().size());
         } catch (Exception e) {
             System.err.println("Error saving game history: " + e.getMessage());
             e.printStackTrace();

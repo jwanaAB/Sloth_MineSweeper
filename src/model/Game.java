@@ -329,21 +329,31 @@ public class Game {
     }
     
     /**
-     * Adds a shared life (cannot exceed initial total lives).
+     * Adds a shared life.
+     * 
+     * Rule: Maximum lives is always 10. If adding a life would exceed 10,
+     * the life is NOT added (caller should convert it to points instead).
+     * 
+     * @return true if the life was added (lives < 10), false if it would exceed max (should be converted to points)
      */
-    public void addSharedLife() {
-        if (sharedLives < totalLives) {
-            sharedLives++;
-            notifyLivesChanged();
+    public boolean addSharedLife() {
+        if (sharedLives >= totalLives) {
+            // Already at max (10) - don't add, return false so caller can convert to points
+            return false;
         }
+        sharedLives++;
+        notifyLivesChanged();
+        return true;
     }
     
     /**
      * Sets the shared lives directly.
+     * Lives are capped at the maximum (10).
      * 
      * @param lives The new number of shared lives
      */
     public void setSharedLives(int lives) {
+        // Lives cannot go below 0, and cannot exceed the maximum (10)
         this.sharedLives = Math.max(0, Math.min(lives, totalLives));
         notifyLivesChanged();
     }
