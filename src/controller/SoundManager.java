@@ -3,6 +3,7 @@ package controller;
 import javax.sound.sampled.*;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,16 +49,26 @@ public class SoundManager {
     
     /**
      * Loads the background music from the sounds folder.
+     * Tries to load from JAR resources first, then falls back to file system.
      */
     private void loadBackgroundMusic() {
         try {
-            File musicFile = new File("sounds/Background_Music.wav");
-            if (!musicFile.exists()) {
-                System.err.println("Background music file not found: sounds/Background_Music.wav");
-                return;
+            AudioInputStream audioStream = null;
+            
+            // Try to load from JAR resources first
+            URL resourceUrl = getClass().getClassLoader().getResource("sounds/Background_Music.wav");
+            if (resourceUrl != null) {
+                audioStream = AudioSystem.getAudioInputStream(resourceUrl);
+            } else {
+                // Fallback to file system
+                File musicFile = new File("sounds/Background_Music.wav");
+                if (!musicFile.exists()) {
+                    System.err.println("Background music file not found: sounds/Background_Music.wav");
+                    return;
+                }
+                audioStream = AudioSystem.getAudioInputStream(musicFile);
             }
             
-            AudioInputStream audioStream = AudioSystem.getAudioInputStream(musicFile);
             backgroundMusicClip = AudioSystem.getClip();
             backgroundMusicClip.open(audioStream);
             // Note: Loop will be set when starting the music
@@ -68,18 +79,28 @@ public class SoundManager {
     
     /**
      * Loads a sound effect from a file.
+     * Tries to load from JAR resources first, then falls back to file system.
      * @param name The name/key for the sound
-     * @param filePath Path to the sound file (relative to project root)
+     * @param filePath Path to the sound file (relative to project root or JAR root)
      */
     private void loadSound(String name, String filePath) {
         try {
-            File soundFile = new File(filePath);
-            if (!soundFile.exists()) {
-                System.err.println("Sound file not found: " + filePath);
-                return;
+            AudioInputStream audioStream = null;
+            
+            // Try to load from JAR resources first
+            URL resourceUrl = getClass().getClassLoader().getResource(filePath);
+            if (resourceUrl != null) {
+                audioStream = AudioSystem.getAudioInputStream(resourceUrl);
+            } else {
+                // Fallback to file system
+                File soundFile = new File(filePath);
+                if (!soundFile.exists()) {
+                    System.err.println("Sound file not found: " + filePath);
+                    return;
+                }
+                audioStream = AudioSystem.getAudioInputStream(soundFile);
             }
             
-            AudioInputStream audioStream = AudioSystem.getAudioInputStream(soundFile);
             Clip clip = AudioSystem.getClip();
             clip.open(audioStream);
             
