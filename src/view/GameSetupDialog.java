@@ -122,7 +122,7 @@ public class GameSetupDialog extends JDialog {
         gameModeRow.setPreferredSize(new Dimension(gameModeRowWidth, 100));
         
         twoPlayersOption = new GameModeOption("Two Players", "Play with a friend", "👥", true);
-        vsAIOption = new GameModeOption("With AI", "Play against computer", "🤖", false);
+        vsAIOption = new GameModeOption("With AI", "Play with a computer", "🤖", false);
         
         twoPlayersOption.addMouseListener(new MouseAdapter() {
             @Override

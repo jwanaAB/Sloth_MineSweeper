@@ -52,6 +52,10 @@ public class HowToPlayDialog extends JDialog {
         contentPanel.add(createQuestionCellsCard());
         contentPanel.add(Box.createVerticalStrut(12));
 
+        // Surprise Cells card with colored background
+        contentPanel.add(createSurpriseCellsCard());
+        contentPanel.add(Box.createVerticalStrut(12));
+
         // Flags & Marks card with colored background
         contentPanel.add(createFlagsMarksCard());
         contentPanel.add(Box.createVerticalStrut(12));
@@ -536,6 +540,82 @@ public class HowToPlayDialog extends JDialog {
             "Questions have an activation cost (5/8/12 points by difficulty).<br>" +
             "Correct answers earn points and may grant lives based on question type and difficulty.<br>" +
             "Wrong answers may cost points and lives depending on the question type.</div></html>");
+        textLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        textLabel.setForeground(textColor);
+        textLabel.setVerticalAlignment(SwingConstants.TOP);
+        textLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        textLabel.setBorder(new EmptyBorder(12, 0, 0, 0));
+        textLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+
+        contentPanel.add(headerRow);
+        contentPanel.add(Box.createVerticalStrut(0));
+        contentPanel.add(textLabel);
+
+        card.add(contentPanel, BorderLayout.CENTER);
+
+        return card;
+    }
+
+    private JPanel createSurpriseCellsCard() {
+        // Light magenta/pink background matching the surprise cell theme
+        Color cardBg = new Color(255, 230, 255); // Light magenta/pink
+        Color borderColor = new Color(255, 150, 255); // Slightly darker magenta for border
+        Color textColor = new Color(50, 50, 50); // Dark grey text
+
+        // Create card panel with colored background, rounded corners and border
+        JPanel card = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                // Draw card background
+                g2.setColor(cardBg);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+
+                // Draw border
+                g2.setColor(borderColor);
+                g2.setStroke(new BasicStroke(1.5f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+
+                g2.dispose();
+            }
+        };
+
+        card.setLayout(new BorderLayout());
+        card.setOpaque(false);
+        card.setBorder(new EmptyBorder(24, 24, 24, 24));
+
+        // Main content panel
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        contentPanel.setOpaque(false);
+
+        // Header row: icon + title (icon directly aligned, no container)
+        JPanel headerRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        headerRow.setOpaque(false);
+        headerRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // Icon label (directly, no container)
+        JLabel iconLabel = new JLabel("🎁");
+        iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 24));
+        iconLabel.setBorder(new EmptyBorder(0, 0, 0, 12));
+
+        // Title label
+        JLabel titleLabel = new JLabel("Surprise Cells");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        titleLabel.setForeground(textColor);
+
+        headerRow.add(iconLabel);
+        headerRow.add(titleLabel);
+
+        // Body text
+        JLabel textLabel = new JLabel("<html><div style='line-height: 1.6;'>" +
+            "Clicking on a surprise cell (after revealing it) activates a random surprise effect.<br>" +
+            "Activation costs points based on difficulty (5/8/12 points for Easy/Medium/Hard).<br>" +
+            "Each surprise has a 50% chance of being good or bad:<br>" +
+            "• <b>Good Surprise:</b> +1 shared life and bonus points (+8/+12/+16 by difficulty)<br>" +
+            "• <b>Bad Surprise:</b> -1 shared life and penalty points (-8/-12/-16 by difficulty)<br>");
         textLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         textLabel.setForeground(textColor);
         textLabel.setVerticalAlignment(SwingConstants.TOP);
